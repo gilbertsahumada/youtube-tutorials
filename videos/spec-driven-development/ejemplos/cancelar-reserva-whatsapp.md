@@ -17,6 +17,34 @@ Cuando el cliente manda "cancelar" por WhatsApp, el bot cancela su próxima rese
 - **Confirmación:** mensaje de vuelta por WhatsApp ("Listo, cancelé tu reserva del lunes 14 a las 15:00").
 - **Idempotencia:** si no tiene reservas futuras, o ya está cancelada/pasada, responde claro y no rompe ni cancela dos veces.
 
+## Flujo
+**Secuencia** (orden temporal ↓ — versión comprimida; la completa con lifelines está disponible si la pides):
+```
+1. Cliente → Handler: "cancelar"
+2. Handler → cancelarReserva(tel)
+3. cancelarReserva → Repo: buscar próxima confirmada
+4. cancelarReserva → Repo: update(cancelada) + liberar cupo
+5. cancelarReserva → Handler: resultado
+6. Handler → Mensajes → Cliente: confirmación con fecha
+```
+**Flujo** (las decisiones — acá viven los casos borde que el agente, si no, inventa):
+```
+ mensaje "cancelar"
+        │
+        ▼
+ ¿tiene reserva futura confirmada? ──no──▶ "nada que cancelar"
+        │ sí
+        ▼
+ ¿más de una futura? ──sí──▶ pregunta cuál (lista numerada)
+        │ no
+        ▼
+ ¿>24h de anticipación? ──no──▶ "fuera de ventana, no cancelo"
+        │ sí
+        ▼
+ marcar cancelada + liberar cupo ──▶ confirmar con fecha
+```
+> Aprobar estos diagramas = aprobar la ventana de 24h, el caso sin reservas, el de varias reservas y la idempotencia. Eso es lo que se confirma antes de escribir una línea.
+
 ## Restricciones
 - No tocar la integración de WhatsApp ni el enrutado de intenciones del handler (solo enchufar el caso de uso).
 - No cambiar el modelo `Reserva` más allá de usar el campo `estado`.

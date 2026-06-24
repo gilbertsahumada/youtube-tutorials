@@ -63,7 +63,8 @@ Los 5 pasos, cada uno es un skill (carpeta [`skills/`](skills)):
 
 | Skill | Hace |
 |---|---|
-| [`scope`](skills/scope/SKILL.md) | Convierte la idea en una spec (las 5 preguntas) |
+| [`scope`](skills/scope/SKILL.md) | Convierte la idea en una spec (las 5 preguntas) + dibuja el flujo (secuencia y diagrama) para que lo apruebes antes de partir las tareas |
+| [`trace`](skills/trace/SKILL.md) | Dibuja el flujo (secuencia + diagrama) de código que YA existe, para entenderlo antes de tocarlo |
 | [`exec`](skills/exec/SKILL.md) | Implementa UNA tarea, nada más |
 | [`prove`](skills/prove/SKILL.md) | Corre la prueba de la tarea y pega la evidencia real (no autoreporte) |
 | [`audit`](skills/audit/SKILL.md) | Revisión senior del diff contra la spec (idealmente en un agente aparte) |
@@ -83,6 +84,9 @@ Los 5 pasos, cada uno es un skill (carpeta [`skills/`](skills)):
 
 ## Objetivo
 El resultado concreto y acotado. Una frase, no "mejorar X".
+
+## Flujo
+Diagrama de secuencia + diagrama de flujo en ASCII. Lo apruebas ANTES de partir las tareas: ahí confirmas las decisiones (casos borde, límites) que el agente, si no, inventa.
 
 ## Restricciones
 - Qué NO tocar (auth, modelo de datos, contratos de API).
