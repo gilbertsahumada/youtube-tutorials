@@ -1,8 +1,6 @@
 # Cómo uso OpenAI Codex de 0 a Pro
 
-> Compañero del video. El setup que uso para trabajar con **Codex** (CLI y app de escritorio) con criterio de ingeniería: configuración, permisos, `AGENTS.md` y los prompts del workflow real (de un ticket a varios Pull Requests).
-
-> Comunidad (gratis) → https://www.skool.com/ia-en-produccion-3264
+> El setup que uso para trabajar con **Codex** (CLI y app de escritorio) con criterio de ingeniería: configuración, permisos, `AGENTS.md` y los prompts del workflow real (de un ticket a varios Pull Requests).
 
 ---
 
@@ -62,6 +60,4 @@ El agente propone, tú decides en cada paso. **Plan → implementación revisada
 
 ---
 
-> El pack completo (config, AGENTS.md, permisos y los 4 prompts en detalle) está en la comunidad como **Codex Starter Pack**.
-
-*¿Lo probaste? Sube tu resultado al thread. → https://www.skool.com/ia-en-produccion-3264*
+> Por si quieres más: el pack completo (config, AGENTS.md, permisos y los 4 prompts en detalle) está como **Codex Starter Pack** en la comunidad **IA en Producción** → https://www.skool.com/ia-en-produccion-3264

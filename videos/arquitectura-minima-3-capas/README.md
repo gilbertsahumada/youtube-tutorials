@@ -1,8 +1,6 @@
 # La mejor arquitectura para vibecoding: 3 capas
 
-> Compañero del video. El modelo mental de 3 capas para que la IA no destroce tu app cuando crece, y los prompts para ordenar un proyecto vibecodeado.
-
-> Comunidad (gratis) → https://www.skool.com/ia-en-produccion-3264
+> El modelo mental de 3 capas para que la IA no destroce tu app cuando crece, y los prompts para ordenar un proyecto vibecodeado.
 
 ---
 
@@ -112,4 +110,4 @@ Si es una demo de una tarde, no armes todo esto. Pero si la app va a tener usuar
 
 ---
 
-*¿Tienes una app vibecodeada para ordenar? Súbela al thread de la comunidad. → https://www.skool.com/ia-en-produccion-3264*
+> Por si quieres más (lives, casos reales, más prompts): la comunidad **IA en Producción** → https://www.skool.com/ia-en-produccion-3264

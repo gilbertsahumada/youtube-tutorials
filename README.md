@@ -2,8 +2,6 @@
 
 Prompts, skills y ejemplos que acompañan los videos del canal **IA en Producción** ([@gilbertsahumada](https://www.youtube.com/@gilbertsahumada)). La idea de fondo: construir con IA **con criterio de ingeniería**, no tirándole prompts a ciegas.
 
-> Comunidad (gratis) → https://www.skool.com/ia-en-produccion-3264
-
 ## Cómo está organizado
 
 **Una carpeta por video.** Cada una tiene su `README.md` (el compañero escrito del video) y, cuando aplica, sus `skills/` (comandos reutilizables) y `ejemplos/`.
@@ -29,9 +27,9 @@ videos/
 
 Todo está en español para que lo entiendas rápido, pero los modelos suelen rendir mejor en inglés (están entrenados mayormente en inglés). Si quieres exprimir mejores resultados, traduce los prompts, los skills y tus specs a inglés. Funciona igual en español, así que es cosa de cada uno.
 
-## Cómo aportar
+## La comunidad (por si quieres más)
 
-¿Lo aplicaste en tu proyecto? Sube tu resultado al thread de la comunidad. Cada semana reviso casos reales. → https://www.skool.com/ia-en-produccion-3264
+Estos recursos salen de **IA en Producción**. Por si quieres lives, casos reales y más prompts, la comunidad está acá: https://www.skool.com/ia-en-produccion-3264
 
 ## Licencia
 

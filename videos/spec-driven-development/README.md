@@ -1,8 +1,6 @@
 # Spec-Driven Development sin ceremonia
 
-> Compañero del video. Antes de pedirle código a un agente, defines qué vas a aceptar como "listo". No es una metodología pesada ni un framework: son **5 preguntas** que conviertes en un markdown corto.
-
-> Comunidad (gratis) → https://www.skool.com/ia-en-produccion-3264
+> Antes de pedirle código a un agente, defines qué vas a aceptar como "listo". No es una metodología pesada ni un framework: son **5 preguntas** que conviertes en un markdown corto.
 
 ---
 
@@ -124,4 +122,4 @@ Ejemplo lleno: [`ejemplos/exportar-reservas-csv.md`](ejemplos/exportar-reservas-
 
 ---
 
-*¿Lo aplicaste? Sube tu spec al thread de la comunidad. → https://www.skool.com/ia-en-produccion-3264*
+> Por si quieres más (lives, casos reales, más prompts): la comunidad **IA en Producción** → https://www.skool.com/ia-en-produccion-3264
