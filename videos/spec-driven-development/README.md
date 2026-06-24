@@ -124,22 +124,23 @@ Ejemplos llenos (misma app de reservas por WhatsApp, tres formas distintas de fe
 
 ## No es nada nuevo
 
-Esto es el ciclo de software de siempre. Lo único distinto es a quién le pasas las tareas:
+Esto es el **SDLC** (Software Development Life Cycle), el ciclo de desarrollo de software de toda la vida: un equipo levanta requisitos, diseña, parte en tareas, implementa, revisa y mergea — y al terminar, el feedback abre el siguiente ciclo. Spec-Driven Development **no inventa un ciclo nuevo**: es el mismo SDLC. Lo único distinto es a **quién le pasas las tareas** (un agente, no un equipo de personas).
+
+Por eso es un **ciclo**, no una línea recta: terminas un feature y vuelves a empezar con el siguiente.
 
 ```
-TRADICIONAL  (equipos de software)
-  Requisitos ─▶ Diseño ─▶ Tareas ─▶ Implementar ─▶ Revisar ─▶ Merge
-     PRD       DesignDoc  Tickets     código         PR        main
-  (humanos)    (humanos)  (humanos)   (humanos)     (humano)
+TRADICIONAL (equipos de software) — un ciclo que se repite por release
+  ┌─▶ Requisitos ─▶ Diseño ─▶ Tareas ─▶ Implementar ─▶ Revisar ─▶ Merge ─┐
+  │      PRD       DesignDoc  Tickets     código          PR       main  │
+  └─────────────────◀── feedback / próxima feature ──────────────────────┘
 
-SPEC-DRIVEN  (con agentes)
-  Spec ───────────────▶ Tareas ─▶ Ejecutar ─▶ Verificar ─▶ Revisar ─▶ Commit
-  contexto / objetivo   T1, T2…   exec        prove        audit      ship
-  restricciones                   (agente)    (evidencia)  (humano)
-  (para el agente)
+SPEC-DRIVEN (con agentes) — mismo ciclo, distinta audiencia
+  ┌─▶ Spec ─▶ Tareas ─▶ Ejecutar ─▶ Verificar ─▶ Revisar ─▶ Commit ─┐
+  │ (5 preg)  T1,T2…   exec        prove        audit       ship    │
+  └──────────────◀── nueva feature / editar la spec ────────────────┘
 ```
 
-Mismo proceso, distinta audiencia.
+Mismo proceso, distinta audiencia. La spec ocupa el lugar de los requisitos + diseño + tickets; `prove` ocupa el lugar de "confiar en que el dev lo probó".
 
 ## Pero esto sí cambia con un agente
 
