@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Revisa los cambios (diff) como un ingeniero senior, contra la spec: alcance, correctitud, simplicidad y consistencia. Úsala antes de commitear o mergear, cuando se pida revisar el código ("audita esto", "revisa el diff").
+description: Revisa los cambios (el diff) como un ingeniero senior contra la spec, mirando alcance, correctitud, simplicidad y consistencia. Úsala antes de commitear o mergear, cuando se pida revisar el código o el diff.
 ---
 
 # Audit: revisión senior del diff

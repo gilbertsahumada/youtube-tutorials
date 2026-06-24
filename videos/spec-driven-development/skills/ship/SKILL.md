@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Escribe el mensaje de commit de los cambios en staging, en formato conventional commits y explicando el porqué. Úsala cuando se quiera commitear ("haz el commit", "ship esto", "escribe el mensaje de commit").
+description: Escribe el mensaje de commit de los cambios en staging, en formato conventional commits y explicando el porqué. Úsala cuando se quiera commitear o generar el mensaje de commit.
 ---
 
 # Ship: mensaje de commit

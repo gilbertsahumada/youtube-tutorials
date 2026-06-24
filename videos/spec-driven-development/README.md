@@ -6,7 +6,7 @@
 
 ## El problema
 
-Le dices a un agente "agrega exportar reservas a CSV". Un minuto después tienes código. Pero no es lo que querías: columnas que no van, sin respetar permisos, una pantalla nueva que no pediste, una dependencia rara. Lo arreglas, se rompe otra cosa, y terminas desenredando **decisiones que nunca tomaste**.
+Le dices a un agente "agrega cancelar reserva por WhatsApp". Un minuto después tienes código. Pero no es lo que querías: cancela sin chequear la ventana de 24h, deja el cupo ocupado, no le confirma nada al cliente, y de paso un número podría cancelar la reserva de otro. Lo arreglas, se rompe otra cosa, y terminas desenredando **decisiones que nunca tomaste**.
 
 Eso pasa cuando el agente está **adivinando** lo que querías.
 
@@ -102,12 +102,12 @@ El resultado concreto y acotado. Una frase, no "mejorar X".
 - [ ] Manual: <qué revisar end-to-end>
 ```
 
-Ejemplo lleno: [`ejemplos/exportar-reservas-csv.md`](ejemplos/exportar-reservas-csv.md).
+Ejemplo lleno: [`ejemplos/cancelar-reserva-whatsapp.md`](ejemplos/cancelar-reserva-whatsapp.md).
 
 ## Cómo dimensionar tareas y escribir buenos `Verify`
 
 - **Tarea:** una sesión, commit independiente. Si toca más de ~3 archivos o pasa de ~30 min, pártela. Contexto fresco por tarea evita que el agente se pierda.
-- **Verify:** prefiere un comando sobre revisión manual. Si es manual, específico ("clic en Exportar, se descarga un .csv con 6 columnas"), no "verificar que funciona". Sin verificación, obtienes slop.
+- **Verify:** prefiere un comando sobre revisión manual. Si es manual, específico ("mando 'cancelar' por WhatsApp y llega la confirmación con la fecha"), no "verificar que funciona". Sin verificación, obtienes slop.
 
 ## Cuándo SÍ y cuándo abreviar
 
@@ -134,6 +134,15 @@ SPEC-DRIVEN  (con agentes)
 
 Mismo proceso, distinta audiencia.
 
+## Pero esto sí cambia con un agente
+
+El proceso tiene la misma forma. Lo que **se rompe distinto** cuando el ejecutor es una IA y no una persona:
+
+1. **La verificación deja de ser por confianza.** A un humano le crees cuando dice "lo probé". El agente afirma "todo pasó" con la misma seguridad aunque sea falso. Por eso la evidencia es obligatoria, no un spot-check → de ahí `prove`.
+2. **El cuello de botella pasa de escribir a revisar.** Escribir código ahora es casi gratis; el límite es cuán rápido un humano revisa. Todo el proceso optimiza para *revisabilidad*: diffs chicos y evidencia → "una tarea, una evidencia".
+3. **El ejecutor tiene amnesia.** No acumula contexto entre sesiones como un humano en semanas. Por eso contexto fresco por tarea, y tareas más autocontenidas de lo que le darías a una persona.
+4. **El alcance hay que blindarlo, no pedirlo.** El agente es ansioso y agrega cosas que no pediste. El "fuera de alcance" pesa más que en un PRD humano: es un guardarraíl, no solo claridad.
+
 ## FAQ
 
 **"Claude Code ya tiene plan mode, ¿para qué archivos?"** El plan mode vive dentro de la sesión. Un archivo de spec es separado, limpio, versionable y compartible: se lo pasas a cualquier agente, en cualquier herramienta, dentro de seis meses. Usa plan mode para pensar; usa specs para ejecutar.
@@ -143,9 +152,9 @@ Mismo proceso, distinta audiencia.
 ## Quick start
 
 1. Copia los skills de [`skills/`](skills) a tu herramienta (ver abajo).
-2. `/scope agregar exportar reservas a CSV desde el dashboard`
+2. `/scope agregar cancelar reserva por WhatsApp`
 3. Revisa la spec generada. Que las decisiones sean tuyas.
-4. `/exec specs/exportar-reservas-csv.md T1` → `/prove ... T1` → `/audit` → `/ship`.
+4. `/exec specs/cancelar-reserva-whatsapp.md T1` → `/prove ... T1` → `/audit` → `/ship`.
 5. Sesión fresca para T2. Repite.
 
 > **Instalar los skills:** copia cada carpeta de `skills/` a `.claude/skills/<nombre>/` en tu proyecto (o a `~/.claude/skills/<nombre>/` para tenerlas globales). Claude Code las invoca solas según su `description`. Si prefieres invocarlas tú con `/nombre`, el mismo contenido sirve como command en `.claude/commands/<nombre>.md`.

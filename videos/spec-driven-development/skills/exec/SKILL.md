@@ -1,6 +1,6 @@
 ---
 name: exec
-description: Implementa UNA sola tarea de una spec existente, sin tocar nada más. Úsala cuando exista un archivo de spec en specs/ y el usuario pida ejecutar o implementar una tarea concreta (ej. "implementa T1", "exec T2").
+description: Implementa UNA sola tarea de una spec existente, sin tocar nada más. Úsala cuando exista un archivo de spec en la carpeta specs y el usuario pida ejecutar o implementar una tarea concreta (por ejemplo la T1 o la T2).
 ---
 
 # Exec: ejecuta una sola tarea

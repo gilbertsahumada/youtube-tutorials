@@ -1,6 +1,6 @@
 ---
 name: prove
-description: Verifica que una tarea quedó realmente lista corriendo su paso Verify y mostrando la salida real, sin autoreporte. Úsala después de implementar una tarea, cuando se quiera comprobar que funciona de verdad ("verifica T1", "prueba que esto funciona").
+description: Verifica que una tarea quedó realmente lista corriendo su paso Verify y mostrando la salida real, sin autoreporte. Úsala después de implementar una tarea, cuando se quiera comprobar que funciona de verdad y no solo que el agente lo afirme.
 ---
 
 # Prove: verifica de verdad (sin autoreporte)

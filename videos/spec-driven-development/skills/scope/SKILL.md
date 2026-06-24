@@ -1,6 +1,6 @@
 ---
 name: scope
-description: Convierte una idea o feature vaga en una spec ejecutable (las 5 preguntas: contexto, objetivo, restricciones, tareas y verificación) antes de escribir código. Úsala cuando el usuario describa algo que quiere construir y pida una spec, "scope esto", o planear el trabajo antes de implementar.
+description: Convierte una idea o feature vaga en una spec ejecutable con las 5 preguntas (contexto, objetivo, restricciones, tareas y verificación) antes de escribir código. Úsala cuando el usuario describa algo que quiere construir y pida una spec, o planear el trabajo antes de implementar.
 ---
 
 # Scope: idea → spec
