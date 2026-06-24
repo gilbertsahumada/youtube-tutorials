@@ -1,10 +1,11 @@
-# /ship — Mensaje de commit
+---
+name: ship
+description: Escribe el mensaje de commit de los cambios en staging, en formato conventional commits y explicando el porqué. Úsala cuando se quiera commitear ("haz el commit", "ship esto", "escribe el mensaje de commit").
+---
+
+# Ship: mensaje de commit
 
 Escribe el mensaje de commit de los cambios en staging. Explica el **porqué**, no solo el qué.
-
-**Uso:** `/ship`
-
----
 
 1. Corre `git diff --staged` para ver los cambios.
 2. Escribe un mensaje en formato conventional commits:

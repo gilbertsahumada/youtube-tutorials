@@ -1,16 +1,11 @@
-# /scope — Convierte una idea en una spec
-
-Genera una spec ejecutable para un agente a partir de una idea vaga (las 5 preguntas).
-
-**Uso:** `/scope <describe la feature en 1-2 líneas>`
-
+---
+name: scope
+description: Convierte una idea o feature vaga en una spec ejecutable (las 5 preguntas: contexto, objetivo, restricciones, tareas y verificación) antes de escribir código. Úsala cuando el usuario describa algo que quiere construir y pida una spec, "scope esto", o planear el trabajo antes de implementar.
 ---
 
-Lee primero `CLAUDE.md` / `AGENTS.md` si existen (de ahí salen las convenciones y restricciones globales). Pregunta solo si estás bloqueado.
+# Scope: idea → spec
 
-Convierte esta idea en una spec y guárdala en `specs/<slug>.md`:
-
-$ARGUMENTS
+Convierte la idea del usuario en una spec y guárdala en `specs/<slug>.md`. Lee primero `CLAUDE.md` / `AGENTS.md` si existen (de ahí salen las convenciones y restricciones globales). Pregunta solo si estás bloqueado. **No escribas código todavía.**
 
 La spec debe tener exactamente estas secciones:
 
@@ -47,6 +42,5 @@ El resultado concreto y acotado. Una frase, no "mejorar X".
 Reglas al escribirla:
 - **Tareas chicas:** cada una en una sesión, < ~3 archivos, segura de commitear sola. Si una tarea puede chocar con el límite de contexto, pártela.
 - **Verify de verdad:** prefiere un comando sobre revisión manual; el manual debe ser específico ("clic en X, se ve Y"), no "verificar que funciona".
-- **No escribas código todavía.**
 
 Al terminar, hazte el test de completitud: *¿un agente nuevo, sin más contexto que esta spec, podría implementar T1?* Si no, falta detalle.

@@ -1,14 +1,13 @@
-# /audit — Revisión senior del diff
-
-Revisa los cambios como lo haría un ingeniero senior, contra la spec.
-
-**Uso:** `/audit` (revisa los archivos cambiados) · `/audit <archivo o target>`
-
-> Córrelo en un **contexto fresco / agente aparte**, para que NO sea el mismo agente revisando su propio trabajo. Ahí está el valor.
-
+---
+name: audit
+description: Revisa los cambios (diff) como un ingeniero senior, contra la spec: alcance, correctitud, simplicidad y consistencia. Úsala antes de commitear o mergear, cuando se pida revisar el código ("audita esto", "revisa el diff").
 ---
 
-Revisa $ARGUMENTS (o todos los archivos cambiados) y evalúa, en este orden:
+# Audit: revisión senior del diff
+
+Revisa los archivos cambiados (o el target indicado) como lo haría un ingeniero senior, contra la spec. Idealmente se corre en un **contexto fresco / sesión aparte**, para no ser el mismo agente revisando su propio trabajo.
+
+Evalúa en este orden:
 
 ### 1. Alcance (lo primero)
 - ¿Tocó algo de **"No tocar"** o **"Fuera de alcance"** de la spec? Si sí, márcalo: es lo más grave.

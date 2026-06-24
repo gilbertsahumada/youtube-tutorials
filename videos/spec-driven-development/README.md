@@ -52,11 +52,11 @@ Los 5 pasos, cada uno es un skill (carpeta [`skills/`](skills)):
 
 | Skill | Hace |
 |---|---|
-| [`/scope`](skills/scope.md) | Convierte la idea en una spec (las 5 preguntas) |
-| [`/exec`](skills/exec.md) | Implementa UNA tarea, nada más |
-| [`/prove`](skills/prove.md) | Corre la prueba de la tarea y pega la evidencia real (no autoreporte) |
-| [`/audit`](skills/audit.md) | Revisión senior del diff contra la spec (idealmente en un agente aparte) |
-| [`/ship`](skills/ship.md) | Mensaje de commit que explica el porqué |
+| [`scope`](skills/scope/SKILL.md) | Convierte la idea en una spec (las 5 preguntas) |
+| [`exec`](skills/exec/SKILL.md) | Implementa UNA tarea, nada más |
+| [`prove`](skills/prove/SKILL.md) | Corre la prueba de la tarea y pega la evidencia real (no autoreporte) |
+| [`audit`](skills/audit/SKILL.md) | Revisión senior del diff contra la spec (idealmente en un agente aparte) |
+| [`ship`](skills/ship/SKILL.md) | Mensaje de commit que explica el porqué |
 
 > `/prove` es la pieza que más sube la calidad: la verificación deja de ser "el agente dice que pasó" y pasa a ser **evidencia real corrida en un contexto independiente**.
 
@@ -118,7 +118,7 @@ Ejemplo lleno: [`ejemplos/exportar-reservas-csv.md`](ejemplos/exportar-reservas-
 4. `/exec specs/exportar-reservas-csv.md T1` → `/prove ... T1` → `/audit` → `/ship`.
 5. Sesión fresca para T2. Repite.
 
-> **Instalar los skills:** son plantillas de prompt. Para usarlos como slash commands de Claude Code, cópialos a `.claude/commands/<nombre>.md`. Para Codex, a tu carpeta de prompts/skills. O simplemente cópialos y pégalos.
+> **Instalar los skills:** copia cada carpeta de `skills/` a `.claude/skills/<nombre>/` en tu proyecto (o a `~/.claude/skills/<nombre>/` para tenerlas globales). Claude Code las invoca solas según su `description`. Si prefieres invocarlas tú con `/nombre`, el mismo contenido sirve como command en `.claude/commands/<nombre>.md`.
 
 ---
 

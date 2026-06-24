@@ -1,12 +1,11 @@
-# /exec — Ejecuta una sola tarea
-
-Implementa UNA tarea de una spec. Ni una línea más.
-
-**Uso:** `/exec specs/<slug>.md T1`
-
+---
+name: exec
+description: Implementa UNA sola tarea de una spec existente, sin tocar nada más. Úsala cuando exista un archivo de spec en specs/ y el usuario pida ejecutar o implementar una tarea concreta (ej. "implementa T1", "exec T2").
 ---
 
-$ARGUMENTS apunta al archivo de spec y a la tarea (ej. `T1`).
+# Exec: ejecuta una sola tarea
+
+Implementa UNA tarea de la spec que indique el usuario (ej. `specs/<slug>.md` tarea `T1`). Ni una línea más.
 
 1. Lee la spec completa.
 2. Lee Contexto, Objetivo, Restricciones y Fuera de alcance para tener el marco.
@@ -22,7 +21,7 @@ Reglas duras:
 Al terminar, reporta:
 - Archivos creados o modificados.
 - Qué hiciste y por qué.
-- El resultado del paso **Verify** (o corre `/prove` para la evidencia real).
+- El resultado del paso **Verify** (o sugiere correr la skill `prove` para la evidencia real).
 - Riesgos o dudas antes de continuar.
 
-**No avances a la siguiente tarea.** Sugiere el siguiente paso: `/prove specs/<slug>.md T1` y, si pasa, `/exec specs/<slug>.md T2` en una sesión fresca.
+**No avances a la siguiente tarea.** Para la siguiente, empieza en una sesión fresca (contexto limpio).
