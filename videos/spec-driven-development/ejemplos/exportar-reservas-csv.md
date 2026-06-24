@@ -1,49 +1,47 @@
 # Exportar reservas a CSV
 
-> Ejemplo de spec llena, para un feature chico y real de una app de reservas (Next.js + Prisma). Así se ve aplicar las 5 preguntas.
+> Ejemplo de spec llena para un feature chico y real (app de reservas en Next.js + Prisma). Lo que la hace útil no es ser larga: es que **define las decisiones que el agente, si no, inventa**.
 
 ## Contexto
-- La app ya tiene dashboard de reservas, permisos por negocio y filtros de fecha.
-- Patrón a seguir: las acciones del dashboard viven en `src/app/dashboard/` y usan la capa de datos en `src/data/`.
-- Decisión ya tomada: la exportación es del lado servidor (no se arma el CSV en el cliente).
+- App de reservas en Next.js (App Router) + Prisma + Postgres; sesión por negocio.
+- El listado vive en `src/app/(dashboard)/reservas/page.tsx`; la query en `src/data/reservas.ts` → `listReservas({ negocioId, desde, hasta })`, que **ya filtra por el `negocioId` de la sesión** (ese es el patrón a seguir).
+- Hoy el dueño copia las reservas a mano para llevarlas a Excel; de ahí el export.
 
 ## Objetivo
-Agregar una acción en el dashboard para descargar las reservas filtradas por rango de fechas, en formato CSV.
+Un botón "Exportar CSV" en el dashboard que descarga las reservas del negocio actual, respetando el rango de fechas activo. El CSV, sin que el agente invente nada:
+- Columnas en este orden: `Fecha, Hora, Cliente, Teléfono, Servicio, Estado`.
+- Fecha `YYYY-MM-DD`, hora `HH:mm`, en la **zona horaria del negocio** (no UTC).
+- UTF-8 **con BOM** (si no, Excel rompe tildes y ñ); separador `,`; los campos con comas o comillas van entre comillas dobles (escape RFC 4180).
+- Nombre del archivo: `reservas_<desde>_<hasta>.csv`.
+- Rango sin reservas → descarga igual, solo con la fila de encabezados.
 
 ## Restricciones
-- No tocar autenticación.
-- No cambiar el modelo de reservas.
-- No agregar dependencias salvo que sea necesario y justificado.
+- No tocar auth ni el modelo `Reserva` de Prisma.
+- Sin dependencias nuevas: el CSV se arma a mano (es trivial), nada de librerías de CSV.
 
 ## Fuera de alcance
-- No crear una pantalla nueva de reportes.
-- No exportar reservas de otros negocios.
-- No agregar gráficos ni dashboards de analítica.
+- Pantalla de reportes, gráficos, export a Excel o PDF.
+- Exportar reservas de otro negocio (debe ser **imposible**, no solo "no incluido").
 
 ## Tareas
 
-### T1: Encontrar el flujo actual de reservas
-**Hacer:** Mapear dónde viven las reservas (query, componente del dashboard, filtros de fecha).
-**Archivos:** solo lectura/exploración.
-**Verify:** listar los archivos/rutas involucrados antes de modificar nada.
-
-### T2: Crear el serializador CSV
-**Hacer:** Función pura que toma reservas y devuelve un string CSV con encabezados.
+### T1: Serializador CSV
+**Hacer:** función pura `toCsv(reservas)` con el orden de columnas, el formato de fecha/hora, el BOM y el escape de arriba.
 **Archivos:** `src/data/csv.ts`, `src/data/csv.test.ts`
-**Verify:** `test` con 3 reservas y encabezados exactos (fecha, hora, cliente, telefono, servicio, estado).
+**Verify:** `npm test src/data/csv.test.ts` con 3 casos: filas normales; un cliente con coma en el nombre (debe quedar entre comillas); lista vacía (solo encabezados).
 
-### T3: Agregar la descarga protegida
-**Hacer:** Endpoint o server action que devuelve el CSV de las reservas del negocio actual, respetando permisos.
+### T2: Endpoint de descarga protegido
+**Hacer:** `GET /api/reservas/export?desde&hasta` → llama a `listReservas` con el `negocioId` de la sesión y responde el CSV con `Content-Type: text/csv; charset=utf-8` y `Content-Disposition: attachment; filename="reservas_<desde>_<hasta>.csv"`.
 **Archivos:** `src/app/api/reservas/export/route.ts`
-**Verify:** el usuario del negocio A NO puede exportar reservas del negocio B (devuelve 403).
+**Verify:** `curl` autenticado descarga el CSV correcto; con la sesión del negocio B, pedir el export nunca devuelve filas del negocio A.
 
-### T4: Agregar el botón en el dashboard
-**Hacer:** Botón "Exportar CSV" que respeta el rango de fechas seleccionado.
-**Archivos:** `src/app/dashboard/ReservasToolbar.tsx`
-**Verify:** descarga un `.csv` que respeta el rango de fechas.
+### T3: Botón en el dashboard
+**Hacer:** botón "Exportar CSV" en la toolbar del listado, que llama al endpoint con el rango de fechas activo.
+**Archivos:** `src/app/(dashboard)/reservas/Toolbar.tsx`
+**Verify:** Manual — rango 2026-03-01 a 2026-03-31, clic en Exportar → se descarga `reservas_2026-03-01_2026-03-31.csv` solo con reservas de marzo.
 
 ## Done (validación final)
-- [ ] `bun run build` (o el build del proyecto) pasa.
-- [ ] Manual: seleccionar un rango → Exportar → abrir el `.csv` en Sheets/Excel → columnas y filas correctas.
-- [ ] Manual: un usuario de otro negocio no puede exportar reservas ajenas.
-- [ ] Sin regresiones en el listado de reservas del dashboard.
+- [ ] `npm test` y `npm run build` pasan.
+- [ ] El CSV abre en Excel y en Google Sheets con tildes y ñ correctas.
+- [ ] Por ninguna vía un negocio puede exportar reservas de otro.
+- [ ] Un rango sin reservas descarga un CSV con solo encabezados (no rompe).

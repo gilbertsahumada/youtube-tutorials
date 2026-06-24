@@ -41,11 +41,22 @@ La spec lleva *algo* de por qué y cómo (lo justo para que el agente decida bie
 ## El workflow
 
 ```
-scope ──▶ exec ──▶ prove ──▶ audit ──▶ ship
-  │                                       │
-  │            (una tarea a la vez)       │
-  └───────────────◀───────────────────────┘
-         contexto fresco cada sesión
+   scope          ┌─────────── repite por cada tarea ───────────┐
+  (1 vez)         │                                             │
+     │            ▼                                             │
+     │     exec ──▶ prove ──▶ audit ──▶ ship ───────────────────┘
+     │    (tarea)  (evidencia)(revisa) (commit)
+     ▼
+  ┌─────────────────────────────────────────────────────────┐
+  │  LA SPEC · specs/<feature>.md                            │
+  │  • Contexto       qué existe hoy y qué respetar          │
+  │  • Objetivo       el resultado concreto + decisiones     │
+  │  • Restricciones  qué NO tocar / fuera de alcance        │
+  │  • Tareas         pasos chicos, cada uno con su Verify   │
+  │  • Done           validación end-to-end                  │
+  └─────────────────────────────────────────────────────────┘
+
+  contexto fresco cada sesión · una tarea, una evidencia
 ```
 
 Los 5 pasos, cada uno es un skill (carpeta [`skills/`](skills)):
@@ -103,6 +114,25 @@ Ejemplo lleno: [`ejemplos/exportar-reservas-csv.md`](ejemplos/exportar-reservas-
 - **No** lo uses para scripts de una vez, prototipos de una tarde, o algo que botas mañana. Feature trivial (< 3 archivos): inline todo, 1-2 tareas. Bugfix: por qué + qué + una tarea.
 - **Sí** cuando hay usuarios, permisos, datos, dinero, o una feature que vas a mantener.
 - Regla personal: **mientras más permisos le das al agente, más concreta tiene que ser la spec.**
+
+## No es nada nuevo
+
+Esto es el ciclo de software de siempre. Lo único distinto es a quién le pasas las tareas:
+
+```
+TRADICIONAL  (equipos de software)
+  Requisitos ─▶ Diseño ─▶ Tareas ─▶ Implementar ─▶ Revisar ─▶ Merge
+     PRD       DesignDoc  Tickets     código         PR        main
+  (humanos)    (humanos)  (humanos)   (humanos)     (humano)
+
+SPEC-DRIVEN  (con agentes)
+  Spec ───────────────▶ Tareas ─▶ Ejecutar ─▶ Verificar ─▶ Revisar ─▶ Commit
+  contexto / objetivo   T1, T2…   exec        prove        audit      ship
+  restricciones                   (agente)    (evidencia)  (humano)
+  (para el agente)
+```
+
+Mismo proceso, distinta audiencia.
 
 ## FAQ
 
