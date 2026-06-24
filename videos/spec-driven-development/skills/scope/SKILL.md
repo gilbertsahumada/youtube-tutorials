@@ -68,9 +68,10 @@ Diagrama de FLUJO (las decisiones y ramas — acá viven los casos borde):
 
 ## Tareas
 ### T1: <título corto>
-**Hacer:** <cambio específico>
-**Archivos:** <rutas que tocará>
-**Verify:** <comando o check manual específico>
+- **Hacer:** <cambio específico>
+- **Archivos:** <rutas que tocará>
+- **Verify:** <comando o check manual específico>
+
 ### T2: ...
 
 ## Done (validación final)

@@ -58,19 +58,19 @@ Cuando el cliente manda "cancelar" por WhatsApp, el bot cancela su próxima rese
 ## Tareas
 
 ### T1: Caso de uso `cancelarReserva`
-**Hacer:** función pura `cancelarReserva({ telefono, ahora })` que aplica la política: busca la próxima reserva confirmada del teléfono, valida la ventana de 24h, la marca `cancelada` y libera el cupo. Devuelve un resultado tipado (cancelada / fuera-de-ventana / sin-reservas / elegir-entre-varias).
-**Archivos:** `src/casos-uso/cancelar-reserva.ts`, `src/casos-uso/cancelar-reserva.test.ts`
-**Verify:** `npm test src/casos-uso/cancelar-reserva.test.ts` con los casos: dentro de ventana (cancela + libera cupo); a menos de 24h (no cancela); sin reservas futuras; cliente con dos reservas futuras (pide elegir); segunda llamada sobre una ya cancelada (no re-cancela).
+- **Hacer:** función pura `cancelarReserva({ telefono, ahora })` que aplica la política: busca la próxima reserva confirmada del teléfono, valida la ventana de 24h, la marca `cancelada` y libera el cupo. Devuelve un resultado tipado (cancelada / fuera-de-ventana / sin-reservas / elegir-entre-varias).
+- **Archivos:** `src/casos-uso/cancelar-reserva.ts`, `src/casos-uso/cancelar-reserva.test.ts`
+- **Verify:** `npm test src/casos-uso/cancelar-reserva.test.ts` con los casos: dentro de ventana (cancela + libera cupo); a menos de 24h (no cancela); sin reservas futuras; cliente con dos reservas futuras (pide elegir); segunda llamada sobre una ya cancelada (no re-cancela).
 
 ### T2: Enchufar la intención "cancelar" en el handler
-**Hacer:** cuando el handler detecta la intención de cancelar, llama a `cancelarReserva` con el teléfono del remitente. No mete lógica de negocio en el handler.
-**Archivos:** `src/bot/handler.ts`
-**Verify:** un mensaje "cancelar" de un número con reserva futura dispara el caso de uso (test del handler con un mock del repositorio).
+- **Hacer:** cuando el handler detecta la intención de cancelar, llama a `cancelarReserva` con el teléfono del remitente. No mete lógica de negocio en el handler.
+- **Archivos:** `src/bot/handler.ts`
+- **Verify:** un mensaje "cancelar" de un número con reserva futura dispara el caso de uso (test del handler con un mock del repositorio).
 
 ### T3: Mensajes de respuesta
-**Hacer:** traducir cada resultado del caso de uso a un mensaje de WhatsApp claro (confirmación con fecha/hora, fuera de ventana, nada que cancelar, elegir entre varias).
-**Archivos:** `src/bot/mensajes.ts`
-**Verify:** Manual por WhatsApp — mandar "cancelar" con una reserva a >24h (llega confirmación y el cupo queda libre); repetir "cancelar" (responde que no hay nada que cancelar).
+- **Hacer:** traducir cada resultado del caso de uso a un mensaje de WhatsApp claro (confirmación con fecha/hora, fuera de ventana, nada que cancelar, elegir entre varias).
+- **Archivos:** `src/bot/mensajes.ts`
+- **Verify:** Manual por WhatsApp — mandar "cancelar" con una reserva a >24h (llega confirmación y el cupo queda libre); repetir "cancelar" (responde que no hay nada que cancelar).
 
 ## Done (validación final)
 - [ ] `npm test` y `npm run build` pasan.

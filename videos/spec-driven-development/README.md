@@ -97,16 +97,19 @@ Diagrama de secuencia + diagrama de flujo en ASCII. Lo apruebas ANTES de partir 
 
 ## Tareas
 ### T1: <título>
-**Hacer:** <cambio específico>
-**Archivos:** <rutas>
-**Verify:** <comando o check manual específico>
+- **Hacer:** <cambio específico>
+- **Archivos:** <rutas>
+- **Verify:** <comando o check manual específico>
 
 ## Done (validación final)
 - [ ] <comando build/test pasa>
 - [ ] Manual: <qué revisar end-to-end>
 ```
 
-Ejemplo lleno: [`ejemplos/cancelar-reserva-whatsapp.md`](ejemplos/cancelar-reserva-whatsapp.md).
+Ejemplos llenos (misma app de reservas por WhatsApp, tres formas distintas de feature):
+- [`cancelar-reserva-whatsapp.md`](ejemplos/cancelar-reserva-whatsapp.md) — acción que dispara el cliente, con política y casos borde.
+- [`exportar-reservas-csv.md`](ejemplos/exportar-reservas-csv.md) — comando del dueño que devuelve datos (CSV) y permisos.
+- [`recordatorio-24h.md`](ejemplos/recordatorio-24h.md) — tarea que dispara el reloj (job programado), idempotente.
 
 ## Cómo dimensionar tareas y escribir buenos `Verify`
 
