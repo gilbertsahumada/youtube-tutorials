@@ -26,4 +26,4 @@ Salida:
 - Si hay problemas: lista con **archivo:línea** + el fix concreto.
 - Si está bien: dilo breve y sigue.
 
-Sé constructivo, no nitpick. Enfócate en lo que importa: bugs, alcance, claridad, mantenibilidad. No sugieras cambios solo por sugerir.
+Sé constructivo, sin fijarte en nimiedades. Enfócate en lo que importa: bugs, alcance, claridad, mantenibilidad. No sugieras cambios solo por sugerir.
