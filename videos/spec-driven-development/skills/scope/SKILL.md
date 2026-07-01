@@ -1,87 +1,87 @@
 ---
 name: scope
-description: Convierte una idea o feature vaga en una spec ejecutable con las 5 preguntas (contexto, objetivo, restricciones, tareas y verificación) antes de escribir código. Úsala cuando el usuario describa algo que quiere construir y pida una spec, o planear el trabajo antes de implementar.
+description: Turns a vague idea or feature into an executable spec using the 5 questions (context, goal, constraints, tasks and verification) before writing any code. Use it when the user describes something they want to build and asks for a spec, or to plan the work before implementing.
 ---
 
 # Scope: idea → spec
 
-Convierte la idea del usuario en una spec y guárdala en `specs/<slug>.md`. Lee primero `CLAUDE.md` / `AGENTS.md` si existen (de ahí salen las convenciones y restricciones globales). Pregunta solo si estás bloqueado. **No escribas código todavía.**
+Turn the user's idea into a spec and save it to `specs/<slug>.md`. Read `CLAUDE.md` / `AGENTS.md` first if they exist (that's where the global conventions and constraints come from). Ask only if you're blocked. **Don't write code yet.**
 
-Trabajas en **dos pasos**:
+You work in **two beats**:
 
-1. **Dibuja el flujo y confirma.** Antes de dividir nada en tareas, genera la sección `## Flujo` con DOS diagramas ASCII (secuencia + flujo) y **detente**: muéstraselos al usuario y pídele que confirme que ese es el comportamiento que quiere. Aquí es donde se aprueban las decisiones que el agente, si no, inventaría (ventanas de tiempo, casos borde, qué pasa si no hay datos). No sigas hasta el "sí".
-2. **Solo entonces, divídelo en tareas.** Con el flujo aprobado, completa el resto de la spec (Restricciones, Fuera de alcance, Tareas con su Verify, Done).
+1. **Draw the flow and confirm.** Before splitting anything into tasks, generate the `## Flow` section with TWO ASCII diagrams (sequence + flow) and **stop**: show them to the user and ask them to confirm that's the behavior they want. This is where you get sign-off on the decisions the agent would otherwise invent (time windows, edge cases, what happens when there's no data). Don't move on until you get the "yes".
+2. **Only then, split it into tasks.** With the flow approved, complete the rest of the spec (Constraints, Out of scope, Tasks with their Verify, Done).
 
-La spec debe tener exactamente estas secciones:
+The spec must have exactly these sections:
 
 ```md
-# <Nombre de la feature>
+# <Feature name>
 
-## Contexto
-- Qué existe hoy (stack, carpetas) que debes respetar.
-- Patrones a seguir (nombra un archivo del repo que ya lo hace bien).
-- Decisiones ya tomadas (para no re-discutirlas).
+## Context
+- What exists today (stack, folders) that you must respect.
+- Patterns to follow (name a file in the repo that already does it well).
+- Decisions already made (so they aren't re-litigated).
 
-## Objetivo
-El resultado concreto y acotado. Una frase, no "mejorar X".
+## Goal
+The concrete, bounded outcome. One sentence, not "improve X".
 
-## Flujo
-Diagrama de SECUENCIA. Por defecto entrega la versión **comprimida** (lista ordenada de pasos); solo si el usuario pide el detalle, dale la **completa** con lifelines.
+## Flow
+SEQUENCE diagram. By default deliver the **compact** version (an ordered list of steps); only if the user asks for the detail, give the **full** one with lifelines.
 
-Comprimida (default):
+Compact (default):
 ```
-SECUENCIA (orden temporal ↓)
-1. Actor → Componente: acción
-2. Componente → OtroComp: llamada()
-3. OtroComp → Componente: retorno
-4. Componente → Actor: respuesta
+SEQUENCE (chronological order ↓)
+1. Actor → Component: action
+2. Component → OtherComp: call()
+3. OtherComp → Component: return
+4. Component → Actor: response
 ```
-Completa (solo si la piden) — cada participante con su lifeline vertical (`│`), el tiempo hacia ABAJO; llamadas flecha sólida (`──▶`), retornos punteada (`◀ ─ ─`):
+Full (only if asked) — each participant with its vertical lifeline (`│`), time going DOWN; calls solid arrow (`──▶`), returns dashed (`◀ ─ ─`):
 ```
-Actor      Componente      OtroComp
+Actor      Component       OtherComp
   │             │              │
-  │  acción     │              │
+  │  action     │              │
   │────────────▶│              │
-  │             │  llamada()   │
+  │             │  call()      │
   │             │─────────────▶│
-  │             │◀ ─ retorno ─ │
-  │◀─ respuesta │              │
+  │             │◀ ─ return ─ ─│
+  │◀─ response ─│              │
   ▼             ▼              ▼
 ```
-Diagrama de FLUJO (las decisiones y ramas — acá viven los casos borde):
+FLOW diagram (the decisions and branches — this is where the edge cases live):
 ```
- entrada
+ input
     │
     ▼
- ¿condición? ──no──▶ rama A
-    │ sí
+ condition? ──no──▶ branch A
+    │ yes
     ▼
- acción ──▶ resultado
+ action ──▶ result
 ```
 
-## Restricciones
-- Qué NO tocar (auth, modelo de datos, contratos de API).
-- Sin dependencias nuevas salvo que sea necesario y justificado.
+## Constraints
+- What NOT to touch (auth, data model, API contracts).
+- No new dependencies unless necessary and justified.
 
-## Fuera de alcance
-- Lo que NO va en esta feature.
+## Out of scope
+- What does NOT go in this feature.
 
-## Tareas
-### T1: <título corto>
-- **Hacer:** <cambio específico>
-- **Archivos:** <rutas que tocará>
-- **Verify:** <comando o check manual específico>
+## Tasks
+### T1: <short title>
+- **Do:** <specific change>
+- **Files:** <paths it will touch>
+- **Verify:** <specific command or manual check>
 
 ### T2: ...
 
-## Done (validación final)
-- [ ] <comando build/test pasa>
-- [ ] Manual: <qué revisar end-to-end>
+## Done (final validation)
+- [ ] <build/test command passes>
+- [ ] Manual: <what to check end-to-end>
 ```
 
-Reglas al escribirla:
-- **Flujo primero, confirmación obligatoria:** los dos diagramas se generan ANTES de las tareas y el usuario los aprueba. El diagrama de flujo debe mostrar cada decisión y caso borde (qué pasa si no hay datos, límites de tiempo, doble ejecución). Si el usuario corrige el flujo, ajusta los diagramas y vuelve a confirmar antes de seguir.
-- **Tareas pequeñas:** cada una en una sesión, < ~3 archivos, segura de commitear sola. Si una tarea puede chocar con el límite de contexto, pártela.
-- **Verify de verdad:** prefiere un comando sobre revisión manual; el manual debe ser específico ("clic en X, se ve Y"), no "verificar que funciona".
+Rules when writing it:
+- **Flow first, confirmation required:** the two diagrams are generated BEFORE the tasks and the user approves them. The flow diagram must show every decision and edge case (what happens when there's no data, time limits, double execution). If the user corrects the flow, adjust the diagrams and confirm again before continuing.
+- **Small tasks:** each one fits in a single session, < ~3 files, safe to commit on its own. If a task might hit the context limit, split it.
+- **Real Verify:** prefer a command over a manual review; the manual one must be specific ("click X, you see Y"), not "verify it works".
 
-Al terminar, hazte el test de completitud: *¿un agente nuevo, sin más contexto que esta spec, podría implementar T1?* Si no, falta detalle.
+When you're done, run the completeness test on yourself: *could a fresh agent, with no context beyond this spec, implement T1?* If not, detail is missing.
