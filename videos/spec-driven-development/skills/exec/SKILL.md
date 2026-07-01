@@ -1,27 +1,27 @@
 ---
 name: exec
-description: Implements ONE single task from an existing spec, without touching anything else. Use it when a spec file exists in the specs folder and the user asks to run or implement a concrete task (for example T1 or T2).
+description: Implementa UNA sola tarea de una spec existente, sin tocar nada más. Úsala cuando exista un archivo de spec en la carpeta specs y el usuario pida ejecutar o implementar una tarea concreta (por ejemplo la T1 o la T2).
 ---
 
-# Exec: run a single task
+# Exec: ejecuta una sola tarea
 
-Implement ONE task from the spec the user points at (e.g. `specs/<slug>.md` task `T1`). Not one line more.
+Implementa UNA tarea de la spec que indique el usuario (ej. `specs/<slug>.md` tarea `T1`). Ni una línea más.
 
-1. Read the full spec.
-2. Read Context, Goal, Constraints and Out of scope to get the framing.
-3. Implement **exactly** what that task describes.
+1. Lee la spec completa.
+2. Lee Contexto, Objetivo, Restricciones y Fuera de alcance para tener el marco.
+3. Implementa **exactamente** lo que describe esa tarea.
 
-Hard rules:
-- **Only that task** — ignore the others in the spec.
-- **Only the files** listed in the task.
-- **No drive-by refactors** or improvements that weren't asked for.
-- Follow the constraints to the letter. **Do not add dependencies** unless the spec says so explicitly.
-- Write tests if the task asks for them.
+Reglas duras:
+- **Solo esa tarea** — ignora las demás de la spec.
+- **Solo los archivos** listados en la tarea.
+- **Nada de refactors de paso** ni mejoras que no se pidieron.
+- Respeta las restricciones al pie de la letra. **No agregues dependencias** salvo que la spec lo diga explícitamente.
+- Escribe tests si la tarea lo pide.
 
-When you're done, report:
-- Files created or modified.
-- What you did and why.
-- The result of the **Verify** step (or suggest running the `prove` skill for the real evidence).
-- Risks or doubts before continuing.
+Al terminar, reporta:
+- Archivos creados o modificados.
+- Qué hiciste y por qué.
+- El resultado del paso **Verify** (o sugiere correr la skill `prove` para la evidencia real).
+- Riesgos o dudas antes de continuar.
 
-**Do not move on to the next task.** For the next one, start in a fresh session (clean context).
+**No avances a la siguiente tarea.** Para la siguiente, empieza en una sesión fresca (contexto limpio).

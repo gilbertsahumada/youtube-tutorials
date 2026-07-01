@@ -1,20 +1,20 @@
 ---
 name: prove
-description: Verifies that a task is actually done by running its Verify step and showing the real output, no self-reporting. Use it after implementing a task, when you want to confirm it truly works and not just that the agent claims so.
+description: Verifica que una tarea quedó realmente lista corriendo su paso Verify y mostrando la salida real, sin autoreporte. Úsala después de implementar una tarea, cuando se quiera comprobar que funciona de verdad y no solo que el agente lo afirme.
 ---
 
-# Prove: verify for real (no self-reporting)
+# Prove: verifica de verdad (sin autoreporte)
 
-Prove the task is done by running its `Verify` and showing the **real evidence**. This is the piece that keeps the agent from fooling itself. Ideally it runs in a different context/session than the one that implemented it.
+Demuestra que la tarea quedó lista corriendo su `Verify` y mostrando la **evidencia real**. Esta es la pieza que evita que el agente se autoengañe. Idealmente se corre en un contexto/sesión distinta del que implementó.
 
-Take the **Verify** step of the given task and run it:
+Toma el paso **Verify** de la tarea indicada y ejecútalo:
 
-- **If it's a command:** run it and **paste the COMPLETE, real output** (not a summary, not "all passed"). If it fails, show the error as-is.
-- **If it's a manual check:** do the exact steps and report what you observed ("I did X, I saw Y"), including the failing path when it matters.
+- **Si es un comando:** córrelo y **pega la salida COMPLETA y real** (no un resumen, no "pasó todo"). Si falla, muestra el error tal cual.
+- **Si es un check manual:** haz los pasos exactos y reporta lo observado ("hice X, vi Y"), incluyendo el camino que falla cuando importe.
 
-Hard rules:
-- **Do NOT declare success without pasted evidence.**
-- **Do NOT invent** command output or results. If you couldn't run it, say so and explain why.
-- One task, one piece of evidence: if there's no evidence, the task is **not done**.
+Reglas duras:
+- **NO declares éxito sin evidencia pegada.**
+- **NO inventes** salida de comandos ni resultados. Si no pudiste correrlo, dilo y explica por qué.
+- Una tarea, una evidencia: si no hay evidencia, la tarea **no está lista**.
 
-Final verdict: **PASS / FAIL**, with the evidence that backs it.
+Veredicto final: **PASA / NO PASA**, con la evidencia que lo respalda.

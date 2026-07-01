@@ -1,27 +1,27 @@
 ---
 name: ship
-description: Writes the commit message for the staged changes, in conventional commits format and explaining the why. Use it when you want to commit or generate the commit message.
+description: Escribe el mensaje de commit de los cambios en staging, en formato conventional commits y explicando el porqué. Úsala cuando se quiera commitear o generar el mensaje de commit.
 ---
 
-# Ship: commit message
+# Ship: mensaje de commit
 
-Write the commit message for the staged changes. Explain the **why**, not just the what.
+Escribe el mensaje de commit de los cambios en staging. Explica el **porqué**, no solo el qué.
 
-1. Run `git diff --staged` to see the changes.
-2. Write a message in conventional commits format:
+1. Corre `git diff --staged` para ver los cambios.
+2. Escribe un mensaje en formato conventional commits:
 
 ```
-<type>(<scope>): <subject>
+<tipo>(<scope>): <asunto>
 
-<body: why this change was needed, not just what changed>
+<cuerpo: por qué era necesario este cambio, no solo qué cambió>
 
 Refs: T<n> / #<issue>
 ```
 
-Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
+Tipos: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
 
-Rules:
-- Subject in the imperative, max ~50 characters.
-- The body explains **why** (future-you digging through `git blame` at 2am will thank you).
-- Reference the spec task (`T1`) or the issue.
-- If you can't sum it up in one line, the change is probably too big.
+Reglas:
+- Asunto en imperativo, máx ~50 caracteres.
+- El cuerpo explica **por qué** (el tú del futuro buscando en `git blame` a las 2am te lo agradece).
+- Referencia la tarea de la spec (`T1`) o el issue.
+- Si no puedes resumirlo en una línea, el cambio probablemente es muy grande.
