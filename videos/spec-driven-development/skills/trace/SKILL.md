@@ -1,51 +1,51 @@
 ---
 name: trace
-description: Dibuja en ASCII el diagrama de secuencia y el diagrama de flujo de una parte del código que ya existe, para entender cómo funciona antes de modificarla. Úsala cuando el usuario quiera entender un flujo, función o feature existente, o antes de hacer scope sobre código heredado.
+description: Draws, in ASCII, the sequence diagram and the flow diagram of a piece of existing code, to understand how it works before modifying it. Use it when the user wants to understand an existing flow, function or feature, or before scoping over legacy code.
 ---
 
-# Trace: código existente → diagramas
+# Trace: existing code → diagrams
 
-Lees el código que el usuario señala (una función, un endpoint, un feature) y reconstruyes su comportamiento real en dos diagramas ASCII. **No inventas:** lo que dibujas tiene que estar en el código. Si algo no se ve en el código (una rama que nunca se ejecuta, un caso que no se maneja), lo dices en vez de adivinarlo.
+You read the code the user points at (a function, an endpoint, a feature) and reconstruct its real behavior in two ASCII diagrams. **Don't make things up:** what you draw has to be in the code. If something isn't visible in the code (a branch that never runs, a case that isn't handled), say so instead of guessing.
 
-Pasos:
+Steps:
 
-1. **Encuentra el punto de entrada.** Dónde empieza el flujo (el handler, la ruta, la función pública). Si el usuario no lo dio, pregúntale o búscalo.
-2. **Sigue las llamadas reales.** Qué le llama a qué, en qué orden, qué datos pasan. Anota los archivos y funciones de verdad (no genéricos).
-3. **Dibuja dos diagramas:**
+1. **Find the entry point.** Where the flow starts (the handler, the route, the public function). If the user didn't give it, ask or look for it.
+2. **Follow the real calls.** What calls what, in what order, what data is passed. Note the actual files and functions (not generic ones).
+3. **Draw two diagrams:**
 
-SECUENCIA. Por defecto la versión **comprimida** (lista ordenada); la **completa** con lifelines solo si el usuario la pide.
+SEQUENCE. By default the **compact** version (an ordered list); the **full** one with lifelines only if the user asks for it.
 
-Comprimida (default):
+Compact (default):
 ```
-SECUENCIA (orden temporal ↓)
-1. Entrada → ComponenteA: llamada()
-2. ComponenteA → ComponenteB: otra()
-3. ComponenteB → ComponenteA: dato
-4. ComponenteA → Entrada: respuesta
+SEQUENCE (chronological order ↓)
+1. Entry → ComponentA: call()
+2. ComponentA → ComponentB: other()
+3. ComponentB → ComponentA: data
+4. ComponentA → Entry: response
 ```
-Completa (solo si la piden) — un lifeline vertical (`│`) por participante real, tiempo hacia ABAJO; llamadas flecha sólida (`──▶`), retornos punteada (`◀ ─ ─`):
+Full (only if asked) — one vertical lifeline (`│`) per real participant, time going DOWN; calls solid arrow (`──▶`), returns dashed (`◀ ─ ─`):
 ```
-Entrada     ComponenteA    ComponenteB
+Entry       ComponentA     ComponentB
   │              │              │
-  │  llamada()   │              │
+  │  call()      │              │
   │─────────────▶│              │
-  │              │  otra()      │
+  │              │  other()     │
   │              │─────────────▶│
-  │              │◀ ─ dato ─ ─  │
-  │◀─ respuesta ─│              │
+  │              │◀ ─ data ─ ─  │
+  │◀─ response ─ │              │
   ▼              ▼              ▼
 ```
-FLUJO (las decisiones y ramas reales del código):
+FLOW (the real decisions and branches in the code):
 ```
- entrada
+ input
     │
     ▼
- ¿condición real? ──no──▶ rama que toma
-    │ sí
+ real condition? ──no──▶ branch it takes
+    │ yes
     ▼
- acción ──▶ resultado
+ action ──▶ result
 ```
 
-4. **Marca lo que falta o huele mal.** Casos que el código NO maneja, ramas muertas, decisiones implícitas. Esto es lo más valioso: lo que el diagrama revela que el código olvidó.
+4. **Flag what's missing or smells off.** Cases the code does NOT handle, dead branches, implicit decisions. This is the most valuable part: what the diagram reveals the code forgot.
 
-Cierra preguntando si el flujo dibujado es el que el usuario esperaba. Si no coincide, ya tienes el insumo para un `scope` de la corrección.
+Close by asking whether the flow you drew is the one the user expected. If it doesn't match, you already have the input for a `scope` of the fix.
