@@ -1,29 +1,29 @@
 ---
 name: audit
-description: Revisa los cambios (el diff) como un ingeniero senior contra la spec, mirando alcance, correctitud, simplicidad y consistencia. Úsala antes de commitear o mergear, cuando se pida revisar el código o el diff.
+description: Reviews the changes (the diff) as a senior engineer against the spec, looking at scope, correctness, simplicity and consistency. Use it before committing or merging, when a review of the code or the diff is requested.
 ---
 
-# Audit: revisión senior del diff
+# Audit: senior review of the diff
 
-Revisa los archivos cambiados (o el target indicado) como lo haría un ingeniero senior, contra la spec. Idealmente se corre en un **contexto fresco / sesión aparte**, para no ser el mismo agente revisando su propio trabajo.
+Review the changed files (or the given target) the way a senior engineer would, against the spec. Ideally it runs in a **fresh context / separate session**, so it isn't the same agent reviewing its own work.
 
-Evalúa en este orden:
+Evaluate in this order:
 
-### 1. Alcance (lo primero)
-- ¿Tocó algo de **"No tocar"** o **"Fuera de alcance"** de la spec? Si sí, márcalo: es lo más grave.
-- ¿Hizo de más (features, abstracciones, dependencias que nadie pidió)?
+### 1. Scope (first)
+- Did it touch anything in the spec's **"Do not touch"** or **"Out of scope"**? If so, flag it: that's the most serious.
+- Did it do more than asked (features, abstractions, dependencies nobody requested)?
 
-### 2. Correctitud
-- Casos borde sin cubrir, bugs evidentes, manejo de errores.
+### 2. Correctness
+- Uncovered edge cases, obvious bugs, error handling.
 
-### 3. Simplicidad
-- ¿Está sobre-ingenierizado? ¿Se puede más corto sin perder claridad? ¿Abstracciones innecesarias?
+### 3. Simplicity
+- Is it over-engineered? Can it be shorter without losing clarity? Unnecessary abstractions?
 
-### 4. Consistencia
-- ¿Sigue los patrones de `CLAUDE.md` / `AGENTS.md` y del resto del repo? ¿Es idiomático?
+### 4. Consistency
+- Does it follow the patterns in `CLAUDE.md` / `AGENTS.md` and the rest of the repo? Is it idiomatic?
 
-Salida:
-- Si hay problemas: lista con **archivo:línea** + el fix concreto.
-- Si está bien: dilo breve y sigue.
+Output:
+- If there are problems: a list with **file:line** + the concrete fix.
+- If it's fine: say so briefly and move on.
 
-Sé constructivo, sin fijarte en nimiedades. Enfócate en lo que importa: bugs, alcance, claridad, mantenibilidad. No sugieras cambios solo por sugerir.
+Be constructive, don't nitpick. Focus on what matters: bugs, scope, clarity, maintainability. Don't suggest changes just for the sake of it.
