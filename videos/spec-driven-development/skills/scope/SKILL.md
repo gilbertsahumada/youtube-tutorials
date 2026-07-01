@@ -7,10 +7,10 @@ description: Convierte una idea o feature vaga en una spec ejecutable con las 5 
 
 Convierte la idea del usuario en una spec y guárdala en `specs/<slug>.md`. Lee primero `CLAUDE.md` / `AGENTS.md` si existen (de ahí salen las convenciones y restricciones globales). Pregunta solo si estás bloqueado. **No escribas código todavía.**
 
-Trabajas en **dos beats**:
+Trabajas en **dos pasos**:
 
-1. **Dibuja el flujo y confirma.** Antes de partir nada en tareas, genera la sección `## Flujo` con DOS diagramas ASCII (secuencia + flujo) y **detente**: muéstraselos al usuario y pídele que confirme que ese es el comportamiento que quiere. Acá es donde se aprueban las decisiones que el agente, si no, inventaría (ventanas de tiempo, casos borde, qué pasa si no hay datos). No sigas hasta el "sí".
-2. **Recién entonces, parte en tareas.** Con el flujo aprobado, completa el resto de la spec (Restricciones, Fuera de alcance, Tareas con su Verify, Done).
+1. **Dibuja el flujo y confirma.** Antes de dividir nada en tareas, genera la sección `## Flujo` con DOS diagramas ASCII (secuencia + flujo) y **detente**: muéstraselos al usuario y pídele que confirme que ese es el comportamiento que quiere. Aquí es donde se aprueban las decisiones que el agente, si no, inventaría (ventanas de tiempo, casos borde, qué pasa si no hay datos). No sigas hasta el "sí".
+2. **Solo entonces, divídelo en tareas.** Con el flujo aprobado, completa el resto de la spec (Restricciones, Fuera de alcance, Tareas con su Verify, Done).
 
 La spec debe tener exactamente estas secciones:
 
@@ -81,7 +81,7 @@ Diagrama de FLUJO (las decisiones y ramas — acá viven los casos borde):
 
 Reglas al escribirla:
 - **Flujo primero, confirmación obligatoria:** los dos diagramas se generan ANTES de las tareas y el usuario los aprueba. El diagrama de flujo debe mostrar cada decisión y caso borde (qué pasa si no hay datos, límites de tiempo, doble ejecución). Si el usuario corrige el flujo, ajusta los diagramas y vuelve a confirmar antes de seguir.
-- **Tareas chicas:** cada una en una sesión, < ~3 archivos, segura de commitear sola. Si una tarea puede chocar con el límite de contexto, pártela.
+- **Tareas pequeñas:** cada una en una sesión, < ~3 archivos, segura de commitear sola. Si una tarea puede chocar con el límite de contexto, pártela.
 - **Verify de verdad:** prefiere un comando sobre revisión manual; el manual debe ser específico ("clic en X, se ve Y"), no "verificar que funciona".
 
 Al terminar, hazte el test de completitud: *¿un agente nuevo, sin más contexto que esta spec, podría implementar T1?* Si no, falta detalle.
