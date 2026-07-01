@@ -59,7 +59,7 @@ La spec lleva *algo* de por qué y cómo (lo justo para que el agente decida bie
   contexto fresco cada sesión · una tarea, una evidencia
 ```
 
-Los 5 pasos, cada uno es un skill (carpeta [`skills/`](skills)):
+Los 5 pasos, cada uno es un skill. Están en **dos idiomas**: español en [`skills/`](skills) e inglés en [`skills-en/`](skills-en). Los dos árboles son idénticos salvo el idioma; usa el que prefieras.
 
 | Skill | Hace |
 |---|---|
@@ -159,13 +159,13 @@ El proceso tiene la misma forma. Lo que **se rompe distinto** cuando el ejecutor
 
 ## Quick start
 
-1. Copia los skills de [`skills/`](skills) a tu herramienta (ver abajo).
+1. Copia los skills a tu herramienta (ver abajo) — en español desde [`skills/`](skills) o en inglés desde [`skills-en/`](skills-en).
 2. `/scope agregar cancelar reserva por WhatsApp`
 3. Revisa la spec generada. Que las decisiones sean tuyas.
 4. `/exec specs/cancelar-reserva-whatsapp.md T1` → `/prove ... T1` → `/audit` → `/ship`.
 5. Sesión fresca para T2. Repite.
 
-> **Instalar los skills:** copia cada carpeta de `skills/` a `.claude/skills/<nombre>/` en tu proyecto (o a `~/.claude/skills/<nombre>/` para tenerlas globales). Claude Code las invoca solas según su `description`. Si prefieres invocarlas tú con `/nombre`, el mismo contenido sirve como command en `.claude/commands/<nombre>.md`.
+> **Instalar los skills:** copia cada carpeta de `skills/` (español) o `skills-en/` (inglés) a `.claude/skills/<nombre>/` en tu proyecto (o a `~/.claude/skills/<nombre>/` para tenerlas globales). Claude Code las invoca solas según su `description`. Si prefieres invocarlas tú con `/nombre`, el mismo contenido sirve como command en `.claude/commands/<nombre>.md`.
 
 ---
 
