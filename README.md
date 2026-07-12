@@ -11,6 +11,7 @@ videos/
   arquitectura-minima-3-capas/   → el modelo de 3 capas + prompts de refactor
   codex-de-0-a-pro/              → setup, permisos, AGENTS.md y prompts
   spec-driven-development/       → las 5 preguntas + skills scope/exec/prove/audit/ship
+  creando-skills/                → anatomía de un SKILL.md, las 4 preguntas y cómo probarlo
 ```
 
 ## Videos
@@ -20,6 +21,7 @@ videos/
 | La mejor arquitectura para vibecoding: 3 capas | [`videos/arquitectura-minima-3-capas`](videos/arquitectura-minima-3-capas) | El modelo de 3 capas y los prompts para ordenar una app vibecodeada |
 | Cómo uso OpenAI Codex de 0 a Pro | [`videos/codex-de-0-a-pro`](videos/codex-de-0-a-pro) | `config.toml`, permisos, `AGENTS.md` y los 4 prompts del workflow |
 | Spec-Driven Development sin ceremonia | [`videos/spec-driven-development`](videos/spec-driven-development) | Las 5 preguntas, la plantilla y los skills `scope · exec · prove · audit · ship` |
+| Cómo crear un Skill (que sí se dispara) | [`videos/creando-skills`](videos/creando-skills) | La anatomía de un `SKILL.md`, las 4 preguntas antes de escribirlo, la plantilla y cómo probarlo |
 
 > Los links a cada video de YouTube se agregan acá a medida que se publican.
 
