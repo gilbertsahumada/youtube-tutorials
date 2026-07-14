@@ -11,5 +11,5 @@ export function toCsv(reservas) {
       .join(","),
   );
 
-  return `\uFEFF${[HEADERS.join(","), ...rows].join("\n")}`;
+  return [HEADERS.join(","), ...rows].join("\n");
 }
