@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { toCsv } from "../src/csv.js";
 
-test("genera una fila normal con BOM", () => {
+test("genera una fila normal", () => {
   const csv = toCsv([
     {
       fecha: "2026-07-14",
@@ -14,7 +14,7 @@ test("genera una fila normal con BOM", () => {
 
   assert.equal(
     csv,
-    "\uFEFFFecha,Cliente,Servicio\n2026-07-14,Ana Pérez,Corte",
+    "Fecha,Cliente,Servicio\n2026-07-14,Ana Pérez,Corte",
   );
 });
 
@@ -29,10 +29,10 @@ test("escapa comas y comillas", () => {
 
   assert.equal(
     csv,
-    '\uFEFFFecha,Cliente,Servicio\n2026-07-14,"Ana, ""La Jefa""","Corte, color"',
+    'Fecha,Cliente,Servicio\n2026-07-14,"Ana, ""La Jefa""","Corte, color"',
   );
 });
 
 test("una lista vacía conserva el encabezado", () => {
-  assert.equal(toCsv([]), "\uFEFFFecha,Cliente,Servicio");
+  assert.equal(toCsv([]), "Fecha,Cliente,Servicio");
 });

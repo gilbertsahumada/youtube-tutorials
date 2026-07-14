@@ -63,11 +63,11 @@ Las cuatro preguntas son el método. `SKILL.md` es donde aterrizan las respuesta
 
 ## Ejemplo real: `prove`
 
-El ejemplo de este tutorial es [`prove`](skill/prove/SKILL.md). Es el único skill que se crea y utiliza en la demo.
+El ejemplo de este tutorial es [`prove`](demo/.claude/skills/prove/SKILL.md). Es el único skill que se crea y utiliza en la demo.
 
 La carpeta [`demo/`](demo) contiene el repo mínimo usado en pantalla: una spec, una implementación CSV, tres tests y comandos para recuperar los estados inicial y final de la grabación.
 
-La demo define un contrato explícito entre la spec y el skill:
+La spec dice cómo comprobar cada tarea mediante una línea `Verify`:
 
 ```md
 ### T1: Nombre de la tarea
@@ -75,30 +75,30 @@ La demo define un contrato explícito entre la spec y el skill:
 ```
 
 - El prompt entrega la ruta de la spec y el ID de la tarea.
-- La tarea contiene exactamente un campo literal `Verify`.
-- Un valor en código inline representa un comando ejecutable.
-- Si el campo falta, se repite o es ambiguo, `prove` no inventa una verificación.
+- `prove` busca la tarea, lee `Verify` y ejecuta lo que dice.
+- Si la tarea no tiene `Verify`, el skill dice que no pudo verificarla en vez de inventar uno.
 
-`Verify` no es una palabra reservada de Claude Code o Codex. Es una convención documentada por esta spec y consumida por este skill.
+`Verify` no es una función especial de Claude Code o Codex. Es solamente la línea de la spec donde dejamos escrito cómo comprobar esa tarea.
 
-El trabajo de `prove` es acotado:
+El trabajo de `prove` es acotado, pero no se limita a ejecutar un comando:
 
-1. Leer la tarea implementada.
-2. Encontrar su paso `Verify`.
-3. Ejecutar el comando o check definido.
-4. Mostrar la salida real.
-5. Devolver `PASA` o `NO PASA` sin inventar evidencia.
+1. Leer la tarea, sus archivos y los criterios de `Done`.
+2. Revisar el diff y comprobar que el cambio respeta el alcance.
+3. Comprobar que los tests no fueron debilitados.
+4. Ejecutar el comando indicado en `Verify`.
+5. Contrastar la evidencia con los criterios de `Done`.
+6. Devolver `PASA` o `NO PASA` sin modificar el proyecto.
 
 Su `description` define el alcance:
 
 ```yaml
 ---
 name: prove
-description: Verifica que una tarea quedó realmente lista corriendo su paso Verify y mostrando la salida real, sin autoreporte. Úsala después de implementar una tarea, cuando se quiera comprobar que funciona de verdad y no solo que el agente lo afirme.
+description: Comprueba si una tarea de una spec está realmente terminada revisando su alcance, ejecutando su Verify y contrastando la evidencia con los criterios de Done. Úsala después de implementar una tarea y antes de declararla lista o hacer commit.
 ---
 ```
 
-El cuerpo define cómo ejecutar la verificación, qué hacer si falla y qué formato debe tener el resultado.
+El cuerpo define cómo revisar el alcance y el diff, proteger los tests, ejecutar la verificación y contrastar la evidencia con `Done`.
 
 ## Plantilla mínima
 
