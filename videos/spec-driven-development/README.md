@@ -159,13 +159,22 @@ El proceso tiene la misma forma. Lo que **se rompe distinto** cuando el ejecutor
 
 ## Quick start
 
-1. Copia los skills a tu herramienta (ver abajo) — en español desde [`skills/`](skills) o en inglés desde [`skills-en/`](skills-en).
-2. `/scope agregar cancelar reserva por WhatsApp`
+1. Copia los skills a tu herramienta (ver abajo), en español desde [`skills/`](skills) o en inglés desde [`skills-en/`](skills-en).
+2. Invoca `scope` explícitamente para crear la spec: Claude Code usa `/scope`; Codex usa `$scope` o el selector `/skills`.
 3. Revisa la spec generada. Que las decisiones sean tuyas.
-4. `/exec specs/cancelar-reserva-whatsapp.md T1` → `/prove ... T1` → `/audit` → `/ship`.
+4. Ejecuta el pipeline de forma explícita: `exec` → `prove` → `audit` → `ship`.
 5. Sesión fresca para T2. Repite.
 
-> **Instalar los skills:** copia cada carpeta de `skills/` (español) o `skills-en/` (inglés) a `.claude/skills/<nombre>/` en tu proyecto (o a `~/.claude/skills/<nombre>/` para tenerlas globales). Claude Code las invoca solas según su `description`. Si prefieres invocarlas tú con `/nombre`, el mismo contenido sirve como command en `.claude/commands/<nombre>.md`.
+### Instalación
+
+| Herramienta | Proyecto | Global | Invocación explícita |
+|---|---|---|---|
+| Claude Code | `.claude/skills/<nombre>/` | `~/.claude/skills/<nombre>/` | `/nombre` |
+| Codex | `.agents/skills/<nombre>/` | `~/.agents/skills/<nombre>/` | `$nombre` o `/skills` |
+
+Copia cada carpeta de `skills/` o `skills-en/` dentro de la ruta correspondiente. También puedes mantener una fuente canónica y enlazarla con symlinks a ambas herramientas.
+
+Claude Code y Codex pueden descubrir un skill implícitamente cuando la solicitud coincide con su `description`, pero esa selección es probabilística. Como el orden de este pipeline importa, usa invocación explícita o un skill orquestador que defina `scope → exec → prove → audit → ship`.
 
 ---
 

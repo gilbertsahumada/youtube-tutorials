@@ -1,172 +1,207 @@
-# Cómo crear un Skill (que sí se activa)
+# Cómo crear un Skill útil para Claude Code y Codex
 
-> Un skill no es un prompt guardado. Es un **proceso empaquetado** para que un agente ejecute una tarea igual de bien todas las veces, sin que se lo expliques de nuevo.
+> Un skill convierte un proceso que repites en un workflow reutilizable, con instrucciones, criterios y recursos que un agente puede ejecutar y verificar.
 
 ---
 
 ## El problema
 
-Instalaste veinte skills y ninguno cambió nada: el agente ni los usa. O el otro lado de la misma moneda: repites los mismos prompts todos los días ("documenta esto", "revisa este código", "hazme un resumen") y cada vez obtienes un resultado distinto, porque cada vez lo escribes ligeramente diferente, omites detalles, o el agente interpreta otra cosa.
+Cada vez que terminas una feature vuelves a pedir lo mismo: revisa el cambio, corre las pruebas y demuestra que funciona. A veces el agente ejecuta todo; otras veces responde que el cambio "se ve bien" sin mostrar evidencia.
 
-Prompt único, calidad de prompt único. A veces excelente, a veces mediocre.
+El problema no es que falte otro prompt. Falta capturar el proceso y definir cómo se ve un resultado aceptable.
 
-## Qué es (y qué no)
+## Qué es un skill
 
-Un skill es una carpeta con un archivo `SKILL.md` adentro. Eso es todo: sin plugins, sin frameworks, sin configuración rara. Pero la diferencia con un prompt guardado es de fondo:
+Un skill no es **solamente** un prompt guardado. Es un paquete reutilizable que puede contener:
 
-| | Prompt guardado | Skill |
-|---|---|---|
-| Dice | "así se **empieza**" | "así se hace este trabajo **de principio a fin**" |
-| Define | un punto de partida | el proceso, el buen resultado, el malo, y qué hacer cuando algo sale mal |
-| Es como | un practicante al que le explicas todo cada vez | un profesional entrenado en lo que hace |
+- `SKILL.md`: metadatos e instrucciones del workflow.
+- `scripts/`: operaciones deterministas o repetitivas.
+- `references/`: documentación que el agente consulta cuando la necesita.
+- `assets/`: templates, ejemplos y otros recursos de salida.
 
-Regla práctica: **si te ves haciendo lo mismo tres veces, eso es un skill.**
+En su forma mínima, un skill es una carpeta con un `SKILL.md`:
 
-## La anatomía
-
-Un `SKILL.md` tiene tres partes, y solo una decide si se activa:
-
-```
-┌─ SKILL.md ────────────────────────────────────────────┐
-│ ---                                                    │
-│ name: <kebab-case>          ← el identificador         │
-│ description: <qué + cuándo> ← EL DISPARADOR (~100 tok, │
-│ ---                            siempre cargado)        │
-│                                                        │
-│ # Instrucciones              ← el proceso (< 5000 tok, │
-│ pasos, reglas, ejemplos         se carga SOLO cuando   │
-│ de output, edge cases           el skill se activa)    │
-│                                                        │
-│ scripts/ references/ assets/ ← recursos opcionales,    │
-│                                 se cargan si se usan   │
-└────────────────────────────────────────────────────────┘
+```text
+prove/
+└── SKILL.md
 ```
 
-El agente **no lee el cuerpo para decidir si usa el skill**. Y no es capricho: es economía de contexto. Lo único que vive siempre en el contexto es el `name` y la `description` (~100 tokens); el cuerpo se carga recién cuando el skill se activa. Por eso puedes tener muchos skills instalados sin quemar contexto — y por eso una description vaga es un skill muerto: existe, pero nunca se activa.
+Regla práctica: **si repites un proceso y puedes reconocer objetivamente un buen resultado, es candidato a skill.**
 
-## La regla que lo resume todo
+## Anatomía y progressive disclosure
 
-**La description es el disparador.** Tiene que decir tres cosas:
+```text
+prove/
+├── SKILL.md
+│   ├── name          identificador
+│   ├── description   qué hace y cuándo es relevante
+│   └── cuerpo        workflow, límites y formato de salida
+├── scripts/          opcional
+├── references/       opcional
+└── assets/           opcional
+```
 
-1. **QUÉ** hace (específico, no "ayuda con el código").
-2. **CUÁNDO** usarlo (las frases que tú realmente escribirías para pedirlo).
-3. **Cuándo NO** usarlo (para que no se active donde no toca).
+Claude Code y Codex conocen inicialmente el nombre y la `description` de los skills disponibles. Cuando seleccionan uno, cargan el cuerpo de `SKILL.md` y consultan sus recursos según sea necesario. Este patrón se llama **progressive disclosure**.
 
-Test rápido: si tu description dice "ayuda con documentación", está mal. Si dice "crea documentación técnica en Markdown; úsala cuando pidan documentar un archivo, módulo o generar un README; NO usarla para posts de marketing", esa sí se activa.
+La distinción importante es:
 
-> ⚠️ Detalle traicionero: en el YAML, si la description contiene dos puntos seguidos de espacio (`: `) o comillas sin escapar, **rompe el frontmatter completo y el skill ni siquiera carga**. Reescribe con comas o paréntesis.
+- La `description` ayuda al agente a **descubrir** cuándo un skill es relevante.
+- El cuerpo, los ejemplos y los recursos determinan la **calidad de la ejecución**.
 
-## Las 4 preguntas (antes de escribir una línea)
+Un skill puede ser descubierto correctamente y producir un mal resultado. También puede estar bien escrito y no ser seleccionado implícitamente en una ejecución concreta. Son problemas distintos y se prueban por separado.
 
-1. **¿Qué hace exactamente?** Si no puedes describir el trabajo, el agente tampoco puede hacerlo.
-2. **¿Cuándo se gatilla?** Escribe las frases REALES que tú dirías para pedirlo. Esas frases van directo a la description.
-3. **¿Cómo se ve un buen output?** Un ejemplo concreto del resultado esperado. Un ejemplo real vale más que cincuenta líneas de instrucciones vagas.
-4. **¿Cómo lo pruebo?** Con qué input debería funcionar, con cuál podría fallar, y con cuál NO debería activarse.
+## Las 4 preguntas
 
-Las 4 preguntas SON el método. El archivo es solo donde aterrizan.
+Antes de escribir una línea, responde:
 
-## La plantilla
+1. **¿Qué hace exactamente?** Define un trabajo concreto, no "ayuda con el código".
+2. **¿Cuándo aplica?** Anota las situaciones y frases reales con las que pedirías ese trabajo.
+3. **¿Cómo se ve un buen output?** Define evidencia, formato y criterios observables.
+4. **¿Cómo lo pruebo?** Incluye un caso normal, uno que falla y uno fuera de alcance.
+
+Las cuatro preguntas son el método. `SKILL.md` es donde aterrizan las respuestas.
+
+## Ejemplo real: `prove`
+
+El ejemplo de este tutorial es [`prove`](../spec-driven-development/skills/prove/SKILL.md), una etapa del workflow de Spec-Driven Development.
+
+La carpeta [`demo/`](demo) contiene el repo mínimo usado en pantalla: una spec, una implementación CSV, tres tests y comandos para recuperar los estados inicial y final de la grabación.
+
+Su trabajo es acotado:
+
+1. Leer la tarea implementada.
+2. Encontrar su paso `Verify`.
+3. Ejecutar el comando o check definido.
+4. Mostrar la salida real.
+5. Devolver `PASA` o `NO PASA` sin inventar evidencia.
+
+Su `description` define el alcance:
+
+```yaml
+---
+name: prove
+description: Verifica que una tarea quedó realmente lista corriendo su paso Verify y mostrando la salida real, sin autoreporte. Úsala después de implementar una tarea, cuando se quiera comprobar que funciona de verdad y no solo que el agente lo afirme.
+---
+```
+
+El cuerpo define cómo ejecutar la verificación, qué hacer si falla y qué formato debe tener el resultado.
+
+## Plantilla mínima
 
 ```md
 ---
 name: <nombre-en-kebab-case>
-description: <Qué hace, en una frase específica>. Úsala cuando <frases gatillo reales, ej. "documenta este archivo", "genera un README">. NO usarla para <casos fuera de alcance>.
+description: <Qué hace>. Usar cuando <situaciones y solicitudes concretas>. No usar para <casos fuera de alcance>.
 ---
 
 # <Nombre del skill>
 
 ## Objetivo
-Qué produce este skill, en una frase.
+Qué produce, en una frase verificable.
 
 ## Workflow
-1. <Paso observable: qué revisar>
-2. <Paso: qué decidir y con qué criterio>
-3. <Paso: cómo entregar el resultado>
+1. <Paso observable>
+2. <Decisión y criterio>
+3. <Resultado y evidencia>
 
 ## Reglas
-- No inventar lo que no se pueda inferir; si algo es incierto, decirlo explícitamente.
-- <Regla que evita tu error más frecuente>
+- No inventar información ni resultados.
+- <Regla que evita el error más frecuente del proceso>.
 
-## Ejemplo de output
-<El formato exacto que aceptas como bueno. Pega uno real.>
+## Formato de salida
+<Ejemplo concreto de un resultado aceptable>.
 ```
 
-Escribe el cuerpo en **imperativo**: "lee esto", "corre aquello", "no toques lo otro". Un skill bueno es mandón: le quita ambigüedad al agente. Y no partas extenso — el skill crece con el ciclo de mejora, no en el primer borrador.
+Escribe el cuerpo en imperativo: "lee", "ejecuta", "comprueba", "no modifiques". Empieza con el mínimo proceso útil y agrega reglas cuando el uso real revele una brecha.
 
 ## Dónde vive
-
-No es la misma carpeta en cada herramienta:
 
 | Herramienta | Proyecto | Global |
 |---|---|---|
 | Claude Code | `.claude/skills/<nombre>/SKILL.md` | `~/.claude/skills/<nombre>/SKILL.md` |
 | Codex | `.agents/skills/<nombre>/SKILL.md` | `~/.agents/skills/<nombre>/SKILL.md` |
 
-La regla para elegir alcance es la misma en ambas: al **proyecto** van los skills específicos de un repo; a **global** los que usas todos los días, en cualquier proyecto.
+Los skills específicos de un repo deben vivir en el proyecto. Los que reutilizas entre repos pueden vivir globalmente.
 
-Si trabajas con varios agentes, guarda los skills en **un solo lugar** y enlázalos (symlink) a la carpeta de cada uno — las dos herramientas siguen symlinks: editas una vez, se actualiza en todos.
+Si usas ambas herramientas, puedes mantener una fuente canónica y crear symlinks hacia las carpetas que descubre cada una.
 
-## Las 3 formas de invocarlo
+## Cómo invocarlo
 
-1. **Indirecta** — el agente matchea tu pedido con la description y lo activa solo. Es la que quieres que funcione.
-2. **Explícita** — lo nombras en el prompt: "usa el skill de documentación para esto".
-3. **Directa** — en Claude Code: `/nombre-del-skill`. En Codex: lo referencias con `$nombre-del-skill` o abres el picker con `/skills`.
+### Explícitamente
 
-Si un skill debería haberse activado solo y no lo hizo, invócalo a mano para salir del paso — pero anota: es señal de que la description hay que mejorarla. Y separa las dos fallas posibles: si **no se activa**, el problema es la description o la ubicación; si **se activa pero el resultado sale malo**, el problema está en el cuerpo (instrucciones o ejemplos).
+Usa esta opción primero para probar el workflow sin mezclarlo con el problema de descubrimiento:
 
-Y no todo lo escribes tú: hay skills de la comunidad y oficiales en [github.com/anthropics/skills](https://github.com/anthropics/skills), [skills.sh](https://skills.sh) y [agentskills.io](https://agentskills.io). Pégale la URL al agente y pídele que lo instale.
+- Claude Code: `/prove`.
+- Codex: `$prove` o selección mediante `/skills`.
+- En lenguaje natural: "usa el skill prove para verificar la tarea T1".
+
+Si fue seleccionado pero ejecutó mal el trabajo, revisa el cuerpo, los ejemplos, los recursos y los permisos disponibles.
+
+### Implícitamente
+
+También puedes pedir la tarea sin nombrar el skill. El agente puede seleccionarlo cuando la solicitud coincide con su `description`.
+
+La selección implícita es probabilística: una buena `description` mejora el descubrimiento, pero no garantiza que el skill se use en cada ejecución. Cuando aplicar el workflow es obligatorio, invócalo explícitamente o define una orquestación que controle la secuencia.
 
 ## Cómo probarlo
 
-Un skill se trata como software, no como un prompt bonito que quedó listo para siempre.
+Prueba ejecución y descubrimiento por separado.
 
-- **La prueba de fuego:** pide la tarea **sin nombrar el skill**. Si la description está bien escrita, tiene que entrar solo.
-- **La otra mitad (la que nadie hace):** pide algo que NO debería activarlo y comprueba que no entra. Un skill que se activa cuando no toca es tan malo como uno que nunca se activa: la description quedó demasiado amplia. Y como la activación es probabilística, prueba varias frases (positivas y negativas), no una sola vez.
-- **Caso feliz:** el input normal que representa el 80% del uso.
-- **Caso límite:** input incompleto o ambiguo. Aquí quieres que el skill declare la incertidumbre, no que invente.
-- **Stress:** la versión grande y desordenada de la tarea, para ver si escala.
+### 1. Ejecución controlada
 
-## El ciclo de mejora
+Invoca el skill explícitamente:
 
+- **Caso normal:** produce el resultado y la evidencia esperados.
+- **Caso que falla:** conserva el error real y no declara éxito.
+- **Caso límite:** declara incertidumbre o bloqueo en vez de inventar.
+
+### 2. Descubrimiento implícito
+
+En una sesión nueva:
+
+- Pide una tarea claramente dentro del alcance sin nombrar el skill.
+- Prueba varias formulaciones reales, no una frase diseñada para la demo.
+- Pide una tarea fuera de alcance y comprueba que el skill no interfiera.
+
+Si no lo descubre, revisa ubicación, frontmatter, claridad y límites de la `description`. Si necesitas garantizar el proceso, vuelve a la invocación explícita.
+
+## Ciclo de mejora
+
+```text
+escribir -> invocar -> observar evidencia -> corregir una brecha -> repetir
 ```
-     escribir ──▶ usar en trabajo REAL ──▶ ¿falló?
-        ▲                                    │
-        │            sí: cada falla ─────────┘
-        └──────── es UNA regla o UNA frase
-                  gatillo que le faltaba
+
+- ¿No se cargó? Revisa ubicación y frontmatter.
+- ¿No fue descubierto? Revisa alcance y términos de la `description`.
+- ¿Omitió un paso? Agrega una regla o referencia.
+- ¿Inventó un resultado? Exige evidencia observable.
+- ¿Entregó un formato inconsistente? Agrega un ejemplo real.
+- ¿Se activó fuera de alcance? Acota la `description`.
+
+Un skill mejora con trabajo real, no intentando anticipar todos los casos en el primer borrador.
+
+## De un skill a un pipeline
+
+`prove` forma parte del ejemplo completo de [`spec-driven-development`](../spec-driven-development):
+
+```text
+scope -> exec -> prove -> audit -> ship
 ```
 
-- ¿Omitió algo relevante? → agrega una regla.
-- ¿Inventó comportamiento? → agrega una regla.
-- ¿Formato inconsistente? → agrega un ejemplo mejor.
-- ¿Se activó cuando no debía? → acota la description.
-- ¿No se activó cuando debía? → agrega frases gatillo.
+`trace` es una herramienta auxiliar para entender código existente antes de modificarlo; no es el sexto paso del pipeline.
 
-Úsalo una semana en trabajo real (no en ejemplos inventados) y tendrás una versión mucho mejor que la inicial.
-
-## Cuándo SÍ y cuándo no
-
-- **No** empaquetes lo que haces una sola vez: eso se pide y ya.
-- **Sí** cuando repites un proceso y siempre quieres el output con el mismo estándar.
-- Pocos skills buenos le ganan a veinte a medias, siempre. No necesitas una biblioteca el día uno: parte con LA tarea más repetida, la más clara, la de output más fácil de evaluar.
-
-## De un skill a una cadena
-
-Un skill solo es una herramienta. Varios que se pasan el trabajo entre sí son un **sistema**: la description de cada uno dice cuándo entra, y por eso tienen límites compatibles y no se pisan.
-
-El ejemplo vivo está en este mismo repo: [`spec-driven-development`](../spec-driven-development). Cinco skills forman el pipeline (`scope · exec · prove · audit · ship`) y `trace` es la herramienta auxiliar para entrar a código existente antes de tocarlo. `scope` entra cuando hay una idea, `exec` cuando ya existe la spec, `prove` después de implementar. Una tarea, una evidencia.
-
-**El matiz de producción:** que el agente *pueda* elegirlos en orden es comportamiento probable, no una garantía. Si el orden es crítico, no lo dejes a la suerte: invoca cada etapa tú (`/scope` → `/exec` → `/prove` → `/audit` → `/ship`, como en el quick start de SDD) o define la secuencia en tu `CLAUDE.md` / `AGENTS.md` o en un skill orquestador.
+Las descriptions compatibles ayudan a descubrir cada etapa, pero no garantizan el orden. Cuando la secuencia importa, invoca cada skill explícitamente o usa un skill orquestador que defina el pipeline.
 
 ## Quick start
 
-1. Elige una tarea que repitas todas las semanas.
-2. Responde las 4 preguntas (en serio, escríbelas).
-3. Crea `.claude/skills/<nombre>/SKILL.md` con la plantilla de arriba.
-4. Prueba de fuego: pide la tarea sin nombrar el skill.
-5. Prueba negativa: pide algo fuera del caso de uso y verifica que NO entre.
-6. Úsalo una semana en trabajo real; cada falla es una regla nueva.
+1. Elige un proceso repetitivo con un resultado evaluable.
+2. Responde las cuatro preguntas.
+3. Crea el skill en la ruta de Claude Code o Codex.
+4. Invócalo explícitamente y prueba un caso normal y uno que falla.
+5. Corrige el cuerpo hasta que la ejecución sea consistente.
+6. En una sesión nueva, prueba el descubrimiento implícito y un caso fuera de alcance.
+7. Si el workflow es obligatorio, mantenlo explícito u orquestado.
 
 ---
 
-> La versión extendida de esta guía (con un ejemplo completo de skill de documentación técnica) está escrita en mi blog **El Diario de Filemón**. Y por si quieres más (lives, casos reales, más prompts): la comunidad **IA en Producción** → https://www.skool.com/ia-en-produccion-3264
+> Los seis skills de SDD están disponibles en [`spec-driven-development`](../spec-driven-development). La versión extendida de esta guía está en **El Diario de Filemón**. Más recursos y casos reales en **IA en Producción**: https://www.skool.com/ia-en-produccion-3264

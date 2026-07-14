@@ -1,0 +1,10 @@
+{
+  "name": "crear-skill-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "reset": "node scripts/set-demo-state.mjs buggy",
+    "restore": "node scripts/set-demo-state.mjs fixed"
+  }
+}
