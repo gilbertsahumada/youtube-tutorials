@@ -65,6 +65,8 @@ Las cuatro preguntas son el método. `SKILL.md` es donde aterrizan las respuesta
 
 El ejemplo de este tutorial es [`prove`](../spec-driven-development/skills/prove/SKILL.md), una etapa del workflow de Spec-Driven Development.
 
+La carpeta [`demo/`](demo) contiene el repo mínimo usado en pantalla: una spec, una implementación CSV, tres tests y comandos para recuperar los estados inicial y final de la grabación.
+
 Su trabajo es acotado:
 
 1. Leer la tarea implementada.
