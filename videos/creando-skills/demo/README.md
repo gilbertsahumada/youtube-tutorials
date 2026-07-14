@@ -2,6 +2,15 @@
 
 Esta demo parte con una feature ya implementada: un serializador CSV. El objetivo del video no es construir la feature, sino crear el skill `prove` para verificarla con evidencia real.
 
+La spec y el skill comparten este contrato:
+
+```md
+### T1: Nombre de la tarea
+- **Verify:** `comando o check`
+```
+
+En `specs/serializar-reservas.md`, T1 define `Verify: npm test`. El comando existe en `package.json` y ejecuta los tres tests de la feature. Si una tarea no tiene exactamente un `Verify`, el skill no debe inferir uno.
+
 Requiere Node.js 20 o superior. No instala dependencias.
 
 ## Preparar la grabación
@@ -36,3 +45,5 @@ Durante el video, crea `prove` dentro de `.claude/skills/prove/SKILL.md`. Para u
 mkdir -p .agents/skills
 ln -s ../../.claude/skills/prove .agents/skills/prove
 ```
+
+La versión terminada del skill está en [`../skill/prove/SKILL.md`](../skill/prove/SKILL.md).

@@ -63,11 +63,25 @@ Las cuatro preguntas son el método. `SKILL.md` es donde aterrizan las respuesta
 
 ## Ejemplo real: `prove`
 
-El ejemplo de este tutorial es [`prove`](../spec-driven-development/skills/prove/SKILL.md), una etapa del workflow de Spec-Driven Development.
+El ejemplo de este tutorial es [`prove`](skill/prove/SKILL.md). Es el único skill que se crea y utiliza en la demo.
 
 La carpeta [`demo/`](demo) contiene el repo mínimo usado en pantalla: una spec, una implementación CSV, tres tests y comandos para recuperar los estados inicial y final de la grabación.
 
-Su trabajo es acotado:
+La demo define un contrato explícito entre la spec y el skill:
+
+```md
+### T1: Nombre de la tarea
+- **Verify:** `comando o check`
+```
+
+- El prompt entrega la ruta de la spec y el ID de la tarea.
+- La tarea contiene exactamente un campo literal `Verify`.
+- Un valor en código inline representa un comando ejecutable.
+- Si el campo falta, se repite o es ambiguo, `prove` no inventa una verificación.
+
+`Verify` no es una palabra reservada de Claude Code o Codex. Es una convención documentada por esta spec y consumida por este skill.
+
+El trabajo de `prove` es acotado:
 
 1. Leer la tarea implementada.
 2. Encontrar su paso `Verify`.
@@ -180,18 +194,6 @@ escribir -> invocar -> observar evidencia -> corregir una brecha -> repetir
 
 Un skill mejora con trabajo real, no intentando anticipar todos los casos en el primer borrador.
 
-## De un skill a un pipeline
-
-`prove` forma parte del ejemplo completo de [`spec-driven-development`](../spec-driven-development):
-
-```text
-scope -> exec -> prove -> audit -> ship
-```
-
-`trace` es una herramienta auxiliar para entender código existente antes de modificarlo; no es el sexto paso del pipeline.
-
-Las descriptions compatibles ayudan a descubrir cada etapa, pero no garantizan el orden. Cuando la secuencia importa, invoca cada skill explícitamente o usa un skill orquestador que defina el pipeline.
-
 ## Quick start
 
 1. Elige un proceso repetitivo con un resultado evaluable.
@@ -204,4 +206,4 @@ Las descriptions compatibles ayudan a descubrir cada etapa, pero no garantizan e
 
 ---
 
-> Los seis skills de SDD están disponibles en [`spec-driven-development`](../spec-driven-development). La versión extendida de esta guía está en **El Diario de Filemón**. Más recursos y casos reales en **IA en Producción**: https://www.skool.com/ia-en-produccion-3264
+> La demo reproducible y el skill `prove` terminado están en esta carpeta. La versión extendida de esta guía está en **El Diario de Filemón**. Más recursos y casos reales en **IA en Producción**: https://www.skool.com/ia-en-produccion-3264

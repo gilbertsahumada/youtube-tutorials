@@ -14,6 +14,10 @@ Generar un CSV UTF-8 con BOM y columnas `Fecha,Cliente,Servicio`.
 - Conservar el orden de las columnas.
 - Escapar campos según CSV: duplicar comillas y envolver entre comillas cuando contengan coma, comillas o salto de línea.
 
+## Convención de tareas
+
+Cada tarea contiene exactamente un campo `Verify`. Un valor entre backticks es un comando que debe existir en el proyecto y ejecutarse desde la raíz. Si falta o es ambiguo, la tarea no puede verificarse.
+
 ## Tareas
 
 ### T1: Serializador CSV
