@@ -63,28 +63,42 @@ Las cuatro preguntas son el método. `SKILL.md` es donde aterrizan las respuesta
 
 ## Ejemplo real: `prove`
 
-El ejemplo de este tutorial es [`prove`](../spec-driven-development/skills/prove/SKILL.md), una etapa del workflow de Spec-Driven Development.
+El ejemplo de este tutorial es [`prove`](demo/.claude/skills/prove/SKILL.md). Es el único skill que se crea y utiliza en la demo.
 
 La carpeta [`demo/`](demo) contiene el repo mínimo usado en pantalla: una spec, una implementación CSV, tres tests y comandos para recuperar los estados inicial y final de la grabación.
 
-Su trabajo es acotado:
+La spec dice cómo comprobar cada tarea mediante una línea `Verify`:
 
-1. Leer la tarea implementada.
-2. Encontrar su paso `Verify`.
-3. Ejecutar el comando o check definido.
-4. Mostrar la salida real.
-5. Devolver `PASA` o `NO PASA` sin inventar evidencia.
+```md
+### T1: Nombre de la tarea
+- **Verify:** `comando o check`
+```
+
+- El prompt entrega la ruta de la spec y el ID de la tarea.
+- `prove` busca la tarea, lee `Verify` y ejecuta lo que dice.
+- Si la tarea no tiene `Verify`, el skill dice que no pudo verificarla en vez de inventar uno.
+
+`Verify` no es una función especial de Claude Code o Codex. Es solamente la línea de la spec donde dejamos escrito cómo comprobar esa tarea.
+
+El trabajo de `prove` es acotado, pero no se limita a ejecutar un comando:
+
+1. Leer la tarea, sus archivos y los criterios de `Done`.
+2. Revisar el diff y comprobar que el cambio respeta el alcance.
+3. Comprobar que los tests no fueron debilitados.
+4. Ejecutar el comando indicado en `Verify`.
+5. Contrastar la evidencia con los criterios de `Done`.
+6. Devolver `PASA` o `NO PASA` sin modificar el proyecto.
 
 Su `description` define el alcance:
 
 ```yaml
 ---
 name: prove
-description: Verifica que una tarea quedó realmente lista corriendo su paso Verify y mostrando la salida real, sin autoreporte. Úsala después de implementar una tarea, cuando se quiera comprobar que funciona de verdad y no solo que el agente lo afirme.
+description: Comprueba si una tarea de una spec está realmente terminada revisando su alcance, ejecutando su Verify y contrastando la evidencia con los criterios de Done. Úsala después de implementar una tarea y antes de declararla lista o hacer commit.
 ---
 ```
 
-El cuerpo define cómo ejecutar la verificación, qué hacer si falla y qué formato debe tener el resultado.
+El cuerpo define cómo revisar el alcance y el diff, proteger los tests, ejecutar la verificación y contrastar la evidencia con `Done`.
 
 ## Plantilla mínima
 
@@ -180,18 +194,6 @@ escribir -> invocar -> observar evidencia -> corregir una brecha -> repetir
 
 Un skill mejora con trabajo real, no intentando anticipar todos los casos en el primer borrador.
 
-## De un skill a un pipeline
-
-`prove` forma parte del ejemplo completo de [`spec-driven-development`](../spec-driven-development):
-
-```text
-scope -> exec -> prove -> audit -> ship
-```
-
-`trace` es una herramienta auxiliar para entender código existente antes de modificarlo; no es el sexto paso del pipeline.
-
-Las descriptions compatibles ayudan a descubrir cada etapa, pero no garantizan el orden. Cuando la secuencia importa, invoca cada skill explícitamente o usa un skill orquestador que defina el pipeline.
-
 ## Quick start
 
 1. Elige un proceso repetitivo con un resultado evaluable.
@@ -204,4 +206,4 @@ Las descriptions compatibles ayudan a descubrir cada etapa, pero no garantizan e
 
 ---
 
-> Los seis skills de SDD están disponibles en [`spec-driven-development`](../spec-driven-development). La versión extendida de esta guía está en **El Diario de Filemón**. Más recursos y casos reales en **IA en Producción**: https://www.skool.com/ia-en-produccion-3264
+> La demo reproducible y el skill `prove` terminado están en esta carpeta. La versión extendida de esta guía está en **El Diario de Filemón**. Más recursos y casos reales en **IA en Producción**: https://www.skool.com/ia-en-produccion-3264
