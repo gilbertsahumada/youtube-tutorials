@@ -12,6 +12,7 @@ videos/
   codex-de-0-a-pro/              → setup, permisos, AGENTS.md y prompts
   spec-driven-development/       → las 5 preguntas + skills scope/exec/prove/audit/ship
   creando-skills/                → anatomía de un SKILL.md, las 4 preguntas y cómo probarlo
+  harness-engineering/            → demo comparativa sin harness y con harness
 ```
 
 ## Videos
@@ -22,6 +23,7 @@ videos/
 | Cómo uso OpenAI Codex de 0 a Pro | [`videos/codex-de-0-a-pro`](videos/codex-de-0-a-pro) | `config.toml`, permisos, `AGENTS.md` y los 4 prompts del workflow |
 | Spec-Driven Development sin ceremonia | [`videos/spec-driven-development`](videos/spec-driven-development) | Las 5 preguntas, la plantilla y los skills `scope · exec · prove · audit · ship` |
 | Cómo crear un Skill (que sí se activa) | [`videos/creando-skills`](videos/creando-skills) | La anatomía de un `SKILL.md`, las 4 preguntas antes de escribirlo, la plantilla y cómo probarlo |
+| Harness engineering con Claude Code y Codex | [`videos/harness-engineering`](videos/harness-engineering) | Una demo reproducible de contexto, especificación, scripts y feedback ejecutable |
 
 > Los links a cada video de YouTube se agregan acá a medida que se publican.
 
