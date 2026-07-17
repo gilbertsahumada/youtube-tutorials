@@ -62,7 +62,10 @@ function page() {
 
 export function handleRequest(request, response) {
   if (request.url === "/api/orders.csv") {
-    response.writeHead(200, { "Content-Type": "text/csv" });
+    response.writeHead(200, {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": 'attachment; filename="orders.csv"',
+    });
     response.end(ordersToCsv(orders));
     return;
   }
