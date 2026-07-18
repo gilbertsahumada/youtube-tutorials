@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-const demoRoot = path.resolve(process.argv[2] ?? ".");
+const demoRoot = path.resolve(process.argv[2] ?? "demo");
 const csvModule = await import(pathToFileURL(path.join(demoRoot, "src/csv.js")));
 const serverModule = await import(pathToFileURL(path.join(demoRoot, "src/server.js")));
 const ordersModule = await import(pathToFileURL(path.join(demoRoot, "src/orders.js")));

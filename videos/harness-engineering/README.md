@@ -83,7 +83,9 @@ El prompt tampoco incluye esas decisiones. Esa omisión es intencional: en un pr
 
 ## Primera ejecución: sin harness
 
-En el primer checkpoint solo existen la aplicación y la tarea. El agente debe decidir por su cuenta qué significa que la exportación esté "lista para usar".
+Partimos desde la única carpeta de la demo y ocultamos temporalmente `AGENTS.md`, `CLAUDE.md`, la documentación, los scripts y los tests del harness. La aplicación incorrecta y el prompt no cambian.
+
+Sin ese entorno, el agente debe decidir por su cuenta qué significa que la exportación esté "lista para usar".
 
 En la ejecución grabada, Codex hizo algo razonable:
 
@@ -101,24 +103,26 @@ Resultado: 1/6 checks pasan
 
 Esto no demuestra que el modelo sea malo. Demuestra que una petición ambigua permite soluciones distintas y que el autoreporte no reemplaza un criterio externo.
 
-La salida exacta del modelo es probabilística. Lo que se mantiene constante en la comparación es la tarea y el evaluador de seis criterios.
+La salida exacta del modelo es probabilística. Lo que se mantiene constante en la comparación es la tarea y el evaluador de seis criterios. Ese [`evaluate.mjs`](evaluation/evaluate.mjs) vive fuera de la carpeta `demo/`, por lo que no se expone durante la inspección normal del espacio de trabajo del primer agente.
 
 ## Construcción del harness
 
-El segundo checkpoint conserva la misma implementación incorrecta y agrega el entorno de trabajo:
+Después de evaluar el primer resultado, restauramos la misma carpeta con `git restore .`. Eso recupera simultáneamente la implementación incorrecta original y el entorno de trabajo:
 
 ```text
-demo/
-├── AGENTS.md
-├── CLAUDE.md
-├── docs/
-│   ├── harness/workflow.md
-│   └── product/export-orders.md
-├── scripts/harness/
-│   ├── start.sh
-│   └── verify.sh
-├── test/export-orders.test.js
-└── src/
+harness-engineering/
+├── evaluation/evaluate.mjs
+└── demo/
+    ├── AGENTS.md
+    ├── CLAUDE.md
+    ├── docs/
+    │   ├── harness/workflow.md
+    │   └── product/export-orders.md
+    ├── scripts/harness/
+    │   ├── start.sh
+    │   └── verify.sh
+    ├── test/export-orders.test.js
+    └── src/
 ```
 
 ### Paso 1: conectar ambos agentes
@@ -183,7 +187,7 @@ El workflow no le pide al agente que "revise bien". Le indica una secuencia veri
 
 ## Segunda ejecución: el mismo prompt con harness
 
-Abrimos una sesión nueva en el checkpoint con harness y repetimos, sin agregar instrucciones:
+Abrimos una sesión nueva en la misma carpeta ya restaurada y repetimos, sin agregar instrucciones:
 
 ```text
 Completa la exportación de pedidos a CSV para que esté lista para usar.
@@ -248,15 +252,19 @@ La ventaja es que los errores dejan de depender únicamente de la interpretació
 
 ## Reproducir la comparación
 
-La carpeta [`demo/`](demo) contiene la aplicación completa y tres checkpoints:
+La carpeta [`demo/`](demo) contiene la aplicación incorrecta y el harness completo. No es necesario cambiar de commit, rama ni worktree.
 
-| Commit | Estado |
-|---|---|
-| `bbee3e1` | Aplicación inicial, sin harness |
-| `cd2ff13` | Harness instalado, implementación todavía incorrecta |
-| `1b51240` | Resultado corregido mediante el harness |
+El recorrido completo utiliza una sola copia:
 
-La guía [`demo/README.md`](demo/README.md) incluye los requisitos, los comandos para crear cada worktree, el prompt exacto y la forma de ejecutar el evaluador independiente.
+```text
+1. Ocultar los archivos del harness.
+2. Ejecutar el prompt y aplicar el evaluador externo.
+3. Restaurar la carpeta con Git.
+4. Repetir el mismo prompt con el harness disponible.
+5. Aplicar el mismo evaluador externo.
+```
+
+La guía [`demo/README.md`](demo/README.md) indica exactamente qué archivos ocultar, cómo limpiar los cambios de la primera sesión y cómo ejecutar ambos recorridos.
 
 ## Idea central
 
