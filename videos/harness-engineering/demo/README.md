@@ -1,80 +1,149 @@
-# Demo reproducible: harness engineering
+# Demo reproducible: Harness Engineering
 
-Esta aplicación muestra pedidos y permite descargarlos como CSV. La implementación inicial parece funcionar con datos simples, pero no define cómo tratar comas, comillas, dinero, fechas ni headers de descarga.
+Esta carpeta contiene una aplicación de pedidos deliberadamente incompleta y el harness que debe guiar a Claude Code o Codex para corregirla.
 
-La demo compara la misma petición sobre dos estados del repositorio:
+La demo usa **una sola carpeta, un solo estado inicial y el mismo prompt** en las dos ejecuciones:
 
 ```text
 Completa la exportación de pedidos a CSV para que esté lista para usar.
 Al terminar, verifica que funcione.
 ```
 
-La selección y el comportamiento del modelo son probabilísticos. Lo reproducible no es una respuesta literal, sino el contrato: el evaluador aplica los mismos seis criterios a ambos resultados.
+Primero ocultaremos temporalmente el harness. Después restauraremos exactamente el mismo estado inicial y repetiremos la tarea con el harness disponible.
 
-## Qué contiene el harness
+## Estructura inicial
 
 ```text
-demo/
-├── AGENTS.md                         # entrada de Codex
-├── CLAUDE.md                         # entrada de Claude Code
-├── docs/
-│   ├── harness/workflow.md           # proceso compartido
-│   └── product/export-orders.md      # decisiones del producto
-├── scripts/harness/
-│   ├── start.sh                      # comprueba el entorno
-│   └── verify.sh                     # ejecuta la verificación
-├── test/export-orders.test.js        # feedback ejecutable
-├── evaluation/evaluate.mjs           # evaluación independiente
-└── src/                              # aplicación
+harness-engineering/
+├── evaluation/evaluate.mjs           # evaluador externo a la carpeta del agente
+└── demo/
+    ├── AGENTS.md                     # entrada de Codex
+    ├── CLAUDE.md                     # entrada de Claude Code
+    ├── docs/
+    │   ├── harness/workflow.md       # proceso compartido
+    │   └── product/export-orders.md  # decisiones del producto
+    ├── scripts/harness/
+    │   ├── start.sh                  # comprueba el entorno
+    │   └── verify.sh                 # ejecuta la verificación
+    ├── test/export-orders.test.js    # feedback ejecutable
+    └── src/                          # aplicación incorrecta
 ```
 
-`AGENTS.md` es la guía canónica del proyecto. `CLAUDE.md` dirige Claude Code hacia esa misma guía. Ambos agentes usan la misma documentación, los mismos scripts y los mismos tests.
-
-No hay hooks en la demo. El agente ejecuta los scripts porque el workflow del repositorio se lo indica. Un hook podría automatizar esos momentos más adelante sin cambiar la lógica del harness.
+El evaluador está fuera de `demo/` para que el agente sin harness no encuentre accidentalmente los criterios ocultos al inspeccionar su carpeta de trabajo.
 
 ## Requisitos
 
 - Git.
 - Node.js 20 o superior.
-- Claude Code o Codex para repetir la ejecución del agente.
+- Claude Code o Codex.
+- Una copia limpia del repositorio dedicada a la demo.
 - No hay dependencias externas que instalar.
 
-La herramienta debe tener permiso para ejecutar los scripts del proyecto. El harness no evade el sandbox ni las aprobaciones de Claude Code o Codex. Si un comando está bloqueado, el comportamiento correcto es reportarlo en vez de afirmar que la verificación pasó.
-
-## Checkpoints
-
-| Commit | Estado |
-|---|---|
-| `bbee3e1` | Aplicación inicial, sin harness |
-| `cd2ff13` | Harness instalado, implementación todavía incorrecta |
-| `1b51240` | Resultado corregido mediante el harness |
-
-Los hashes son parte de la historia publicada de esta demo.
-
-## 1. Probar el estado inicial
-
-Desde la raíz de `youtube-tutorials`:
+Clona el repositorio y entra en la única carpeta que usaremos:
 
 ```bash
-git worktree add /tmp/harness-sin-harness bbee3e1
-cd /tmp/harness-sin-harness/videos/harness-engineering/demo
+git clone https://github.com/gilbertsahumada/youtube-tutorials.git
+cd youtube-tutorials/videos/harness-engineering/demo
 ```
 
-Abre Claude Code o Codex en esa carpeta y entrega exactamente el prompt de la demo. No agregues criterios sobre el CSV.
-
-Después de que termine, evalúa el resultado usando el evaluador del checkout final:
+Comprueba que no existan cambios previos:
 
 ```bash
-node /ruta/al/checkout-final/videos/harness-engineering/demo/evaluation/evaluate.mjs .
+git status --short
 ```
 
-En nuestra ejecución, Codex agregó pruebas que pasaron `2/2`, pero el evaluador independiente reportó `1/6`.
+El comando no debe mostrar nada.
 
-## 2. Probar el harness antes de corregir
+## 1. Ver la aplicación inicial
 
 ```bash
-git worktree add /tmp/harness-con-harness cd2ff13
-cd /tmp/harness-con-harness/videos/harness-engineering/demo
+npm start
+```
+
+Abre `http://localhost:3000` y usa **Exportar CSV**. La descarga parece funcionar, pero todavía no escapa valores complejos, no normaliza dinero ni fechas y no entrega todos los headers requeridos.
+
+Detén el servidor antes de continuar.
+
+## 2. Ocultar temporalmente el harness
+
+Elimina estos archivos y carpetas desde `demo/`:
+
+```bash
+rm AGENTS.md CLAUDE.md
+rm -rf docs/harness docs/product scripts/harness test
+npm pkg delete scripts.harness:start scripts.verify
+```
+
+No elimines `src/`, `package.json` ni el evaluador externo. El agente debe recibir la aplicación incorrecta y la tarea, pero ninguna decisión del harness.
+
+Confirma el estado:
+
+```bash
+git status --short
+```
+
+Debes ver únicamente los archivos del harness eliminados y `package.json` modificado.
+
+## 3. Ejecutar la tarea sin harness
+
+Abre Claude Code o Codex **dentro de `demo/`** y entrega exactamente este prompt:
+
+```text
+Completa la exportación de pedidos a CSV para que esté lista para usar.
+Al terminar, verifica que funcione.
+```
+
+No agregues criterios sobre el CSV. Permite que el agente inspeccione, implemente y verifique con la información disponible.
+
+La respuesta es probabilística. En la ejecución validada para el video, Codex creó sus propias pruebas y reportó `2/2`, pero tomó decisiones distintas de las requeridas por el producto.
+
+## 4. Evaluar el primer resultado
+
+Cuando el agente termine, permanece en `demo/` y ejecuta:
+
+```bash
+node ../evaluation/evaluate.mjs .
+```
+
+En la ejecución usada para el video, el resultado fue:
+
+```text
+Resultado: 1/6 checks pasan
+```
+
+Otra ejecución podría obtener un número diferente. Lo importante es que ambos recorridos usan el mismo evaluador independiente.
+
+## 5. Restaurar la misma carpeta
+
+Cierra la sesión del agente. Después devuelve todos los archivos rastreados al estado inicial:
+
+```bash
+git restore .
+```
+
+El agente podría haber creado archivos nuevos que `git restore` no elimina. Revísalos antes de borrarlos:
+
+```bash
+git clean -nd
+```
+
+En esta copia dedicada a la demo, elimina únicamente esos archivos no rastreados:
+
+```bash
+git clean -fd
+```
+
+Comprueba nuevamente:
+
+```bash
+git status --short
+```
+
+Debe quedar limpio. Ahora tenemos la misma implementación incorrecta del comienzo, pero el harness vuelve a estar disponible.
+
+## 6. Comprobar el harness antes de corregir
+
+```bash
 npm run harness:start
 npm run verify
 ```
@@ -87,26 +156,26 @@ Product spec: docs/product/export-orders.md
 Verification: npm run verify
 ```
 
-La verificación inicial debe fallar: la aplicación todavía contiene la misma implementación incorrecta.
+`npm run verify` debe fallar. Esto es intencional: el harness está instalado, pero todavía no ha corregido la aplicación.
 
-## 3. Ejecutar la misma tarea con harness
+## 7. Repetir la misma tarea con harness
 
-Abre una sesión nueva de Claude Code o Codex en `/tmp/harness-con-harness/videos/harness-engineering/demo` y entrega el mismo prompt:
+Abre una sesión nueva de Claude Code o Codex dentro de la misma carpeta `demo/` y entrega el mismo prompt:
 
 ```text
 Completa la exportación de pedidos a CSV para que esté lista para usar.
 Al terminar, verifica que funcione.
 ```
 
-El agente debe encontrar las instrucciones del proyecto, ejecutar `npm run harness:start`, leer la especificación y ejecutar `npm run verify` antes de terminar.
+El agente debe descubrir las instrucciones del proyecto, ejecutar `npm run harness:start`, leer la especificación y usar `npm run verify` como feedback antes de terminar.
 
-No es necesario nombrar esos archivos en el prompt. Esa es información proporcionada por el harness.
+No es necesario nombrar esos archivos en el prompt. Esa información pertenece al harness.
 
-## 4. Comprobar el resultado
+## 8. Comprobar el segundo resultado
 
 ```bash
 npm run verify
-node /ruta/al/checkout-final/videos/harness-engineering/demo/evaluation/evaluate.mjs .
+node ../evaluation/evaluate.mjs .
 ```
 
 En el resultado validado para esta demo:
@@ -119,19 +188,21 @@ fail 0
 Resultado: 6/6 checks pasan
 ```
 
-## Ejecutar la aplicación
+## Repetir la demo
+
+Para volver al estado inicial, cierra el agente y repite la restauración desde `demo/`:
 
 ```bash
-npm start
+git restore .
+git clean -nd
+git clean -fd
+git status --short
 ```
 
-Abre `http://localhost:3000` y usa **Exportar CSV**. El navegador debe descargar `orders.csv` con las columnas, formatos y escape definidos en `docs/product/export-orders.md`.
+La aplicación vuelve a quedar incorrecta y el harness vuelve a quedar instalado. No necesitas cambiar de commit, rama ni worktree.
 
-## Restaurar o eliminar los worktrees
+## Permisos
 
-Ejecuta estos comandos desde el checkout principal, después de cerrar las sesiones que estén usando las carpetas:
+La herramienta debe tener permiso para ejecutar los scripts del proyecto. El harness no evade el sandbox ni las aprobaciones de Claude Code o Codex. Si un comando está bloqueado, el comportamiento correcto es reportarlo en vez de afirmar que la verificación pasó.
 
-```bash
-git worktree remove /tmp/harness-sin-harness
-git worktree remove /tmp/harness-con-harness
-```
+No hay hooks en la demo. El agente ejecuta los scripts porque el workflow del repositorio se lo indica.
