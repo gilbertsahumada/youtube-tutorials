@@ -29,12 +29,13 @@ harness-engineering/
     └── src/                          # aplicación incorrecta
 ```
 
-El evaluador está fuera de `demo/` para que el agente sin harness no encuentre accidentalmente los criterios ocultos al inspeccionar su carpeta de trabajo.
+El evaluador queda fuera de la carpeta de trabajo del agente y no se menciona en el prompt. El aislamiento no es hermético: `demo/` sigue dentro del mismo repositorio Git, así que un agente podría inspeccionar `../evaluation` o el historial. En la ejecución registrada, el agente no lo hizo. Si quieres un experimento más riguroso, ejecuta la primera prueba en una copia exportada sin `.git` y sin acceso al directorio padre.
 
 ## Requisitos
 
 - Git.
 - Node.js 20 o superior.
+- Bash (macOS, Linux o WSL). Los scripts no son portables a Windows nativo.
 - Claude Code o Codex.
 - Una copia limpia del repositorio dedicada a la demo.
 - No hay dependencias externas que instalar.
