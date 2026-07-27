@@ -2,14 +2,16 @@
 
 Esta carpeta contiene una aplicación de pedidos deliberadamente incompleta y el harness que debe guiar a Claude Code o Codex para corregirla.
 
-La demo usa **una sola carpeta, un solo estado inicial y el mismo prompt** en las dos ejecuciones:
+La demo usa **el mismo código de partida y el mismo mensaje** en las dos ejecuciones. Lo único que cambia es el entorno: la primera vez el agente trabaja sobre una copia que solo tiene la app; la segunda, sobre la carpeta que además tiene el harness.
+
+El mensaje, idéntico en ambas:
 
 ```text
 La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
 Arréglalo y verifica que quede bien.
 ```
 
-Primero ocultaremos temporalmente el harness. Después restauraremos exactamente el mismo estado inicial y repetiremos la tarea con el harness disponible.
+Primero sacaremos una copia de la app sin el harness y correremos ahí la tarea. Después la repetiremos en `demo/`, con el harness disponible.
 
 ## Estructura inicial
 
@@ -29,7 +31,11 @@ harness-engineering/
     └── src/                          # aplicación incorrecta
 ```
 
-El evaluador queda fuera de la carpeta de trabajo del agente y no se menciona en el prompt. El aislamiento no es hermético: `demo/` sigue dentro del mismo repositorio Git, así que un agente podría inspeccionar `../evaluation` o el historial. En la ejecución registrada, el agente no lo hizo. Si quieres un experimento más riguroso, ejecuta la primera prueba en una copia exportada sin `.git` y sin acceso al directorio padre.
+El evaluador vive fuera de la carpeta de trabajo del agente y no se menciona en el prompt.
+
+En el **primer** recorrido el aislamiento es real: el agente trabaja sobre una copia fuera del repositorio, sin `.git` y sin ningún ancestro que contenga el evaluador (ver el paso 2).
+
+En el **segundo** ya no hace falta esconder nada: los seis criterios están a la vista, en la spec y en los tests, porque eso es justamente lo que aporta el harness.
 
 ## Requisitos
 
@@ -90,7 +96,9 @@ Lo que el producto necesita de verdad son seis criterios concretos, escritos en 
 
 Detén el servidor antes de continuar.
 
-## 2. Ocultar temporalmente el harness
+## 2. Sacar una copia de la app, sin el harness
+
+El primer recorrido **no** se hace en `demo/`. Se hace en una copia de la app que vive fuera del repositorio.
 
 Desde `videos/harness-engineering/` (la carpeta de arriba, no `demo/`):
 
@@ -98,30 +106,32 @@ Desde `videos/harness-engineering/` (la carpeta de arriba, no `demo/`):
 npm run demo:sin-harness
 ```
 
-Eso es todo. El script borra `AGENTS.md`, `CLAUDE.md`, el `README.md` de la demo, la documentación, los scripts y los tests, y te imprime lo único que queda visible:
+El script copia `package.json` y `src/` a una carpeta hermana del repositorio, llamada `orders-app`, y te imprime la ruta:
 
 ```text
-package.json
-src
+Copia limpia creada en:
+  /ruta/a/tus/proyectos/orders-app
+
+Esto es todo lo que ve el agente:
+  package.json
+  src
+
+Sin .git, sin carpeta padre con el evaluador. demo/ quedo intacta.
 ```
 
-Se borra también el `README.md` porque describe el harness y apunta al evaluador: dejarlo sería entregarle el mapa al agente. Y se borran `docs/` y `scripts/` enteros, no solo sus subcarpetas, porque los directorios padre vacíos también son una pista.
+### Por qué una copia fuera del repo, y no borrar archivos dentro de `demo/`
 
-Los comandos de producción viven en `videos/harness-engineering/package.json`, fuera de `demo/`. Si estuvieran dentro, el agente los vería y descubriría que aquí hubo un harness.
+La primera versión de esta demo escondía el harness borrándolo de `demo/`. Parecía suficiente y no lo era: al agente le bastaba un `git status` para ver los nombres de todo lo borrado, incluido `docs/product/export-orders.md`, que es exactamente donde viven los seis criterios. Con `git show HEAD:...` podía leerlos completos.
 
-Aun así, el aislamiento no es hermético: el historial de Git conserva todo y el `package.json` de la demo se sigue llamando `harness-engineering-demo`. Nada de eso revela los seis criterios, pero sí delata que aquí había un harness. Reduce la probabilidad de que el agente los encuentre, no la elimina. Para un experimento estricto, copia `demo/` fuera del repositorio y ejecuta ahí el primer recorrido.
+No es un riesgo teórico. En una corrida real el agente lo detectó y lo dijo en su respuesta: *"test/export-orders.test.js está borrado en tu working tree, junto con README, docs y scripts/harness"*.
 
-Confirma el estado:
+Copiando fuera del repositorio no hay `.git` que consultar ni carpeta padre con el evaluador. La copia se llama `orders-app` a propósito: el agente ve el nombre de su propio directorio de trabajo, así que no puede llamarse `demo` ni contener la palabra `harness`. Y al `package.json` copiado se le quitan los comandos `harness:start` y `verify`, que también delatarían el montaje.
 
-```bash
-git status --short
-```
-
-Debes ver únicamente los archivos del harness eliminados y `package.json` modificado.
+Efecto secundario bienvenido: `demo/` no se toca en todo el primer recorrido, así que **no hay que restaurar nada antes del segundo**.
 
 ## 3. Ejecutar la tarea sin harness
 
-Abre Claude Code o Codex **dentro de `demo/`** y entrega exactamente este prompt:
+Abre Claude Code o Codex **dentro de `orders-app/`** (la copia, no `demo/`) y entrega exactamente este prompt:
 
 ```text
 La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
@@ -132,17 +142,19 @@ El prompt reporta un bug real, con su síntoma, igual que se lo reportarías a u
 
 No agregues esos criterios al prompt. Permite que el agente inspeccione, implemente y verifique con la información disponible.
 
-La respuesta es probabilística. Lo esperable es que arregle el escape que le reportaste, escriba sus propias pruebas para ese caso y las reporte en verde, mientras el resto de las decisiones queda a su criterio.
+La respuesta es probabilística. Lo esperable es que arregle el escape que le reportaste y lo verifique de alguna forma, mientras el resto de las decisiones queda a su criterio. En una corrida registrada, el agente escribió su propio chequeo con un parser CSV independiente —"para que no se valide a sí mismo", en sus palabras—, probó casos borde, lo corrió contra el endpoint real y reportó *"Listo, arreglado y verificado"*. No dejó tests en el repo: los escribió aparte y los descartó.
+
+Lo interesante no es que trabajara mal, sino qué verificó: que **cada fila tenga cinco columnas**, es decir, exactamente el síntoma que le reportaste. Nada más.
 
 ## 4. Evaluar el primer resultado
 
-Cuando el agente termine, vuelve a `videos/harness-engineering/` y ejecuta:
+Cuando el agente termine, vuelve a `videos/harness-engineering/` y ejecuta el evaluador **contra la copia**:
 
 ```bash
-node evaluation/evaluate.mjs
+node evaluation/evaluate.mjs /ruta/a/tus/proyectos/orders-app
 ```
 
-Sin argumentos: el evaluador ya apunta a `demo/` por defecto.
+Es la misma ruta que te imprimió el paso 2. Sin argumentos, el evaluador apunta a `demo/`, que es lo que necesitarás en el segundo recorrido.
 
 El evaluador imprime una línea así, con el número de tu corrida:
 
@@ -152,19 +164,21 @@ Resultado: N/6 checks pasan
 
 El único valor medido y publicado hasta ahora es `1/6`, obtenido con una versión anterior del prompt que **no** reportaba el bug. Con el prompt actual es razonable esperar un punto más, porque el escape sí se reporta, pero eso no está medido: el número que vale es el que te salga a ti.
 
-Ese número tampoco es la conclusión. Lo que importa es que el agente arregló exactamente lo que le pediste y, aun así, el archivo incumple las decisiones del producto que nadie escribió en ninguna parte. Ambos recorridos usan el mismo evaluador independiente.
+Ese número tampoco es la conclusión. Lo que importa es que el agente arregló exactamente lo que le pediste, lo verificó, y aun así el archivo incumple las decisiones del producto que nadie escribió en ninguna parte. Ambos recorridos usan el mismo evaluador independiente.
 
-## 5. Restaurar la misma carpeta
+## 5. Pasar al segundo recorrido
 
-Cierra la sesión del agente y, desde `videos/harness-engineering/`:
+No hay nada que restaurar: `demo/` no se tocó, porque el primer recorrido ocurrió en la copia. Sigue teniendo la misma implementación incorrecta del inicio y el harness completo.
+
+Cuando quieras eliminar la copia y dejar todo como estaba:
 
 ```bash
 npm run demo:reset
 ```
 
-El script te lista los archivos que creó el agente antes de eliminarlos, restaura `demo/` a su estado inicial y comprueba que no quedó nada pendiente. Todo lo destructivo queda acotado a `demo/`: no toca el resto del repositorio.
+El script borra la copia, lista los archivos sin rastrear que hubiera dentro de `demo/` antes de eliminarlos, la restaura y comprueba que no quedó nada pendiente. Dentro del repositorio, todo lo destructivo queda acotado a `demo/` con pathspec.
 
-Debe quedar limpio. Ahora tenemos la misma implementación incorrecta del comienzo, pero el harness vuelve a estar disponible.
+Este reset **sí** hace falta después de cada recorrido con harness, que es cuando el agente edita archivos dentro de `demo/`.
 
 ## 6. Comprobar el harness antes de corregir
 
@@ -250,12 +264,12 @@ npm run demo:reset
 
 La aplicación vuelve a quedar incorrecta y el harness vuelve a quedar instalado. No necesitas cambiar de commit, rama ni worktree.
 
-Todo el recorrido, entonces, son tres comandos tuyos:
+Todo el recorrido son tres comandos tuyos:
 
 ```bash
-npm run demo:sin-harness      # esconder
-node evaluation/evaluate.mjs  # medir
-npm run demo:reset            # restaurar
+npm run demo:sin-harness              # copia limpia fuera del repo
+node evaluation/evaluate.mjs [ruta]   # medir: con la ruta de la copia, o sin nada para demo/
+npm run demo:reset                    # borrar la copia y restaurar demo/
 ```
 
 ## Permisos
