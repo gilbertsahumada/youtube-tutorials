@@ -67,22 +67,24 @@ Detén el servidor antes de continuar.
 
 ## 2. Ocultar temporalmente el harness
 
-Elimina estos archivos y carpetas desde `demo/`:
+Desde `videos/harness-engineering/` (la carpeta de arriba, no `demo/`):
 
 ```bash
-rm AGENTS.md CLAUDE.md README.md
-rm -rf docs scripts test
-npm pkg delete scripts.harness:start scripts.verify
+npm run demo:sin-harness
 ```
 
-Dos detalles que importan:
+Eso es todo. El script borra `AGENTS.md`, `CLAUDE.md`, el `README.md` de la demo, la documentación, los scripts y los tests, y te imprime lo único que queda visible:
 
-- **`README.md` también se borra.** Describe el harness completo y apunta a `../evaluation/evaluate.mjs`, es decir, al archivo donde viven los seis criterios. Dejarlo sería entregarle el mapa al agente.
-- **Se borran `docs/` y `scripts/` enteros**, no solo sus subcarpetas: `rm -rf docs/harness scripts/harness` deja los directorios padre vacíos, que quedan a la vista y son una pista.
+```text
+package.json
+src
+```
 
-No elimines `src/`, `package.json` ni el evaluador externo. El agente debe recibir la aplicación incorrecta y la tarea, pero ninguna decisión del harness.
+Se borra también el `README.md` porque describe el harness y apunta al evaluador: dejarlo sería entregarle el mapa al agente. Y se borran `docs/` y `scripts/` enteros, no solo sus subcarpetas, porque los directorios padre vacíos también son una pista.
 
-Aun así, el aislamiento no es hermético: el historial de Git conserva todo, `git status` deja el rastro de los archivos recién borrados, y el propio `package.json` se sigue llamando `harness-engineering-demo`. Nada de eso revela los seis criterios, pero sí delata que aquí había un harness. Esto reduce la probabilidad de que el agente los encuentre, no la elimina. Para un experimento estricto, copia `demo/` fuera del repositorio y ejecuta ahí el primer recorrido.
+Los comandos de producción viven en `videos/harness-engineering/package.json`, fuera de `demo/`. Si estuvieran dentro, el agente los vería y descubriría que aquí hubo un harness.
+
+Aun así, el aislamiento no es hermético: el historial de Git conserva todo y el `package.json` de la demo se sigue llamando `harness-engineering-demo`. Nada de eso revela los seis criterios, pero sí delata que aquí había un harness. Reduce la probabilidad de que el agente los encuentre, no la elimina. Para un experimento estricto, copia `demo/` fuera del repositorio y ejecuta ahí el primer recorrido.
 
 Confirma el estado:
 
@@ -107,11 +109,13 @@ La respuesta es probabilística. En la ejecución validada para el video, Codex 
 
 ## 4. Evaluar el primer resultado
 
-Cuando el agente termine, permanece en `demo/` y ejecuta:
+Cuando el agente termine, vuelve a `videos/harness-engineering/` y ejecuta:
 
 ```bash
-node ../evaluation/evaluate.mjs .
+node evaluation/evaluate.mjs
 ```
+
+Sin argumentos: el evaluador ya apunta a `demo/` por defecto.
 
 En la ejecución usada para el video, el resultado fue:
 
@@ -123,29 +127,13 @@ Otra ejecución podría obtener un número diferente. Lo importante es que ambos
 
 ## 5. Restaurar la misma carpeta
 
-Cierra la sesión del agente. Después devuelve todos los archivos rastreados al estado inicial:
+Cierra la sesión del agente y, desde `videos/harness-engineering/`:
 
 ```bash
-git restore .
+npm run demo:reset
 ```
 
-El agente podría haber creado archivos nuevos que `git restore` no elimina. Revísalos antes de borrarlos:
-
-```bash
-git clean -nd
-```
-
-En esta copia dedicada a la demo, elimina únicamente esos archivos no rastreados:
-
-```bash
-git clean -fd
-```
-
-Comprueba nuevamente:
-
-```bash
-git status --short
-```
+El script te lista los archivos que creó el agente antes de eliminarlos, restaura `demo/` a su estado inicial y comprueba que no quedó nada pendiente. Todo lo destructivo queda acotado a `demo/`: no toca el resto del repositorio.
 
 Debe quedar limpio. Ahora tenemos la misma implementación incorrecta del comienzo, pero el harness vuelve a estar disponible.
 
@@ -160,11 +148,20 @@ El primer comando debe mostrar:
 
 ```text
 Harness ready
+Node: v20.19.6
 Product spec: docs/product/export-orders.md
 Verification: npm run verify
 ```
 
-`npm run verify` debe fallar. Esto es intencional: el harness está instalado, pero todavía no ha corregido la aplicación.
+Y `npm run verify` debe fallar:
+
+```text
+# tests 4
+# pass 1
+# fail 3
+```
+
+Esto es intencional: el harness ya está instalado, pero todavía no ha corregido la aplicación. Que el check siga rojo es la prueba de que el harness no arregla el bug por arte de magia — hace visible qué falta.
 
 ## 7. Repetir la misma tarea con harness
 
@@ -181,33 +178,56 @@ No es necesario nombrar esos archivos en el prompt. Esa información pertenece a
 
 ## 8. Comprobar el segundo resultado
 
+Dentro de `demo/`:
+
 ```bash
 npm run verify
-node ../evaluation/evaluate.mjs .
+```
+
+Y desde `videos/harness-engineering/`:
+
+```bash
+node evaluation/evaluate.mjs
 ```
 
 En el resultado validado para esta demo:
 
 ```text
-tests 4
-pass 4
-fail 0
+# tests 4
+# pass 4
+# fail 0
+```
+
+```text
+PASS incluye las columnas en el orden acordado
+PASS escapa comas y comillas del nombre del cliente
+PASS formatea totales con dos decimales
+PASS formatea fechas como YYYY-MM-DD
+PASS produce exactamente el CSV esperado
+PASS entrega headers HTTP de descarga
 
 Resultado: 6/6 checks pasan
 ```
 
+Esas seis etiquetas son las que imprime el evaluador de verdad. Si en el video prefieres una versión resumida, ponla como overlay de edición, no como si fuera la salida del terminal.
+
 ## Repetir la demo
 
-Para volver al estado inicial, cierra el agente y repite la restauración desde `demo/`:
+Cierra el agente y, desde `videos/harness-engineering/`:
 
 ```bash
-git restore .
-git clean -nd
-git clean -fd
-git status --short
+npm run demo:reset
 ```
 
 La aplicación vuelve a quedar incorrecta y el harness vuelve a quedar instalado. No necesitas cambiar de commit, rama ni worktree.
+
+Todo el recorrido, entonces, son tres comandos tuyos:
+
+```bash
+npm run demo:sin-harness      # esconder
+node evaluation/evaluate.mjs  # medir
+npm run demo:reset            # restaurar
+```
 
 ## Permisos
 

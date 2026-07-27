@@ -36,6 +36,31 @@ Modelo
 
 Harness Engineering es diseñar y mantener ese sistema para que el agente tenga mejores condiciones de trabajo. No consiste en escribir un prompt enorme ni en intentar controlar cada respuesta del modelo.
 
+## De dónde viene la palabra "harness"
+
+Casi todo el mundo asume que viene de los caballos. Es una suposición razonable y es incorrecta: los caballos aparecen temprano en la historia de la palabra, pero no son su origen.
+
+La cadena documentada, según tres fuentes que coinciden:
+
+```text
+nórdico antiguo *hernest    herr ("ejército") + nest ("provisiones")
+        ↓                   provisiones para una fuerza armada
+francés antiguo harneis     equipo de batalla, bagaje
+        ↓
+inglés c. 1300              equipo de combate personal, armadura
+        ↓
+inglés s. XIV temprano      arreos para animales de carga   ← el sentido "de caballos"
+        ↓
+inglés 1690s                (verbo) controlar algo para usarlo como fuerza motriz
+```
+
+O sea que "harness" nunca significó "sujetar a un animal". Significaba **el equipo que un ejército cargaba para poder pelear**. El sentido de arreos es una especialización posterior, del siglo XIV.
+
+Y el sentido que de verdad importa acá es el último, el figurado de los años 1690: *to harness* = tomar una fuerza que no controlas y convertirla en trabajo útil. Eso es exactamente lo que hace un harness alrededor de un agente: no lo sujeta ni lo limita, le da la estructura para que su capacidad rinda.
+
+> **Nota de honestidad:** no encontré ninguna fuente que documente por qué el término se adoptó en software (*test harness*). La conexión con el sentido de 1690 es una lectura razonable, no un hecho documentado. Las tres fuentes de arriba sí documentan todo lo anterior:
+> [Etymonline](https://www.etymonline.com/word/harness) · [Wiktionary](https://en.wiktionary.org/wiki/harness) · [Dictionary.com](https://www.dictionary.com/browse/harness)
+
 ## Las cuatro piezas
 
 ### 1. Contexto
@@ -83,7 +108,13 @@ El prompt tampoco incluye esas decisiones. Esa omisión es intencional: en un pr
 
 ## Primera ejecución: sin harness
 
-Partimos desde la única carpeta de la demo y ocultamos temporalmente `AGENTS.md`, `CLAUDE.md`, el `README.md` de la demo, la documentación, los scripts y los tests del harness. La aplicación incorrecta y el prompt no cambian.
+Partimos desde la única carpeta de la demo y ocultamos temporalmente el harness con un comando, desde `videos/harness-engineering/`:
+
+```bash
+npm run demo:sin-harness
+```
+
+El script borra `AGENTS.md`, `CLAUDE.md`, el `README.md` de la demo, la documentación, los scripts y los tests, y deja a la vista únicamente `package.json` y `src/`. La aplicación incorrecta y el prompt no cambian.
 
 El `README.md` se borra junto con el resto porque describe el harness y apunta al evaluador: dejarlo equivale a entregarle los criterios al agente.
 
@@ -109,7 +140,7 @@ La salida exacta del modelo es probabilística. Lo que se mantiene constante en 
 
 ## Construcción del harness
 
-Después de evaluar el primer resultado, restauramos la misma carpeta con `git restore .`. Eso recupera simultáneamente la implementación incorrecta original y el entorno de trabajo:
+Después de evaluar el primer resultado, restauramos la misma carpeta con `npm run demo:reset`. Eso recupera simultáneamente la implementación incorrecta original y el entorno de trabajo:
 
 ```text
 harness-engineering/

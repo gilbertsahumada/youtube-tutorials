@@ -1,0 +1,9 @@
+{
+  "name": "harness-engineering-tutorial",
+  "private": true,
+  "description": "Comandos de produccion del tutorial. Viven fuera de demo/ para que el agente no los vea.",
+  "scripts": {
+    "demo:sin-harness": "./scripts/sin-harness.sh",
+    "demo:reset": "./scripts/reset.sh"
+  }
+}
