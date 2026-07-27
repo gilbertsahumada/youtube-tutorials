@@ -13,6 +13,7 @@ videos/
   spec-driven-development/       → las 5 preguntas + skills scope/exec/prove/audit/ship
   creando-skills/                → anatomía de un SKILL.md, las 4 preguntas y cómo probarlo
   harness-engineering/            → demo comparativa sin harness y con harness
+  graph-engineering/              → un grafo de loops que se refutan entre sí, con ancla externa
 ```
 
 ## Videos
@@ -24,6 +25,7 @@ videos/
 | Spec-Driven Development sin ceremonia | [`videos/spec-driven-development`](videos/spec-driven-development) | Las 5 preguntas, la plantilla y los skills `scope · exec · prove · audit · ship` |
 | Cómo crear un Skill (que sí se activa) | [`videos/creando-skills`](videos/creando-skills) | La anatomía de un `SKILL.md`, las 4 preguntas antes de escribirlo, la plantilla y cómo probarlo |
 | Harness engineering con Claude Code y Codex | [`videos/harness-engineering`](videos/harness-engineering) | Una demo reproducible de contexto, especificación, scripts y feedback ejecutable |
+| Qué es Graph Engineering (y cuándo NO usarlo) | [`videos/graph-engineering`](videos/graph-engineering) | Un workflow real con lentes en paralelo, verificación adversarial y anclas externas |
 
 > Los links a cada video de YouTube se agregan acá a medida que se publican.
 
