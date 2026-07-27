@@ -70,12 +70,19 @@ Detén el servidor antes de continuar.
 Elimina estos archivos y carpetas desde `demo/`:
 
 ```bash
-rm AGENTS.md CLAUDE.md
-rm -rf docs/harness docs/product scripts/harness test
+rm AGENTS.md CLAUDE.md README.md
+rm -rf docs scripts test
 npm pkg delete scripts.harness:start scripts.verify
 ```
 
+Dos detalles que importan:
+
+- **`README.md` también se borra.** Describe el harness completo y apunta a `../evaluation/evaluate.mjs`, es decir, al archivo donde viven los seis criterios. Dejarlo sería entregarle el mapa al agente.
+- **Se borran `docs/` y `scripts/` enteros**, no solo sus subcarpetas: `rm -rf docs/harness scripts/harness` deja los directorios padre vacíos, que quedan a la vista y son una pista.
+
 No elimines `src/`, `package.json` ni el evaluador externo. El agente debe recibir la aplicación incorrecta y la tarea, pero ninguna decisión del harness.
+
+Aun así, el aislamiento no es hermético: el historial de Git conserva todo, `git status` deja el rastro de los archivos recién borrados, y el propio `package.json` se sigue llamando `harness-engineering-demo`. Nada de eso revela los seis criterios, pero sí delata que aquí había un harness. Esto reduce la probabilidad de que el agente los encuentre, no la elimina. Para un experimento estricto, copia `demo/` fuera del repositorio y ejecuta ahí el primer recorrido.
 
 Confirma el estado:
 
