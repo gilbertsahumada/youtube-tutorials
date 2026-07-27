@@ -83,7 +83,9 @@ El prompt tampoco incluye esas decisiones. Esa omisión es intencional: en un pr
 
 ## Primera ejecución: sin harness
 
-Partimos desde la única carpeta de la demo y ocultamos temporalmente `AGENTS.md`, `CLAUDE.md`, la documentación, los scripts y los tests del harness. La aplicación incorrecta y el prompt no cambian.
+Partimos desde la única carpeta de la demo y ocultamos temporalmente `AGENTS.md`, `CLAUDE.md`, el `README.md` de la demo, la documentación, los scripts y los tests del harness. La aplicación incorrecta y el prompt no cambian.
+
+El `README.md` se borra junto con el resto porque describe el harness y apunta al evaluador: dejarlo equivale a entregarle los criterios al agente.
 
 Sin ese entorno, el agente debe decidir por su cuenta qué significa que la exportación esté "lista para usar".
 
