@@ -5,8 +5,8 @@ Esta carpeta contiene una aplicación de pedidos deliberadamente incompleta y el
 La demo usa **una sola carpeta, un solo estado inicial y el mismo prompt** en las dos ejecuciones:
 
 ```text
-Completa la exportación de pedidos a CSV para que esté lista para usar.
-Al terminar, verifica que funcione.
+Termina la exportación de pedidos a CSV. Tiene que quedar lista para abrirla en Excel.
+Verifica que funcione antes de decirme que está lista.
 ```
 
 Primero ocultaremos temporalmente el harness. Después restauraremos exactamente el mismo estado inicial y repetiremos la tarea con el harness disponible.
@@ -57,11 +57,36 @@ El comando no debe mostrar nada.
 
 ## 1. Ver la aplicación inicial
 
+La app es una página interna de pedidos con un botón **Exportar CSV**: la idea es que alguien se lleve la tabla a Excel. El botón ya existe y ya devuelve un archivo, así que a primera vista funciona.
+
 ```bash
 npm start
 ```
 
-Abre `http://localhost:3000` y usa **Exportar CSV**. La descarga parece funcionar, pero todavía no escapa valores complejos, no normaliza dinero ni fechas y no entrega todos los headers requeridos.
+Abre `http://localhost:3000` y usa **Exportar CSV**.
+
+El primer defecto se ve antes de mirar el contenido: **el archivo no se descarga, se abre en la pestaña**. Falta el header `Content-Disposition: attachment`. (El nombre `orders.csv` sí está definido: viene de la URL `/api/orders.csv`.)
+
+Y este es el contenido que produce:
+
+```csv
+id,customer,total,status,created_at
+ORD-001,Acme Norte,1299.5,paid,2026-07-14T14:35:00.000Z
+ORD-002,Cafe "Central", SpA,89,pending,2026-07-15T09:10:00.000Z
+ORD-003,Distribuidora Sur,450.75,refunded,2026-07-16T18:05:00.000Z
+```
+
+Tres defectos, todos visibles:
+
+| Dónde | Qué se ve | Por qué importa |
+|---|---|---|
+| Fila `ORD-002` | `Cafe "Central", SpA` | La coma del nombre parte la fila: seis campos donde deberían ir cinco. En Excel ese pedido se corre entero |
+| Columna `total` | `1299.5` · `89` · `450.75` | Un decimal, ninguno y dos, en la misma columna de dinero |
+| Columna `created_at` | `2026-07-14T14:35:00.000Z` | Se llama fecha, pero trae hora y milisegundos |
+
+La causa está en `src/csv.js`, en cinco líneas: une los valores con comas y los escribe tal como vienen, sin escapar ni formatear.
+
+Lo que el producto necesita de verdad son seis criterios concretos, escritos en `docs/product/export-orders.md`. Esa es justamente la información que el agente **no** va a tener en la primera ejecución.
 
 Detén el servidor antes de continuar.
 
@@ -99,13 +124,13 @@ Debes ver únicamente los archivos del harness eliminados y `package.json` modif
 Abre Claude Code o Codex **dentro de `demo/`** y entrega exactamente este prompt:
 
 ```text
-Completa la exportación de pedidos a CSV para que esté lista para usar.
-Al terminar, verifica que funcione.
+Termina la exportación de pedidos a CSV. Tiene que quedar lista para abrirla en Excel.
+Verifica que funcione antes de decirme que está lista.
 ```
 
 No agregues criterios sobre el CSV. Permite que el agente inspeccione, implemente y verifique con la información disponible.
 
-La respuesta es probabilística. En la ejecución validada para el video, Codex creó sus propias pruebas y reportó `2/2`, pero tomó decisiones distintas de las requeridas por el producto.
+La respuesta es probabilística. En la ejecución registrada, Codex creó sus propias pruebas y reportó `2/2`, pero tomó decisiones distintas de las requeridas por el producto. Ese resultado se obtuvo con una versión anterior del prompt: con el prompt actual el número puede ser otro, y lo que importa es la comparación entre las dos pasadas, no el valor exacto.
 
 ## 4. Evaluar el primer resultado
 
@@ -117,7 +142,7 @@ node evaluation/evaluate.mjs
 
 Sin argumentos: el evaluador ya apunta a `demo/` por defecto.
 
-En la ejecución usada para el video, el resultado fue:
+En la ejecución registrada, el resultado fue:
 
 ```text
 Resultado: 1/6 checks pasan
@@ -168,8 +193,8 @@ Esto es intencional: el harness ya está instalado, pero todavía no ha corregid
 Abre una sesión nueva de Claude Code o Codex dentro de la misma carpeta `demo/` y entrega el mismo prompt:
 
 ```text
-Completa la exportación de pedidos a CSV para que esté lista para usar.
-Al terminar, verifica que funcione.
+Termina la exportación de pedidos a CSV. Tiene que quedar lista para abrirla en Excel.
+Verifica que funcione antes de decirme que está lista.
 ```
 
 El agente debe descubrir las instrucciones del proyecto, ejecutar `npm run harness:start`, leer la especificación y usar `npm run verify` como feedback antes de terminar.
