@@ -103,7 +103,7 @@ Resultado: 1/6 checks pasan
 
 Esto no demuestra que el modelo sea malo. Demuestra que una petición ambigua permite soluciones distintas y que el autoreporte no reemplaza un criterio externo.
 
-La salida exacta del modelo es probabilística. Lo que se mantiene constante en la comparación es la tarea y el evaluador de seis criterios. Ese [`evaluate.mjs`](evaluation/evaluate.mjs) vive fuera de la carpeta `demo/`, por lo que no se expone durante la inspección normal del espacio de trabajo del primer agente.
+La salida exacta del modelo es probabilística. Lo que se mantiene constante en la comparación es la tarea y el evaluador de seis criterios. Ese [`evaluate.mjs`](evaluation/evaluate.mjs) vive fuera de la carpeta `demo/` y no se menciona en el prompt. El aislamiento no es hermético — la carpeta sigue dentro del mismo repositorio Git —, pero en la ejecución registrada el agente no lo inspeccionó.
 
 ## Construcción del harness
 
@@ -143,7 +143,7 @@ Before declaring the task complete:
 3. Report the real verification output and any remaining limitation.
 ```
 
-[`CLAUDE.md`](demo/CLAUDE.md) apunta a esas mismas instrucciones. No mantenemos dos procesos diferentes: Claude Code y Codex comparten el harness del repositorio.
+[`CLAUDE.md`](demo/CLAUDE.md) importa esas mismas instrucciones con `@AGENTS.md`, el patrón documentado de Claude Code para compartir memoria entre herramientas. No mantenemos dos procesos diferentes: Claude Code y Codex comparten el harness del repositorio.
 
 ### Paso 2: sacar decisiones del prompt
 
