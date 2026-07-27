@@ -148,11 +148,20 @@ El primer comando debe mostrar:
 
 ```text
 Harness ready
+Node: v20.19.6
 Product spec: docs/product/export-orders.md
 Verification: npm run verify
 ```
 
-`npm run verify` debe fallar. Esto es intencional: el harness está instalado, pero todavía no ha corregido la aplicación.
+Y `npm run verify` debe fallar:
+
+```text
+# tests 4
+# pass 1
+# fail 3
+```
+
+Esto es intencional: el harness ya está instalado, pero todavía no ha corregido la aplicación. Que el check siga rojo es la prueba de que el harness no arregla el bug por arte de magia — hace visible qué falta.
 
 ## 7. Repetir la misma tarea con harness
 
@@ -184,12 +193,23 @@ node evaluation/evaluate.mjs
 En el resultado validado para esta demo:
 
 ```text
-tests 4
-pass 4
-fail 0
+# tests 4
+# pass 4
+# fail 0
+```
+
+```text
+PASS incluye las columnas en el orden acordado
+PASS escapa comas y comillas del nombre del cliente
+PASS formatea totales con dos decimales
+PASS formatea fechas como YYYY-MM-DD
+PASS produce exactamente el CSV esperado
+PASS entrega headers HTTP de descarga
 
 Resultado: 6/6 checks pasan
 ```
+
+Esas seis etiquetas son las que imprime el evaluador de verdad. Si en el video prefieres una versión resumida, ponla como overlay de edición, no como si fuera la salida del terminal.
 
 ## Repetir la demo
 
