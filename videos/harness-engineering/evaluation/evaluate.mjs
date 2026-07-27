@@ -3,9 +3,46 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const demoRoot = path.resolve(process.argv[2] ?? "demo");
-const csvModule = await import(pathToFileURL(path.join(demoRoot, "src/csv.js")));
-const serverModule = await import(pathToFileURL(path.join(demoRoot, "src/server.js")));
-const ordersModule = await import(pathToFileURL(path.join(demoRoot, "src/orders.js")));
+
+// Un agente puede renombrar o mover estos archivos. Si eso ocurre, el evaluador debe
+// explicar por que no pudo evaluar y aun asi imprimir un resultado, en vez de morir
+// con un error de import y dejar la comparacion sin numero.
+async function cargar(relativePath, exportEsperado) {
+  try {
+    const modulo = await import(pathToFileURL(path.join(demoRoot, relativePath)));
+    if (modulo[exportEsperado] === undefined) {
+      return { modulo, problema: `${relativePath} no exporta "${exportEsperado}"` };
+    }
+    return { modulo };
+  } catch (error) {
+    const detalle = error.message.split("\n")[0];
+    return { modulo: {}, problema: `no se pudo cargar ${relativePath}: ${detalle}` };
+  }
+}
+
+const [csv, server, orders] = await Promise.all([
+  cargar("src/csv.js", "ordersToCsv"),
+  cargar("src/server.js", "handleRequest"),
+  cargar("src/orders.js", "orders"),
+]);
+
+const problemas = [csv, server, orders].map((r) => r.problema).filter(Boolean);
+
+if (problemas.length > 0) {
+  console.log("AVISO: la implementacion no expone lo que este evaluador necesita.\n");
+  for (const problema of problemas) {
+    console.log(`  - ${problema}`);
+  }
+  console.log("\nPuntos de entrada esperados:");
+  console.log("  src/csv.js     -> ordersToCsv");
+  console.log("  src/server.js  -> handleRequest");
+  console.log("  src/orders.js  -> orders");
+  console.log("\nLos checks de abajo fallaran por eso, no necesariamente por el formato del CSV.\n");
+}
+
+const csvModule = csv.modulo;
+const serverModule = server.modulo;
+const ordersModule = orders.modulo;
 
 const expected = [
   "id,customer,total,status,created_at",
