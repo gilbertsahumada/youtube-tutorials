@@ -6,7 +6,7 @@ The **Exportar CSV** button must download all orders in a spreadsheet-compatible
 
 ## Expected file
 
-- Filename: `orders.csv`.
+- Filename: `orders.csv`, delivered with the header `Content-Disposition: attachment; filename="orders.csv"` so the browser saves the file instead of rendering it.
 - Content type: `text/csv; charset=utf-8`.
 - Columns, in this order: `id`, `customer`, `total`, `status`, `created_at`.
 - Preserve the order in which orders are received.
