@@ -5,8 +5,8 @@ Esta carpeta contiene una aplicación de pedidos deliberadamente incompleta y el
 La demo usa **una sola carpeta, un solo estado inicial y el mismo prompt** en las dos ejecuciones:
 
 ```text
-Termina la exportación de pedidos a CSV. Tiene que quedar lista para abrirla en Excel.
-Verifica que funcione antes de decirme que está lista.
+La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
+Arréglalo y verifica que quede bien.
 ```
 
 Primero ocultaremos temporalmente el harness. Después restauraremos exactamente el mismo estado inicial y repetiremos la tarea con el harness disponible.
@@ -124,13 +124,15 @@ Debes ver únicamente los archivos del harness eliminados y `package.json` modif
 Abre Claude Code o Codex **dentro de `demo/`** y entrega exactamente este prompt:
 
 ```text
-Termina la exportación de pedidos a CSV. Tiene que quedar lista para abrirla en Excel.
-Verifica que funcione antes de decirme que está lista.
+La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
+Arréglalo y verifica que quede bien.
 ```
 
-No agregues criterios sobre el CSV. Permite que el agente inspeccione, implemente y verifique con la información disponible.
+El prompt reporta un bug real, con su síntoma, igual que se lo reportarías a un colega. Lo que **no** hace es nombrar las decisiones del producto: cuántos decimales lleva el total, en qué formato va la fecha, cómo se llama el archivo o que deba descargarse en vez de abrirse. Eso no es parte del bug — es conocimiento que hoy no está en ninguna parte del repositorio.
 
-La respuesta es probabilística. En la ejecución registrada, Codex creó sus propias pruebas y reportó `2/2`, pero tomó decisiones distintas de las requeridas por el producto. Ese resultado se obtuvo con una versión anterior del prompt: con el prompt actual el número puede ser otro, y lo que importa es la comparación entre las dos pasadas, no el valor exacto.
+No agregues esos criterios al prompt. Permite que el agente inspeccione, implemente y verifique con la información disponible.
+
+La respuesta es probabilística. Lo esperable es que arregle el escape que le reportaste, escriba sus propias pruebas para ese caso y las reporte en verde, mientras el resto de las decisiones queda a su criterio.
 
 ## 4. Evaluar el primer resultado
 
@@ -142,13 +144,15 @@ node evaluation/evaluate.mjs
 
 Sin argumentos: el evaluador ya apunta a `demo/` por defecto.
 
-En la ejecución registrada, el resultado fue:
+El evaluador imprime una línea así, con el número de tu corrida:
 
 ```text
-Resultado: 1/6 checks pasan
+Resultado: N/6 checks pasan
 ```
 
-Otra ejecución podría obtener un número diferente. Lo importante es que ambos recorridos usan el mismo evaluador independiente.
+El único valor medido y publicado hasta ahora es `1/6`, obtenido con una versión anterior del prompt que **no** reportaba el bug. Con el prompt actual es razonable esperar un punto más, porque el escape sí se reporta, pero eso no está medido: el número que vale es el que te salga a ti.
+
+Ese número tampoco es la conclusión. Lo que importa es que el agente arregló exactamente lo que le pediste y, aun así, el archivo incumple las decisiones del producto que nadie escribió en ninguna parte. Ambos recorridos usan el mismo evaluador independiente.
 
 ## 5. Restaurar la misma carpeta
 
@@ -193,8 +197,8 @@ Esto es intencional: el harness ya está instalado, pero todavía no ha corregid
 Abre una sesión nueva de Claude Code o Codex dentro de la misma carpeta `demo/` y entrega el mismo prompt:
 
 ```text
-Termina la exportación de pedidos a CSV. Tiene que quedar lista para abrirla en Excel.
-Verifica que funcione antes de decirme que está lista.
+La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
+Arréglalo y verifica que quede bien.
 ```
 
 El agente debe descubrir las instrucciones del proyecto, ejecutar `npm run harness:start`, leer la especificación y usar `npm run verify` como feedback antes de terminar.
