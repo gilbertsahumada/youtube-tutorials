@@ -5,6 +5,7 @@ Before changing code:
 1. Run `npm run harness:start`.
 2. Read `docs/harness/workflow.md`.
 3. Read the product specification named by the task.
+4. Run `npm run verify` and read the failures. That output is the task.
 
 Before declaring the task complete:
 
