@@ -153,15 +153,26 @@ node evaluation/evaluate.mjs /ruta/a/tus/proyectos/orders-app
 
 Es la misma ruta que te imprimió el paso 1. Sin argumentos, el evaluador apunta a `demo/`, que es lo que necesitarás en el segundo recorrido.
 
-El evaluador imprime una línea así, con el número de tu corrida:
+Imprime los seis checks, el resultado, y el CSV producido contra el esperado con los `\r` y `\n` visibles.
 
-```text
-Resultado: N/6 checks pasan
-```
+**Compara ese resultado con el de la aplicación intacta** — corre el evaluador sin argumentos, contra `demo/`, que nadie tocó. Esa es la comparación que importa, y no es la que uno espera.
 
-El único valor medido y publicado hasta ahora es `1/6`, obtenido con una versión anterior del prompt que **no** reportaba el bug. Con el prompt actual es razonable esperar un punto más, porque el escape sí se reporta, pero eso no está medido: el número que vale es el que te salga a ti.
+En la corrida registrada, los dos dieron `2/6`:
 
-Ese número tampoco es la conclusión. Lo que importa es que el agente arregló exactamente lo que le pediste, lo verificó, y aun así el archivo incumple las decisiones del producto que nadie escribió en ninguna parte. Ambos recorridos usan el mismo evaluador independiente.
+| Check | App intacta | Después del agente |
+|---|---|---|
+| columnas y su orden | PASS | PASS |
+| escapa comas y comillas | FAIL | **PASS** |
+| totales con dos decimales | FAIL | FAIL |
+| fechas `YYYY-MM-DD` | FAIL | FAIL |
+| separa filas con LF, sin salto final | PASS | **FAIL** |
+| headers HTTP de descarga | FAIL | FAIL |
+
+El agente arregló lo que le reportaste **y rompió un criterio que ya estaba bien**: cambió los saltos de línea a `CRLF`. Y no se equivocó — `CRLF` es lo que manda RFC 4180, el estándar que él mismo citó. Este producto usa `LF`, y esa decisión no estaba en ninguna parte que él pudiera leer.
+
+Ahí está el punto de la demo, y no es "el agente programa mal". Es que **al no conocer las decisiones, puede romper las que ya estaban bien** — y quedarse tranquilo, porque su propia verificación pasó.
+
+Tu corrida dará otra cosa: la generación es probabilística. Lo que se repite no es el número, es que el resultado depende de que el modelo adivine.
 
 ## 5. Pasar al segundo recorrido
 
@@ -234,14 +245,16 @@ En el resultado validado para esta demo:
 ```
 
 ```text
-PASS incluye las columnas en el orden acordado
+PASS columnas y su orden
 PASS escapa comas y comillas del nombre del cliente
 PASS formatea totales con dos decimales
 PASS formatea fechas como YYYY-MM-DD
-PASS produce exactamente el CSV esperado
+PASS separa filas con LF y no deja salto final
 PASS entrega headers HTTP de descarga
 
 Resultado: 6/6 checks pasan
+
+El CSV coincide exactamente con el esperado.
 ```
 
 Esas seis etiquetas son las que imprime el evaluador de verdad. Si en el video prefieres una versión resumida, ponla como overlay de edición, no como si fuera la salida del terminal.

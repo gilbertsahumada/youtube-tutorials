@@ -13,6 +13,7 @@ The **Exportar CSV** button must download all orders in a spreadsheet-compatible
 - Format `total` with exactly two decimal places.
 - Format `created_at` as `YYYY-MM-DD` in UTC.
 - Escape values containing commas, double quotes, carriage returns, or line breaks by wrapping the value in double quotes and doubling each internal double quote.
+- Separate rows with a single `LF` (`\n`), not `CRLF`. RFC 4180 asks for `CRLF`; this product does not follow it here, because the file is consumed by an internal pipeline that splits on `LF`.
 - Do not add a trailing line break at the end of the file.
 
 ## Example

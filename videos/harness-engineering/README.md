@@ -138,7 +138,9 @@ En una ejecución registrada, el agente hizo un buen trabajo: arregló el escape
 
 Lo interesante es **qué verificó**: que cada fila tenga cinco columnas. Es decir, exactamente el síntoma que le reportaron. Nada más. No tocó decimales, ni el formato de fecha, ni el header de descarga, porque nadie le dijo nunca que existieran.
 
-Un evaluador independiente, que sí conoce las seis decisiones del producto, mide el resultado. El único valor publicado hasta ahora es `1/6`, obtenido con una versión anterior del prompt que no reportaba el bug; con el prompt actual es razonable esperar un punto más, pero **eso no está medido**.
+Un evaluador independiente mide el resultado con seis checks, cada uno sobre una decisión distinta. En la corrida registrada, la aplicación intacta y el resultado del agente dieron **el mismo `2/6`** — pero no el mismo `2/6`: el agente arregló el escapado que se le reportó y rompió el fin de línea, que ya estaba bien. Aplicó `CRLF`, que es lo que manda RFC 4180; este producto usa `LF`, y esa decisión no estaba escrita donde él pudiera leerla.
+
+Con el harness, `6/6`. Tu corrida dará otra cosa: lo que se repite no es el número, es que sin las decisiones escritas el resultado depende de adivinar.
 
 Esto no demuestra que el modelo sea malo. Demuestra que la verificación puede ser impecable y aun así medir el criterio equivocado, cuando ese criterio no está escrito en ninguna parte. Ese [`evaluate.mjs`](evaluation/evaluate.mjs) nunca se menciona en el prompt.
 
