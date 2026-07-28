@@ -86,7 +86,7 @@ Sin .git, sin carpeta padre con el evaluador. demo/ quedo intacta.
 
 Anota esa ruta: la vas a usar en el paso 4.
 
-> **Por qué una copia, y no borrar archivos dentro de `demo/`.** La primera versión de esta demo escondía el harness borrándolo. Parecía suficiente y no lo era: al agente le bastaba un `git status` para ver los nombres de todo lo borrado —incluido `docs/product/export-orders.md`, donde viven las decisiones del producto— y un `git show HEAD:...` para leerlos enteros. No es teórico: en una corrida real el agente lo detectó y lo dijo en su respuesta. La copia se llama `orders-app` a propósito, porque el agente ve el nombre de su directorio de trabajo, y al `package.json` copiado se le quitan los comandos `harness:start` y `verify`, que también delatarían el montaje. Efecto secundario bienvenido: `demo/` no se toca en todo el primer recorrido, así que **no hay que restaurar nada antes del segundo**.
+> **Por qué una copia, y no borrar archivos dentro de `demo/`.** La primera versión de esta demo escondía el harness borrándolo. Parecía suficiente y no lo era: al agente le bastaba un `git status` para ver los nombres de todo lo borrado, incluido `docs/product/export-orders.md`, donde viven las decisiones del producto, y un `git show HEAD:...` para leerlos enteros. No es teórico: en una corrida real el agente lo detectó y lo dijo en su respuesta. La copia se llama `orders-app` a propósito, porque el agente ve el nombre de su directorio de trabajo, y al `package.json` copiado se le quitan los comandos `harness:start` y `verify`, que también delatarían el montaje. Efecto secundario bienvenido: `demo/` no se toca en todo el primer recorrido, así que **no hay que restaurar nada antes del segundo**.
 
 ## 2. Ver la aplicación inicial
 
@@ -135,11 +135,11 @@ La exportación a CSV está fallando: abro el archivo en Excel y hay una fila do
 Arréglalo y verifica que quede bien.
 ```
 
-El prompt reporta un bug real, con su síntoma, igual que se lo reportarías a un colega. Lo que **no** hace es nombrar las decisiones del producto: cuántos decimales lleva el total, en qué formato va la fecha, cómo se llama el archivo o que deba descargarse en vez de abrirse. Eso no es parte del bug — es conocimiento que hoy no está en ninguna parte del repositorio.
+El prompt reporta un bug real, con su síntoma, igual que se lo reportarías a un colega. Lo que **no** hace es nombrar las decisiones del producto: cuántos decimales lleva el total, en qué formato va la fecha, cómo se llama el archivo o que deba descargarse en vez de abrirse. Eso no es parte del bug: es conocimiento que hoy no está en ninguna parte del repositorio.
 
 No agregues esos criterios al prompt. Permite que el agente inspeccione, implemente y verifique con la información disponible.
 
-La respuesta es probabilística. Lo esperable es que arregle el escape que le reportaste y lo verifique de alguna forma, mientras el resto de las decisiones queda a su criterio. En una corrida registrada, el agente escribió su propio chequeo con un parser CSV independiente —"para que no se valide a sí mismo", en sus palabras—, probó casos borde, lo corrió contra el endpoint real y reportó *"Listo, arreglado y verificado"*. No dejó tests en el repo: los escribió aparte y los descartó.
+La respuesta es probabilística. Lo esperable es que arregle el escape que le reportaste y lo verifique de alguna forma, mientras el resto de las decisiones queda a su criterio. En una corrida registrada, el agente escribió su propio chequeo con un parser CSV independiente, "para que no se valide a sí mismo" en sus palabras, probó casos borde, lo corrió contra el endpoint real y reportó *"Listo, arreglado y verificado"*. No dejó tests en el repo: los escribió aparte y los descartó.
 
 Lo interesante no es que trabajara mal, sino qué verificó: que **cada fila tenga cinco columnas**, es decir, exactamente el síntoma que le reportaste. Nada más.
 
@@ -157,7 +157,7 @@ La primera línea que imprime es `Evaluando: <ruta>`. Léela: en esta demo se mi
 
 Imprime los seis checks, el resultado, y el CSV producido contra el esperado con los `\r` y `\n` visibles.
 
-**Compara ese resultado con el de la aplicación intacta** — corre el evaluador sin argumentos, contra `demo/`, que nadie tocó. Esa es la comparación que importa, y no es la que uno espera.
+**Compara ese resultado con el de la aplicación intacta:** corre el evaluador sin argumentos, contra `demo/`, que nadie tocó. Esa es la comparación que importa, y no es la que uno espera.
 
 En la corrida registrada, los dos dieron `2/6`:
 
@@ -170,15 +170,15 @@ En la corrida registrada, los dos dieron `2/6`:
 | separa filas con LF, sin salto final | PASS | **FAIL** |
 | headers HTTP de descarga | FAIL | FAIL |
 
-El agente arregló lo que le reportaste **y rompió un criterio que ya estaba bien**: cambió los saltos de línea a `CRLF`. Y no se equivocó — `CRLF` es lo que manda RFC 4180, el estándar que él mismo citó. Este producto usa `LF`, y esa decisión no estaba en ninguna parte que él pudiera leer.
+El agente arregló lo que le reportaste **y rompió un criterio que ya estaba bien**: cambió los saltos de línea a `CRLF`. Y no se equivocó: `CRLF` es lo que manda RFC 4180, el estándar que él mismo citó. Este producto usa `LF`, y esa decisión no estaba en ninguna parte que él pudiera leer.
 
-Ahí está el punto de la demo, y no es "el agente programa mal". Es que **al no conocer las decisiones, puede romper las que ya estaban bien** — y quedarse tranquilo, porque su propia verificación pasó.
+Ahí está el punto de la demo, y no es "el agente programa mal". Es que **al no conocer las decisiones, puede romper las que ya estaban bien**, y quedarse tranquilo, porque su propia verificación pasó.
 
 Tu corrida dará otra cosa: la generación es probabilística. Lo que se repite no es el número, es que el resultado depende de que el modelo adivine.
 
 ## 5. Pasar a `demo/`, que sí tiene el harness
 
-**No hay nada que restaurar.** El agente trabajó en la copia, así que `demo/` quedó intacta: tiene exactamente la misma app rota del principio y, además, el harness. La comparación es limpia — mismo código de partida, mismo mensaje, y lo único distinto es lo que hay alrededor.
+**No hay nada que restaurar.** El agente trabajó en la copia, así que `demo/` quedó intacta: tiene exactamente la misma app rota del principio y, además, el harness. La comparación es limpia: mismo código de partida, mismo mensaje, y lo único distinto es lo que hay alrededor.
 
 ```bash
 cd demo
@@ -187,7 +187,7 @@ git status --short     # vacio: nadie la toco
 
 Son ocho archivos, y ninguno es especial: markdown, dos scripts de bash y un archivo de tests.
 
-### Pieza 1 — la puerta de entrada
+### Pieza 1: la puerta de entrada
 
 `AGENTS.md` es la guía canónica. Es corta a propósito: apunta a dónde está lo demás y define el ciclo mínimo.
 
@@ -202,7 +202,7 @@ Before changing code:
 
 El punto 4 es el que más cambia las cosas: el agente **empieza** mirando qué está mal, en vez de verificar al final para ver si acertó.
 
-`CLAUDE.md` solo importa ese archivo con la sintaxis `@`, que es el patrón documentado de memoria de Claude Code — se carga al iniciar la sesión sin pedirlo:
+`CLAUDE.md` solo importa ese archivo con la sintaxis `@`, que es el patrón documentado de memoria de Claude Code; se carga al iniciar la sesión sin pedirlo:
 
 ```md
 # Claude Code entry point
@@ -218,13 +218,13 @@ Claude Code -> CLAUDE.md -> AGENTS.md -> el workflow del proyecto
                     otras herramientas entran aqui directo
 ```
 
-### Pieza 2 — contexto y decisiones
+### Pieza 2: contexto y decisiones
 
 `docs/harness/workflow.md` dice cómo trabajar: preparar, leer la spec, verificar, hacer el cambio mínimo, verificar otra vez.
 
-`docs/product/export-orders.md` es donde dejan de vivir en tu cabeza las decisiones del producto: dos decimales, `YYYY-MM-DD`, escapado, `LF` en vez de `CRLF`, sin salto final, y el header de descarga. También dice qué **no** hacer — no agregar dependencias, no rediseñar la página, no tocar los tests.
+`docs/product/export-orders.md` es donde dejan de vivir en tu cabeza las decisiones del producto: dos decimales, `YYYY-MM-DD`, escapado, `LF` en vez de `CRLF`, sin salto final, y el header de descarga. También dice qué **no** hacer: no agregar dependencias, no rediseñar la página, no tocar los tests.
 
-## 6. Piezas 3 y 4 — los scripts y el feedback
+## 6. Piezas 3 y 4: los scripts y el feedback
 
 Primero el script directo, para ver que es un `.sh` normal:
 
@@ -256,7 +256,7 @@ npm run harness:start
 
 npm imprime qué está ejecutando (`> ./scripts/harness/start.sh`), así que el mapeo se ve solo. No hay nada nuevo aquí: es un script de bash y un alias, lo de siempre. Lo único que cambió es que ahora también lo corre un modelo.
 
-**No corras `npm run verify` todavía** — ese es el primer trabajo del agente en el paso siguiente, y verlo encontrarse con el rojo es la parte que vale.
+**No corras `npm run verify` todavía.** Ese es el primer trabajo del agente en el paso siguiente, y verlo encontrarse con el rojo es la parte que vale.
 
 (Si quieres el estado de partida sin abrir un agente: `npm run verify` da `1 pass / 3 fail`.)
 
@@ -271,7 +271,7 @@ Arréglalo y verifica que quede bien.
 
 El agente debe descubrir las instrucciones del proyecto, ejecutar `npm run harness:start`, leer la especificación y **correr `npm run verify` antes de escribir nada**: `AGENTS.md` y el workflow le dicen que las fallas que reporte son la tarea. Después implementa y lo vuelve a correr hasta que pase.
 
-Eso es lo que hay que mirar en este paso: el agente se encuentra con `1 pass / 3 fail`, y son esas tres fallas —no el mensaje que le mandaste— las que le dicen qué falta. En la primera pasada, sin harness, no existía nada equivalente.
+Eso es lo que hay que mirar en este paso: el agente se encuentra con `1 pass / 3 fail`, y son esas tres fallas, no el mensaje que le mandaste, las que le dicen qué falta. En la primera pasada, sin harness, no existía nada equivalente.
 
 No es necesario nombrar esos archivos en el prompt. Esa información pertenece al harness.
 
