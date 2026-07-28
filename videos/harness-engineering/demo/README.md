@@ -33,7 +33,7 @@ harness-engineering/
 
 El evaluador vive fuera de la carpeta de trabajo del agente y no se menciona en el prompt.
 
-En el **primer** recorrido el aislamiento es real: el agente trabaja sobre una copia fuera del repositorio, sin `.git` y sin ningún ancestro que contenga el evaluador (ver el paso 2).
+En el **primer** recorrido el aislamiento es real: el agente trabaja sobre una copia fuera del repositorio, sin `.git` y sin ningún ancestro que contenga el evaluador (ver el paso 1).
 
 En el **segundo** ya no hace falta esconder nada: los seis criterios están a la vista, en la spec y en los tests, porque eso es justamente lo que aporta el harness.
 
@@ -46,11 +46,11 @@ En el **segundo** ya no hace falta esconder nada: los seis criterios están a la
 - Una copia limpia del repositorio dedicada a la demo.
 - No hay dependencias externas que instalar.
 
-Clona el repositorio y entra en la única carpeta que usaremos:
+Clona el repositorio y entra en la carpeta del video (no en `demo/`: los comandos del recorrido se lanzan desde arriba):
 
 ```bash
 git clone https://github.com/gilbertsahumada/youtube-tutorials.git
-cd youtube-tutorials/videos/harness-engineering/demo
+cd youtube-tutorials/videos/harness-engineering
 ```
 
 Comprueba que no existan cambios previos:
@@ -61,12 +61,42 @@ git status --short
 
 El comando no debe mostrar nada.
 
-## 1. Ver la aplicación inicial
+## 1. Sacar una copia de la app, sin el harness
+
+El primer recorrido **no** se hace en `demo/`. Se hace en una copia de la app que vive fuera del repositorio, para que el aislamiento sea real.
+
+Desde `videos/harness-engineering/` (la carpeta de arriba, no `demo/`):
+
+```bash
+npm run demo:sin-harness
+```
+
+El script copia `package.json` y `src/` a una carpeta hermana del repositorio, llamada `orders-app`, y te imprime la ruta:
+
+```text
+Copia limpia creada en:
+  /ruta/a/tus/proyectos/orders-app
+
+Esto es todo lo que ve el agente:
+  package.json
+  src
+
+Sin .git, sin carpeta padre con el evaluador. demo/ quedo intacta.
+```
+
+Anota esa ruta: la vas a usar en el paso 4.
+
+> **Por qué una copia, y no borrar archivos dentro de `demo/`.** La primera versión de esta demo escondía el harness borrándolo. Parecía suficiente y no lo era: al agente le bastaba un `git status` para ver los nombres de todo lo borrado —incluido `docs/product/export-orders.md`, donde viven los seis criterios— y un `git show HEAD:...` para leerlos enteros. No es teórico: en una corrida real el agente lo detectó y lo dijo en su respuesta. La copia se llama `orders-app` a propósito, porque el agente ve el nombre de su directorio de trabajo, y al `package.json` copiado se le quitan los comandos `harness:start` y `verify`, que también delatarían el montaje. Efecto secundario bienvenido: `demo/` no se toca en todo el primer recorrido, así que **no hay que restaurar nada antes del segundo**.
+
+## 2. Ver la aplicación inicial
+
+Todo este paso ocurre **dentro de la copia**, que es exactamente lo que verá el agente.
 
 La app es una página interna de pedidos con un botón **Exportar CSV**: la idea es que alguien se lleve la tabla a Excel. El botón ya existe y ya devuelve un archivo, así que a primera vista funciona.
 
 ```bash
-npm start
+cd /ruta/a/tus/proyectos/orders-app
+PORT=3000 npm start
 ```
 
 Abre `http://localhost:3000` y usa **Exportar CSV**.
@@ -96,39 +126,6 @@ Lo que el producto necesita de verdad son seis criterios concretos, escritos en 
 
 Detén el servidor antes de continuar.
 
-## 2. Sacar una copia de la app, sin el harness
-
-El primer recorrido **no** se hace en `demo/`. Se hace en una copia de la app que vive fuera del repositorio.
-
-Desde `videos/harness-engineering/` (la carpeta de arriba, no `demo/`):
-
-```bash
-npm run demo:sin-harness
-```
-
-El script copia `package.json` y `src/` a una carpeta hermana del repositorio, llamada `orders-app`, y te imprime la ruta:
-
-```text
-Copia limpia creada en:
-  /ruta/a/tus/proyectos/orders-app
-
-Esto es todo lo que ve el agente:
-  package.json
-  src
-
-Sin .git, sin carpeta padre con el evaluador. demo/ quedo intacta.
-```
-
-### Por qué una copia fuera del repo, y no borrar archivos dentro de `demo/`
-
-La primera versión de esta demo escondía el harness borrándolo de `demo/`. Parecía suficiente y no lo era: al agente le bastaba un `git status` para ver los nombres de todo lo borrado, incluido `docs/product/export-orders.md`, que es exactamente donde viven los seis criterios. Con `git show HEAD:...` podía leerlos completos.
-
-No es un riesgo teórico. En una corrida real el agente lo detectó y lo dijo en su respuesta: *"test/export-orders.test.js está borrado en tu working tree, junto con README, docs y scripts/harness"*.
-
-Copiando fuera del repositorio no hay `.git` que consultar ni carpeta padre con el evaluador. La copia se llama `orders-app` a propósito: el agente ve el nombre de su propio directorio de trabajo, así que no puede llamarse `demo` ni contener la palabra `harness`. Y al `package.json` copiado se le quitan los comandos `harness:start` y `verify`, que también delatarían el montaje.
-
-Efecto secundario bienvenido: `demo/` no se toca en todo el primer recorrido, así que **no hay que restaurar nada antes del segundo**.
-
 ## 3. Ejecutar la tarea sin harness
 
 Abre Claude Code o Codex **dentro de `orders-app/`** (la copia, no `demo/`) y entrega exactamente este prompt:
@@ -154,7 +151,7 @@ Cuando el agente termine, vuelve a `videos/harness-engineering/` y ejecuta el ev
 node evaluation/evaluate.mjs /ruta/a/tus/proyectos/orders-app
 ```
 
-Es la misma ruta que te imprimió el paso 2. Sin argumentos, el evaluador apunta a `demo/`, que es lo que necesitarás en el segundo recorrido.
+Es la misma ruta que te imprimió el paso 1. Sin argumentos, el evaluador apunta a `demo/`, que es lo que necesitarás en el segundo recorrido.
 
 El evaluador imprime una línea así, con el número de tu corrida:
 
