@@ -46,7 +46,7 @@ Las tres demos con recorrido ejecutable, y qué hace cada una:
 
 | Demo | Qué corres | Qué obtienes |
 |---|---|---|
-| [`harness-engineering`](videos/harness-engineering) | el mismo mensaje dos veces, con y sin harness | un evaluador independiente puntúa las dos, de `N/6` a `6/6` |
+| [`harness-engineering`](videos/harness-engineering) | el mismo mensaje dos veces, con y sin harness | un evaluador independiente puntúa las dos: sin harness el marcador no se mueve, con harness `6/6` |
 | [`loop-engineering`](videos/loop-engineering) | `node loop-fix.mjs` | un loop que arregla una feature vuelta a vuelta y se detiene solo |
 | [`graph-engineering`](videos/graph-engineering) | `node review-graph.mjs` | lentes en paralelo, verificación adversarial y ancla externa |
 
