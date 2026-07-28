@@ -31,6 +31,27 @@ videos/
 
 > Los links a cada video de YouTube se agregan acá a medida que se publican.
 
+## Cómo reproducir una demo
+
+Todas se reproducen igual: clonas, entras a la carpeta del video y sigues su `README.md`. No hay dependencias que instalar.
+
+```bash
+git clone https://github.com/gilbertsahumada/youtube-tutorials.git
+cd youtube-tutorials/videos/<carpeta-del-video>
+```
+
+Necesitas **Node.js 20 o superior**, **Bash** (macOS, Linux o WSL — los scripts no corren en Windows nativo) y **Claude Code o Codex**.
+
+Las tres demos con recorrido ejecutable, y qué hace cada una:
+
+| Demo | Qué corres | Qué obtienes |
+|---|---|---|
+| [`harness-engineering`](videos/harness-engineering) | el mismo mensaje dos veces, con y sin harness | un evaluador independiente puntúa las dos, de `N/6` a `6/6` |
+| [`loop-engineering`](videos/loop-engineering) | `node loop-fix.mjs` | un loop que arregla una feature vuelta a vuelta y se detiene solo |
+| [`graph-engineering`](videos/graph-engineering) | `node review-graph.mjs` | lentes en paralelo, verificación adversarial y ancla externa |
+
+Los números que verás publicados salen de ejecuciones registradas y están marcados como tales. La generación es probabilística: **tu corrida dará algo distinto**, y esa es justamente la razón de que cada demo traiga su propio evaluador.
+
 ## Una nota sobre el idioma
 
 Todo está en español para que lo entiendas rápido, pero los modelos suelen rendir mejor en inglés (están entrenados mayormente en inglés). Si quieres exprimir mejores resultados, traduce los prompts, los skills y tus specs a inglés. Funciona igual en español, así que es cosa de cada uno.
