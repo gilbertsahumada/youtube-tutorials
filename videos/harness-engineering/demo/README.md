@@ -181,10 +181,9 @@ Este reset **sí** hace falta después de cada recorrido con harness, que es cua
 
 ```bash
 npm run harness:start
-npm run verify
 ```
 
-El primer comando debe mostrar:
+Debe mostrar:
 
 ```text
 Harness ready
@@ -193,15 +192,9 @@ Product spec: docs/product/export-orders.md
 Verification: npm run verify
 ```
 
-Y `npm run verify` debe fallar:
+Con eso basta: el harness está instalado y la aplicación sigue rota. **No corras `npm run verify` todavía** — ese es el primer trabajo del agente en el paso siguiente, y verlo encontrarse con el rojo es la parte que vale.
 
-```text
-# tests 4
-# pass 1
-# fail 3
-```
-
-Esto es intencional: el harness ya está instalado, pero todavía no ha corregido la aplicación. Que el check siga rojo es la prueba de que el harness no arregla el bug por arte de magia — hace visible qué falta.
+(Si quieres el estado de partida sin abrir un agente: `npm run verify` da `1 pass / 3 fail`.)
 
 ## 7. Repetir la misma tarea con harness
 
@@ -212,7 +205,9 @@ La exportación a CSV está fallando: abro el archivo en Excel y hay una fila do
 Arréglalo y verifica que quede bien.
 ```
 
-El agente debe descubrir las instrucciones del proyecto, ejecutar `npm run harness:start`, leer la especificación y usar `npm run verify` como feedback antes de terminar.
+El agente debe descubrir las instrucciones del proyecto, ejecutar `npm run harness:start`, leer la especificación y **correr `npm run verify` antes de escribir nada**: `AGENTS.md` y el workflow le dicen que las fallas que reporte son la tarea. Después implementa y lo vuelve a correr hasta que pase.
+
+Eso es lo que hay que mirar en este paso: el agente se encuentra con `1 pass / 3 fail`, y son esas tres fallas —no el mensaje que le mandaste— las que le dicen qué falta. En la primera pasada, sin harness, no existía nada equivalente.
 
 No es necesario nombrar esos archivos en el prompt. Esa información pertenece al harness.
 
