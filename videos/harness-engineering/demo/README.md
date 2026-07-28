@@ -151,7 +151,9 @@ Cuando el agente termine, vuelve a `videos/harness-engineering/` y ejecuta el ev
 node evaluation/evaluate.mjs /ruta/a/tus/proyectos/orders-app
 ```
 
-Es la misma ruta que te imprimió el paso 1. Sin argumentos, el evaluador apunta a `demo/`, que es lo que necesitarás en el segundo recorrido.
+Es la misma ruta que te imprimió el paso 1. Sin argumentos, el evaluador apunta a `demo/`, sin importar desde qué carpeta lo llames.
+
+La primera línea que imprime es `Evaluando: <ruta>`. Léela: en esta demo se mide dos veces, contra la copia y contra `demo/`, y esa línea es la que dice cuál de las dos estás midiendo.
 
 Imprime los seis checks, el resultado, y el CSV producido contra el esperado con los `\r` y `\n` visibles.
 
@@ -245,6 +247,8 @@ En el resultado validado para esta demo:
 ```
 
 ```text
+Evaluando: /ruta/a/youtube-tutorials/videos/harness-engineering/demo
+
 PASS columnas y su orden
 PASS escapa comas y comillas del nombre del cliente
 PASS formatea totales con dos decimales

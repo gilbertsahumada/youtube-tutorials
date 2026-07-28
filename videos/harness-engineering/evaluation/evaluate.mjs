@@ -1,8 +1,18 @@
 import assert from "node:assert/strict";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-const demoRoot = path.resolve(process.argv[2] ?? "demo");
+// Sin argumento evaluamos demo/, y esa ruta se resuelve respecto a ESTE archivo, no al
+// directorio desde el que llamas. Antes era relativa al cwd: correrlo desde evaluation/
+// buscaba evaluation/demo/ y devolvia 0/6 con seis errores de import, que parecen un
+// fallo de la implementacion y no lo son. Con un argumento explicito se respeta lo que
+// escribiste, relativo a donde estas.
+const aqui = path.dirname(fileURLToPath(import.meta.url));
+const demoRoot = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : path.join(aqui, "..", "demo");
+
+console.log(`Evaluando: ${demoRoot}\n`);
 
 // Un agente puede renombrar o mover estos archivos. Si eso ocurre, el evaluador debe
 // explicar por que no pudo evaluar y aun asi imprimir un resultado, en vez de morir
