@@ -1,4 +1,4 @@
-# IA en Producción — Recursos de los videos
+# IA en Producción: recursos de los videos
 
 Prompts, skills y ejemplos que acompañan los videos del canal **IA en Producción** ([@gilbertsahumada](https://www.youtube.com/@gilbertsahumada)). La idea de fondo: construir con IA **con criterio de ingeniería**, no tirándole prompts a ciegas.
 
@@ -40,7 +40,7 @@ git clone https://github.com/gilbertsahumada/youtube-tutorials.git
 cd youtube-tutorials/videos/<carpeta-del-video>
 ```
 
-Necesitas **Node.js 20 o superior**, **Bash** (macOS, Linux o WSL — los scripts no corren en Windows nativo) y **Claude Code o Codex**.
+Necesitas **Node.js 20 o superior**, **Bash** (macOS, Linux o WSL; los scripts no corren en Windows nativo) y **Claude Code o Codex**.
 
 Las tres demos con recorrido ejecutable, y qué hace cada una:
 
