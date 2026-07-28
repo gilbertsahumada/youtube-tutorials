@@ -51,9 +51,16 @@ const expected = [
   "ORD-003,Distribuidora Sur,450.75,refunded,2026-07-16",
 ].join("\n");
 
+// Cada check mide UNA decision y solo una. Arreglar cualquiera de ellas no debe
+// mover el resultado de las otras: si dos checks suben juntos siempre, el
+// marcador esta inflado y el "de N a 6" deja de significar algo.
+//
+// Por eso "produce exactamente el CSV esperado" ya no puntua: era la suma de los
+// cuatro checks de formato. Se imprime abajo como resumen, sin sumar.
 const checks = [
-  ["incluye las columnas en el orden acordado", () => {
-    const [header] = csvModule.ordersToCsv(ordersModule.orders).split("\n");
+  ["columnas y su orden", () => {
+    // Normalizamos el fin de linea a proposito: eso lo mide otro check.
+    const [header] = csvModule.ordersToCsv(ordersModule.orders).replace(/\r\n/g, "\n").split("\n");
     assert.equal(header, "id,customer,total,status,created_at");
   }],
   ["escapa comas y comillas del nombre del cliente", () => {
@@ -69,22 +76,22 @@ const checks = [
     assert.doesNotMatch(csv, /T14:35/);
     assert.match(csv, /2026-07-14/);
   }],
-  ["produce exactamente el CSV esperado", () => {
-    assert.equal(csvModule.ordersToCsv(ordersModule.orders), expected);
+  ["separa filas con LF y no deja salto final", () => {
+    const csv = csvModule.ordersToCsv(ordersModule.orders);
+    assert.doesNotMatch(csv, /\r\n/, "usa CRLF; este producto espera LF");
+    assert.doesNotMatch(csv, /\n$/, "deja un salto de linea al final");
   }],
   ["entrega headers HTTP de descarga", () => {
+    // Solo el contrato HTTP. El contenido del cuerpo lo miden los checks de arriba.
     let status;
     let headers;
-    let body;
     const response = {
       writeHead(nextStatus, nextHeaders) {
         status = nextStatus;
         headers = nextHeaders;
         return this;
       },
-      end(nextBody) {
-        body = nextBody;
-      },
+      end() {},
     };
 
     serverModule.handleRequest({ url: "/api/orders.csv" }, response);
@@ -92,7 +99,6 @@ const checks = [
     assert.equal(status, 200);
     assert.equal(headers["Content-Type"], "text/csv; charset=utf-8");
     assert.equal(headers["Content-Disposition"], 'attachment; filename="orders.csv"');
-    assert.equal(body, expected);
   }],
 ];
 
@@ -110,4 +116,21 @@ for (const [name, check] of checks) {
 }
 
 console.log(`\nResultado: ${passed}/${checks.length} checks pasan`);
+
+// Resumen, no puntua: sirve para ver el archivo entero en pantalla.
+try {
+  const actual = csvModule.ordersToCsv(ordersModule.orders);
+  const visible = (texto) => texto.replace(/\r/g, "\\r").replace(/\n/g, "\\n\n");
+  if (actual === expected) {
+    console.log("\nEl CSV coincide exactamente con el esperado.");
+  } else {
+    console.log("\nCSV producido (\\r y \\n visibles):\n");
+    console.log(visible(actual));
+    console.log("\nCSV esperado:\n");
+    console.log(visible(expected));
+  }
+} catch {
+  console.log("\nNo se pudo generar el CSV para el resumen.");
+}
+
 process.exitCode = passed === checks.length ? 0 : 1;
