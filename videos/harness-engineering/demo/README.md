@@ -1,6 +1,6 @@
 # Demo reproducible: Harness Engineering
 
-Esta carpeta contiene una aplicación de pedidos deliberadamente incompleta y el harness que debe guiar a Claude Code o Codex para corregirla.
+Esta carpeta contiene una aplicación de pedidos deliberadamente incompleta y el harness que debe guiar a Claude Code para corregirla.
 
 La demo usa **el mismo código de partida y el mismo mensaje** en las dos ejecuciones. Lo único que cambia es el entorno: la primera vez el agente trabaja sobre una copia que solo tiene la app; la segunda, sobre la carpeta que además tiene el harness.
 
@@ -19,30 +19,30 @@ Primero sacaremos una copia de la app sin el harness y correremos ahí la tarea.
 harness-engineering/
 ├── evaluation/evaluate.mjs           # evaluador externo a la carpeta del agente
 └── demo/
-    ├── AGENTS.md                     # entrada de Codex
+    ├── AGENTS.md                     # la guia canonica del proyecto
     ├── CLAUDE.md                     # entrada de Claude Code
     ├── docs/
-    │   ├── harness/workflow.md       # proceso compartido
-    │   └── product/export-orders.md  # decisiones del producto
+    │   ├── harness/workflow.md       # como se trabaja
+    │   └── product/export-orders.md  # las decisiones del producto
     ├── scripts/harness/
-    │   ├── start.sh                  # comprueba el entorno
-    │   └── verify.sh                 # ejecuta la verificación
+    │   ├── start.sh                  # npm run harness:start
+    │   └── verify.sh                 # npm run verify
     ├── test/export-orders.test.js    # feedback ejecutable
-    └── src/                          # aplicación incorrecta
+    └── src/                          # la misma app rota
 ```
 
 El evaluador vive fuera de la carpeta de trabajo del agente y no se menciona en el prompt.
 
 En el **primer** recorrido el aislamiento es real: el agente trabaja sobre una copia fuera del repositorio, sin `.git` y sin ningún ancestro que contenga el evaluador (ver el paso 1).
 
-En el **segundo** ya no hace falta esconder nada: los seis criterios están a la vista, en la spec y en los tests, porque eso es justamente lo que aporta el harness.
+En el **segundo** ya no hace falta esconder nada: las decisiones están a la vista, en la spec y en los tests, porque eso es justamente lo que aporta el harness.
 
 ## Requisitos
 
 - Git.
 - Node.js 20 o superior.
 - Bash (macOS, Linux o WSL). Los scripts no son portables a Windows nativo.
-- Claude Code o Codex.
+- Claude Code.
 - Una copia limpia del repositorio dedicada a la demo.
 - No hay dependencias externas que instalar.
 
@@ -86,7 +86,7 @@ Sin .git, sin carpeta padre con el evaluador. demo/ quedo intacta.
 
 Anota esa ruta: la vas a usar en el paso 4.
 
-> **Por qué una copia, y no borrar archivos dentro de `demo/`.** La primera versión de esta demo escondía el harness borrándolo. Parecía suficiente y no lo era: al agente le bastaba un `git status` para ver los nombres de todo lo borrado —incluido `docs/product/export-orders.md`, donde viven los seis criterios— y un `git show HEAD:...` para leerlos enteros. No es teórico: en una corrida real el agente lo detectó y lo dijo en su respuesta. La copia se llama `orders-app` a propósito, porque el agente ve el nombre de su directorio de trabajo, y al `package.json` copiado se le quitan los comandos `harness:start` y `verify`, que también delatarían el montaje. Efecto secundario bienvenido: `demo/` no se toca en todo el primer recorrido, así que **no hay que restaurar nada antes del segundo**.
+> **Por qué una copia, y no borrar archivos dentro de `demo/`.** La primera versión de esta demo escondía el harness borrándolo. Parecía suficiente y no lo era: al agente le bastaba un `git status` para ver los nombres de todo lo borrado —incluido `docs/product/export-orders.md`, donde viven las decisiones del producto— y un `git show HEAD:...` para leerlos enteros. No es teórico: en una corrida real el agente lo detectó y lo dijo en su respuesta. La copia se llama `orders-app` a propósito, porque el agente ve el nombre de su directorio de trabajo, y al `package.json` copiado se le quitan los comandos `harness:start` y `verify`, que también delatarían el montaje. Efecto secundario bienvenido: `demo/` no se toca en todo el primer recorrido, así que **no hay que restaurar nada antes del segundo**.
 
 ## 2. Ver la aplicación inicial
 
@@ -122,13 +122,13 @@ Tres defectos, todos visibles:
 
 La causa está en `src/csv.js`, en cinco líneas: une los valores con comas y los escribe tal como vienen, sin escapar ni formatear.
 
-Lo que el producto necesita de verdad son seis criterios concretos, escritos en `docs/product/export-orders.md`. Esa es justamente la información que el agente **no** va a tener en la primera ejecución.
+Lo que el producto necesita de verdad está escrito en `docs/product/export-orders.md`. Esa es justamente la información que el agente **no** va a tener en la primera ejecución.
 
 Detén el servidor antes de continuar.
 
 ## 3. Ejecutar la tarea sin harness
 
-Abre Claude Code o Codex **dentro de `orders-app/`** (la copia, no `demo/`) y entrega exactamente este prompt:
+Abre Claude Code **dentro de `orders-app/`** (la copia, no `demo/`) y entrega exactamente este prompt:
 
 ```text
 La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
@@ -176,27 +176,61 @@ Ahí está el punto de la demo, y no es "el agente programa mal". Es que **al no
 
 Tu corrida dará otra cosa: la generación es probabilística. Lo que se repite no es el número, es que el resultado depende de que el modelo adivine.
 
-## 5. Pasar al segundo recorrido
+## 5. Pasar a `demo/`, que sí tiene el harness
 
-No hay nada que restaurar: `demo/` no se tocó, porque el primer recorrido ocurrió en la copia. Sigue teniendo la misma implementación incorrecta del inicio y el harness completo.
-
-Cuando quieras eliminar la copia y dejar todo como estaba:
+**No hay nada que restaurar.** El agente trabajó en la copia, así que `demo/` quedó intacta: tiene exactamente la misma app rota del principio y, además, el harness. La comparación es limpia — mismo código de partida, mismo mensaje, y lo único distinto es lo que hay alrededor.
 
 ```bash
-npm run demo:reset
+cd demo
+git status --short     # vacio: nadie la toco
 ```
 
-El script borra la copia, lista los archivos sin rastrear que hubiera dentro de `demo/` antes de eliminarlos, la restaura y comprueba que no quedó nada pendiente. Dentro del repositorio, todo lo destructivo queda acotado a `demo/` con pathspec.
+Son ocho archivos, y ninguno es especial: markdown, dos scripts de bash y un archivo de tests.
 
-Este reset **sí** hace falta después de cada recorrido con harness, que es cuando el agente edita archivos dentro de `demo/`.
+### Pieza 1 — la puerta de entrada
 
-## 6. Comprobar el harness antes de corregir
+`AGENTS.md` es la guía canónica. Es corta a propósito: apunta a dónde está lo demás y define el ciclo mínimo.
+
+```md
+Before changing code:
+
+1. Run `npm run harness:start`.
+2. Read `docs/harness/workflow.md`.
+3. Read the product specification named by the task.
+4. Run `npm run verify` and read the failures. That output is the task.
+```
+
+El punto 4 es el que más cambia las cosas: el agente **empieza** mirando qué está mal, en vez de verificar al final para ver si acertó.
+
+`CLAUDE.md` solo importa ese archivo con la sintaxis `@`, que es el patrón documentado de memoria de Claude Code — se carga al iniciar la sesión sin pedirlo:
+
+```md
+# Claude Code entry point
+
+@AGENTS.md
+
+`AGENTS.md` is the canonical project guide.
+```
+
+```text
+Claude Code -> CLAUDE.md -> AGENTS.md -> el workflow del proyecto
+                                ↑
+                    otras herramientas entran aqui directo
+```
+
+### Pieza 2 — contexto y decisiones
+
+`docs/harness/workflow.md` dice cómo trabajar: preparar, leer la spec, verificar, hacer el cambio mínimo, verificar otra vez.
+
+`docs/product/export-orders.md` es donde dejan de vivir en tu cabeza las decisiones del producto: dos decimales, `YYYY-MM-DD`, escapado, `LF` en vez de `CRLF`, sin salto final, y el header de descarga. También dice qué **no** hacer — no agregar dependencias, no rediseñar la página, no tocar los tests.
+
+## 6. Piezas 3 y 4 — los scripts y el feedback
+
+Primero el script directo, para ver que es un `.sh` normal:
 
 ```bash
-npm run harness:start
+./scripts/harness/start.sh
 ```
-
-Debe mostrar:
 
 ```text
 Harness ready
@@ -205,13 +239,30 @@ Product spec: docs/product/export-orders.md
 Verification: npm run verify
 ```
 
-Con eso basta: el harness está instalado y la aplicación sigue rota. **No corras `npm run verify` todavía** — ese es el primer trabajo del agente en el paso siguiente, y verlo encontrarse con el rojo es la parte que vale.
+Comprueba la versión de Node y que existan las piezas del workflow. No instala nada y es idempotente.
+
+Y en `package.json` está el atajo, que es la interfaz estable que usa el agente:
+
+```json
+"scripts": {
+  "harness:start": "./scripts/harness/start.sh",
+  "verify": "./scripts/harness/verify.sh"
+}
+```
+
+```bash
+npm run harness:start
+```
+
+npm imprime qué está ejecutando (`> ./scripts/harness/start.sh`), así que el mapeo se ve solo. No hay nada nuevo aquí: es un script de bash y un alias, lo de siempre. Lo único que cambió es que ahora también lo corre un modelo.
+
+**No corras `npm run verify` todavía** — ese es el primer trabajo del agente en el paso siguiente, y verlo encontrarse con el rojo es la parte que vale.
 
 (Si quieres el estado de partida sin abrir un agente: `npm run verify` da `1 pass / 3 fail`.)
 
 ## 7. Repetir la misma tarea con harness
 
-Abre una sesión nueva de Claude Code o Codex dentro de la misma carpeta `demo/` y entrega el mismo prompt:
+Abre una sesión nueva de Claude Code dentro de la misma carpeta `demo/` y entrega el mismo prompt:
 
 ```text
 La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
@@ -226,13 +277,7 @@ No es necesario nombrar esos archivos en el prompt. Esa información pertenece a
 
 ## 8. Comprobar el segundo resultado
 
-Dentro de `demo/`:
-
-```bash
-npm run verify
-```
-
-Y desde `videos/harness-engineering/`:
+El propio agente ya corrió `npm run verify` y debería reportar `4/4`. Compruébalo tú desde `videos/harness-engineering/` con el evaluador, que él nunca vio:
 
 ```bash
 node evaluation/evaluate.mjs
@@ -273,6 +318,8 @@ npm run demo:reset
 
 La aplicación vuelve a quedar incorrecta y el harness vuelve a quedar instalado. No necesitas cambiar de commit, rama ni worktree.
 
+El script borra la copia, lista los archivos sin rastrear que hubiera dentro de `demo/` antes de eliminarlos, restaura la carpeta y comprueba que no quedó nada pendiente. Todo lo destructivo queda acotado a `demo/` con pathspec. **Ojo: descarta los cambios sin commitear que haya ahí dentro**, incluido el trabajo del agente que acabas de ver.
+
 Todo el recorrido son tres comandos tuyos:
 
 ```bash
@@ -283,6 +330,6 @@ npm run demo:reset                    # borrar la copia y restaurar demo/
 
 ## Permisos
 
-La herramienta debe tener permiso para ejecutar los scripts del proyecto. El harness no evade el sandbox ni las aprobaciones de Claude Code o Codex. Si un comando está bloqueado, el comportamiento correcto es reportarlo en vez de afirmar que la verificación pasó.
+La herramienta debe tener permiso para ejecutar los scripts del proyecto. El harness no evade el sandbox ni las aprobaciones de Claude Code. Si un comando está bloqueado, el comportamiento correcto es reportarlo en vez de afirmar que la verificación pasó.
 
 No hay hooks en la demo. El agente ejecuta los scripts porque el workflow del repositorio se lo indica.
