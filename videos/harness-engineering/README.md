@@ -11,7 +11,7 @@ La exportación a CSV está fallando: abro el archivo en Excel y hay una fila do
 Arréglalo y verifica que quede bien.
 ```
 
-Es un reporte de bug normal: dice qué falla y con qué síntoma. Lo que **no** dice es cuántos decimales lleva el total, en qué formato va la fecha o que el archivo deba descargarse. Eso no es parte del bug — son decisiones del producto, y ahí está toda la diferencia entre las dos ejecuciones.
+Es un reporte de bug normal: dice qué falla y con qué síntoma. Lo que **no** dice es cuántos decimales lleva el total, en qué formato va la fecha o que el archivo deba descargarse. Eso no es parte del bug: son decisiones del producto, y ahí está toda la diferencia entre las dos ejecuciones.
 
 ## Qué es Harness Engineering
 
@@ -125,7 +125,7 @@ Lo que el producto necesita son seis criterios concretos, escritos en [`demo/doc
 
 El agente trabaja sobre una copia de la app que vive **fuera del repositorio**: solo `package.json` y `src/`, sin `.git` y sin carpeta padre que contenga el evaluador.
 
-Esto empezó siendo más simple —borrar el harness dentro de `demo/`— y no funcionaba. Con la carpeta dentro de un repo Git, al agente le bastaba `git status` para ver los nombres de todo lo borrado, incluido el archivo con los seis criterios, y `git show` para leerlos. No es teórico: un agente lo detectó y lo dijo en su respuesta.
+Esto empezó siendo más simple, borrando el harness dentro de `demo/`, y no funcionaba. Con la carpeta dentro de un repo Git, al agente le bastaba `git status` para ver los nombres de todo lo borrado, incluido el archivo con los seis criterios, y `git show` para leerlos. No es teórico: un agente lo detectó y lo dijo en su respuesta.
 
 El prompt reporta el bug con su síntoma, como se lo reportarías a un colega, y calla las decisiones del producto:
 
@@ -134,11 +134,11 @@ La exportación a CSV está fallando: abro el archivo en Excel y hay una fila do
 Arréglalo y verifica que quede bien.
 ```
 
-En una ejecución registrada, el agente hizo un buen trabajo: arregló el escape siguiendo RFC 4180, escribió su propio chequeo con un parser CSV independiente —"para que no se valide a sí mismo", en sus palabras—, probó casos borde, lo corrió contra el endpoint real y reportó *"Listo, arreglado y verificado"*.
+En una ejecución registrada, el agente hizo un buen trabajo: arregló el escape siguiendo RFC 4180, escribió su propio chequeo con un parser CSV independiente, "para que no se valide a sí mismo" en sus palabras, probó casos borde, lo corrió contra el endpoint real y reportó *"Listo, arreglado y verificado"*.
 
 Lo interesante es **qué verificó**: que cada fila tenga cinco columnas. Es decir, exactamente el síntoma que le reportaron. Nada más. No tocó decimales, ni el formato de fecha, ni el header de descarga, porque nadie le dijo nunca que existieran.
 
-Un evaluador independiente mide el resultado con seis checks, cada uno sobre una decisión distinta. En la corrida registrada, la aplicación intacta y el resultado del agente dieron **el mismo `2/6`** — pero no el mismo `2/6`: el agente arregló el escapado que se le reportó y rompió el fin de línea, que ya estaba bien. Aplicó `CRLF`, que es lo que manda RFC 4180; este producto usa `LF`, y esa decisión no estaba escrita donde él pudiera leerla.
+Un evaluador independiente mide el resultado con seis checks, cada uno sobre una decisión distinta. En la corrida registrada, la aplicación intacta y el resultado del agente dieron **el mismo `2/6`**, pero no el mismo `2/6`. El agente arregló el escapado que se le reportó y rompió el fin de línea, que ya estaba bien. Aplicó `CRLF`, que es lo que manda RFC 4180; este producto usa `LF`, y esa decisión no estaba escrita donde él pudiera leerla.
 
 Con el harness, `6/6`. Tu corrida dará otra cosa: lo que se repite no es el número, es que sin las decisiones escritas el resultado depende de adivinar.
 
