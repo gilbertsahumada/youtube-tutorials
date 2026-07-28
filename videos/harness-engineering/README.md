@@ -4,12 +4,14 @@
 
 En este tutorial construiremos un harness dentro de un repositorio. Funcionará tanto con Claude Code como con Codex y no dependerá de hooks, plugins ni un framework de agentes.
 
-La prueba será concreta: le daremos exactamente la misma tarea al mismo modelo, primero sin harness y después con harness.
+La prueba será concreta: le daremos exactamente el mismo mensaje al mismo modelo, primero sin harness y después con harness. Sin cambiar una coma.
 
 ```text
-Completa la exportación de pedidos a CSV para que esté lista para usar.
-Al terminar, verifica que funcione.
+La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
+Arréglalo y verifica que quede bien.
 ```
+
+Es un reporte de bug normal: dice qué falla y con qué síntoma. Lo que **no** dice es cuántos decimales lleva el total, en qué formato va la fecha o que el archivo deba descargarse. Eso no es parte del bug — son decisiones del producto, y ahí está toda la diferencia entre las dos ejecuciones.
 
 ## Qué es Harness Engineering
 
@@ -96,47 +98,49 @@ Sin ese feedback, el agente solo puede revisar su propio código y afirmar que p
 
 ## La demo
 
-La aplicación muestra una lista de pedidos y tiene un botón **Exportar CSV**. La implementación inicial funciona con datos simples, pero no define qué hacer con:
+> Los pasos para reproducirla están en **[`demo/README.md`](demo/README.md)**. Este archivo cuenta
+> qué pasó y por qué; el otro dice qué teclear. No repetimos lo mismo en dos sitios.
 
-- nombres que contienen comas o comillas;
-- totales que necesitan dos decimales;
-- fechas que deben normalizarse en UTC;
-- nombre y tipo de contenido de la descarga;
-- saltos de línea y retorno de carro dentro de un valor.
+La aplicación muestra tres pedidos y un botón **Exportar CSV**, para que alguien se lleve la tabla a Excel. El botón ya devuelve un archivo, así que a primera vista funciona. Este es el archivo que produce:
 
-El prompt tampoco incluye esas decisiones. Esa omisión es intencional: en un proyecto real, no deberíamos repetir todo el conocimiento del producto en cada petición.
+```csv
+id,customer,total,status,created_at
+ORD-001,Acme Norte,1299.5,paid,2026-07-14T14:35:00.000Z
+ORD-002,Cafe "Central", SpA,89,pending,2026-07-15T09:10:00.000Z
+ORD-003,Distribuidora Sur,450.75,refunded,2026-07-16T18:05:00.000Z
+```
+
+Tres defectos visibles, más uno que se nota antes de abrirlo:
+
+| Dónde | Qué se ve | Por qué importa |
+|---|---|---|
+| Al descargar | el archivo se abre en la pestaña | falta `Content-Disposition: attachment` |
+| Fila `ORD-002` | `Cafe "Central", SpA` | la coma parte la fila: seis campos donde van cinco |
+| Columna `total` | `1299.5` · `89` · `450.75` | un decimal, ninguno y dos, en la misma columna de dinero |
+| Columna `created_at` | `2026-07-14T14:35:00.000Z` | se llama fecha, pero trae hora y milisegundos |
+
+Lo que el producto necesita son seis criterios concretos, escritos en [`demo/docs/product/export-orders.md`](demo/docs/product/export-orders.md). El prompt no los menciona, y esa omisión es deliberada: en un proyecto real no repetimos todo el conocimiento del producto en cada petición.
 
 ## Primera ejecución: sin harness
 
-Partimos desde la única carpeta de la demo y ocultamos temporalmente el harness con un comando, desde `videos/harness-engineering/`:
+El agente trabaja sobre una copia de la app que vive **fuera del repositorio**: solo `package.json` y `src/`, sin `.git` y sin carpeta padre que contenga el evaluador.
 
-```bash
-npm run demo:sin-harness
-```
+Esto empezó siendo más simple —borrar el harness dentro de `demo/`— y no funcionaba. Con la carpeta dentro de un repo Git, al agente le bastaba `git status` para ver los nombres de todo lo borrado, incluido el archivo con los seis criterios, y `git show` para leerlos. No es teórico: un agente lo detectó y lo dijo en su respuesta.
 
-El script borra `AGENTS.md`, `CLAUDE.md`, el `README.md` de la demo, la documentación, los scripts y los tests, y deja a la vista únicamente `package.json` y `src/`. La aplicación incorrecta y el prompt no cambian.
-
-El `README.md` se borra junto con el resto porque describe el harness y apunta al evaluador: dejarlo equivale a entregarle los criterios al agente.
-
-Sin ese entorno, el agente debe decidir por su cuenta qué significa que la exportación esté "lista para usar".
-
-En la ejecución grabada, Codex hizo algo razonable:
-
-1. Inspeccionó el código existente.
-2. Mejoró la función de exportación.
-3. Creó sus propias pruebas.
-4. Ejecutó esas pruebas y obtuvo `2/2`.
-5. Reportó que la tarea estaba lista.
-
-El problema es que esas pruebas validaban las mismas suposiciones que el agente acababa de tomar. Un evaluador independiente, que sí conocía las seis decisiones del producto, obtuvo:
+El prompt reporta el bug con su síntoma, como se lo reportarías a un colega, y calla las decisiones del producto:
 
 ```text
-Resultado: 1/6 checks pasan
+La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
+Arréglalo y verifica que quede bien.
 ```
 
-Esto no demuestra que el modelo sea malo. Demuestra que una petición ambigua permite soluciones distintas y que el autoreporte no reemplaza un criterio externo.
+En una ejecución registrada, el agente hizo un buen trabajo: arregló el escape siguiendo RFC 4180, escribió su propio chequeo con un parser CSV independiente —"para que no se valide a sí mismo", en sus palabras—, probó casos borde, lo corrió contra el endpoint real y reportó *"Listo, arreglado y verificado"*.
 
-La salida exacta del modelo es probabilística. Lo que se mantiene constante en la comparación es la tarea y el evaluador de seis criterios. Ese [`evaluate.mjs`](evaluation/evaluate.mjs) vive fuera de la carpeta `demo/` y no se menciona en el prompt. El aislamiento no es hermético — la carpeta sigue dentro del mismo repositorio Git —, pero en la ejecución registrada el agente no lo inspeccionó.
+Lo interesante es **qué verificó**: que cada fila tenga cinco columnas. Es decir, exactamente el síntoma que le reportaron. Nada más. No tocó decimales, ni el formato de fecha, ni el header de descarga, porque nadie le dijo nunca que existieran.
+
+Un evaluador independiente, que sí conoce las seis decisiones del producto, mide el resultado. El único valor publicado hasta ahora es `1/6`, obtenido con una versión anterior del prompt que no reportaba el bug; con el prompt actual es razonable esperar un punto más, pero **eso no está medido**.
+
+Esto no demuestra que el modelo sea malo. Demuestra que la verificación puede ser impecable y aun así medir el criterio equivocado, cuando ese criterio no está escrito en ninguna parte. Ese [`evaluate.mjs`](evaluation/evaluate.mjs) nunca se menciona en el prompt.
 
 ## Construcción del harness
 
@@ -220,11 +224,11 @@ El workflow no le pide al agente que "revise bien". Le indica una secuencia veri
 
 ## Segunda ejecución: el mismo prompt con harness
 
-Abrimos una sesión nueva en la misma carpeta ya restaurada y repetimos, sin agregar instrucciones:
+Ahora en `demo/`, que no se tocó durante el primer recorrido: mismo código de partida, y además el harness. Abrimos una sesión nueva y repetimos **el mismo mensaje**, sin agregar nada:
 
 ```text
-Completa la exportación de pedidos a CSV para que esté lista para usar.
-Al terminar, verifica que funcione.
+La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas.
+Arréglalo y verifica que quede bien.
 ```
 
 Esta vez el agente encontró las instrucciones del repositorio, leyó la especificación, ejecutó la verificación, corrigió la implementación y volvió a comprobarla.
@@ -285,19 +289,26 @@ La ventaja es que los errores dejan de depender únicamente de la interpretació
 
 ## Reproducir la comparación
 
-La carpeta [`demo/`](demo) contiene la aplicación incorrecta y el harness completo. No es necesario cambiar de commit, rama ni worktree.
+Tres comandos tuyos. El resto lo hace el agente.
 
-El recorrido completo utiliza una sola copia:
+```bash
+git clone https://github.com/gilbertsahumada/youtube-tutorials.git
+cd youtube-tutorials/videos/harness-engineering
 
-```text
-1. Ocultar los archivos del harness.
-2. Ejecutar el prompt y aplicar el evaluador externo.
-3. Restaurar la carpeta con Git.
-4. Repetir el mismo prompt con el harness disponible.
-5. Aplicar el mismo evaluador externo.
+npm run demo:sin-harness              # copia la app a orders-app/, fuera del repo
+# abre tu agente en orders-app/ y pégale el prompt
+node evaluation/evaluate.mjs <ruta>   # mide esa copia
+
+# abre tu agente en demo/ y pégale el MISMO prompt
+node evaluation/evaluate.mjs          # sin argumentos: mide demo/
+
+npm run demo:reset                    # borra la copia y restaura demo/
 ```
 
-La guía [`demo/README.md`](demo/README.md) indica exactamente qué archivos ocultar, cómo limpiar los cambios de la primera sesión y cómo ejecutar ambos recorridos.
+No hay que cambiar de commit, rama ni worktree, y `demo/` no se toca durante el primer recorrido.
+
+El paso a paso completo, con las salidas esperadas de cada comando, está en
+**[`demo/README.md`](demo/README.md)**.
 
 ## Idea central
 
