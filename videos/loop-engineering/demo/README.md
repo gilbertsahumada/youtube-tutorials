@@ -17,7 +17,7 @@ pass 1
 fail 3
 ```
 
-Para restaurar únicamente los archivos de esta demo:
+Para restaurar `src/` y las configuraciones temporales de hooks:
 
 ```bash
 npm run demo:reset

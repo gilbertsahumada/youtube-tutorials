@@ -287,11 +287,14 @@ problema, mantener un orquestador propio añade código sin añadir control úti
 
 ## Restaurar
 
-El reset descarta únicamente cambios dentro de la demo:
+El reset descarta cambios de implementación en `src/` y configuraciones temporales de hooks:
 
 ```bash
 npm run demo:reset
 ```
+
+No restaura tests, documentación ni configuración base. Si detecta cambios rastreados en esas rutas,
+sale con error y muestra los archivos para que los revises.
 
 Después comprueba otra vez:
 
