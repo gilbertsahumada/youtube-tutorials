@@ -1,0 +1,15 @@
+{
+  "name": "loop-engineering-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "harness:start": "./scripts/harness/start.sh",
+    "test": "node --test",
+    "verify": "./scripts/harness/verify.sh",
+    "demo:reset": "./scripts/reset.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
