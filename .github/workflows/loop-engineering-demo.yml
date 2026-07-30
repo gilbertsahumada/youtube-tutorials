@@ -1,0 +1,20 @@
+name: Loop Engineering demo
+
+on:
+  pull_request:
+    paths:
+      - "videos/loop-engineering/demo/**"
+
+jobs:
+  webhook-delivery:
+    if: startsWith(github.head_ref, 'demo/loop-engineering-')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: videos/loop-engineering/demo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm run verify

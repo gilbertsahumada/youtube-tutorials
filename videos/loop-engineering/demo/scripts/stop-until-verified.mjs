@@ -38,6 +38,6 @@ if (event.stop_hook_active === true) {
 
 const output = [verification.stdout, verification.stderr].filter(Boolean).join("\n").trim();
 process.stderr.write(
-  `La tarea todavía no está terminada: npm run verify falló.\n\n${output}\n\nCorrige la implementación sin modificar tests, datos de ejemplo ni documentación, y vuelve a ejecutar la verificación.\n`,
+  `La tarea todavía no está terminada: npm run verify falló.\n\n${output}\n\nCorrige la política de entrega sin modificar tests, eventos de ejemplo ni documentación, y vuelve a ejecutar la verificación.\n`,
 );
 process.exit(2);

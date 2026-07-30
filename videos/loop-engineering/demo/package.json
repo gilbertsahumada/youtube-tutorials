@@ -1,12 +1,12 @@
 {
-  "name": "loop-engineering-demo",
+  "name": "loop-engineering-pr-demo",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "harness:start": "./scripts/harness/start.sh",
+    "demo": "node scripts/show-run.mjs",
+    "demo:prepare": "./scripts/prepare-run.sh",
     "test": "node --test",
-    "verify": "./scripts/harness/verify.sh",
+    "verify": "node --test test/delivery.test.js",
     "demo:reset": "./scripts/reset.sh"
   },
   "engines": {

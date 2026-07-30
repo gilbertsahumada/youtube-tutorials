@@ -8,7 +8,7 @@
             "type": "command",
             "command": "node \"$(git rev-parse --show-toplevel)/videos/loop-engineering/demo/scripts/stop-until-verified.mjs\"",
             "timeout": 30,
-            "statusMessage": "Verificando la exportación CSV"
+            "statusMessage": "Verificando la política de webhooks"
           }
         ]
       }
