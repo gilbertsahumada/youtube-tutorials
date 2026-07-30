@@ -1,76 +1,147 @@
 # Loop Engineering con Claude Code y Codex
 
-> Loop Engineering no es escribir un `while`. Es decidir qué inicia la siguiente vuelta, qué
-> información sobrevive y quién tiene autoridad para decir que el trabajo terminó.
+Loop Engineering no es repetir un prompt. Es diseñar qué inicia la siguiente vuelta, qué estado
+conserva y qué evidencia puede detenerla.
 
-Claude Code y Codex ya ejecutan un loop interno durante cada turno: leen, editan, prueban y corrigen.
-Este tutorial trata del loop externo, el que conecta varios turnos, ejecuciones o momentos.
+Esta demo sigue un solo trabajo durante todo su ciclo:
 
 ```text
-observar el estado
-  -> elegir la siguiente acción
-  -> ejecutar
-  -> verificar
-  -> continuar, detenerse o escalar
+bug visible
+  -> PR con CI rojo
+  -> /goal corrige hasta cumplir una condición
+  -> push inicia CI otra vez
+  -> un loop temporal espera el resultado externo
+  -> una tarea durable puede volver cuando la sesión ya terminó
 ```
 
-No existe una única herramienta llamada "Loop Engineering". Hay mecanismos distintos porque no
-todos los problemas necesitan que la siguiente vuelta empiece por la misma razón.
+El ejemplo es un procesador de webhooks de facturación. El estado inicial duplica un evento,
+descarta un fallo temporal y entrega un fallo permanente como si hubiera funcionado.
 
 ## La pregunta que separa los loops
 
-**¿Qué inicia la siguiente vuelta?**
+**¿Qué debe iniciar la siguiente vuelta?**
 
-| Tipo | La siguiente vuelta empieza cuando | Se detiene cuando | Mecanismo |
-|---|---|---|---|
-| Convergencia | termina el turno anterior | se cumple una condición | `/goal`, Stop hook |
-| Temporal | pasa un intervalo | lo detienes o cambia el estado externo | Claude Code `/loop` |
-| Programado | llega una fecha u horario | lo define la tarea | Scheduled Tasks, Routines |
-| Evento | ocurre algo en otro sistema | se resuelve el evento | CI, GitHub Actions, webhooks |
-| Backlog | queda trabajo pendiente | la cola queda vacía | skill, script, SDK, supervisor |
+<table>
+  <thead>
+    <tr>
+      <th>Necesidad</th>
+      <th>Claude Code</th>
+      <th>Codex</th>
+      <th>La siguiente vuelta empieza cuando</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Converger hasta un resultado</td>
+      <td><code>/goal</code></td>
+      <td><code>/goal</code></td>
+      <td>Termina el turno anterior y todavía falta evidencia</td>
+    </tr>
+    <tr>
+      <td>Aplicar una barrera personalizada</td>
+      <td>Stop hook</td>
+      <td>Stop hook</td>
+      <td>El agente intenta terminar</td>
+    </tr>
+    <tr>
+      <td>Esperar dentro del mismo contexto</td>
+      <td><code>/loop</code></td>
+      <td>Scheduled Task dentro del chat</td>
+      <td>Pasa un intervalo</td>
+    </tr>
+    <tr>
+      <td>Volver con una ejecución independiente</td>
+      <td>Desktop task o Routine</td>
+      <td>Standalone Scheduled Task</td>
+      <td>Llega el horario</td>
+    </tr>
+    <tr>
+      <td>Reaccionar a GitHub o una API</td>
+      <td>Routine con trigger</td>
+      <td>GitHub Action, SDK o controlador propio</td>
+      <td>Ocurre el evento externo</td>
+    </tr>
+  </tbody>
+</table>
 
-La cadencia, los worktrees, las skills, MCP y los subagentes pueden formar parte de un loop, pero no
-son el loop por sí solos. Son decisiones de implementación.
+Las herramientas se parecen, pero no son idénticas:
 
-## Las preguntas de diseño
+- Claude documenta `/goal` como un Stop hook de sesión con un evaluador separado.
+- Codex documenta el goal como la primera instrucción y el criterio de finalización asociado al chat.
+- Claude Code tiene `/loop` en la CLI. Codex no documenta un comando equivalente.
+- En Codex, el equivalente temporal más cercano es una Scheduled Task dentro del mismo chat.
+- Claude Routines acepta horarios, llamadas API y eventos de GitHub.
+- Codex Scheduled Tasks puede ejecutar trabajo local en un worktree o trabajo web con herramientas
+  conectadas.
 
-Antes de automatizar, responde:
+No asumimos que dos mecanismos son iguales solamente porque resuelven un caso parecido.
 
-1. ¿Qué dispara la siguiente vuelta?
-2. ¿Cuál es el objetivo o la fuente de trabajo?
-3. ¿Qué estado persiste?
-4. ¿Quién ejecuta?
-5. ¿Qué evidencia verifica el resultado?
-6. ¿Cuándo se detiene, se bloquea o pide ayuda?
-7. ¿Qué puede tocar y dónde queda aislado?
+## Requisitos
 
-Este marco no es una taxonomía oficial de Anthropic u OpenAI. Es una forma práctica de revisar un
-loop antes de dejarlo trabajando sin supervisión.
+- Git.
+- GitHub CLI autenticado.
+- Node.js 20 o superior.
+- Claude Code con `/goal` y `/loop`.
+- Codex o ChatGPT Desktop con Goal mode y Scheduled Tasks.
 
-## La demo principal: converger hasta una condición
+## 1. Preparar una corrida real
 
-La demo es una aplicación real y pequeña que exporta pedidos a CSV. La exportación está rota:
+Clona el repositorio y crea una rama con el prefijo que activa el workflow de la demo:
 
-```csv
-id,customer,total,status,created_at
-ORD-001,Acme Norte,1299.5,paid,2026-07-14T14:35:00.000Z
-ORD-002,Cafe "Central", SpA,89,pending,2026-07-15T09:10:00.000Z
-ORD-003,Distribuidora Sur,450.75,refunded,2026-07-16T18:05:00.000Z
+```bash
+git clone https://github.com/gilbertsahumada/youtube-tutorials.git
+cd youtube-tutorials
+git switch -c demo/loop-engineering-recording
+cd videos/loop-engineering/demo
+npm run demo:prepare
 ```
 
-La segunda fila queda con seis campos donde deberían existir cinco. El dinero usa uno, cero y dos
-decimales. La fecha incluye hora y milisegundos. Además, el navegador abre el archivo en vez de
-descargarlo.
+El script requiere un árbol limpio y crea `RUN.md`. Ese archivo produce un cambio real para abrir el
+PR sin modificar la implementación.
 
-El estado correcto vive en
-[`demo/docs/product/export-orders.md`](demo/docs/product/export-orders.md), y la comprobación
-mecánica es:
+```bash
+git add RUN.md
+git commit -m "demo: start loop engineering run"
+git push -u origin demo/loop-engineering-recording
+gh pr create --draft \
+  --title "Demo: repair webhook delivery policy" \
+  --body "Reproducible run for the Loop Engineering tutorial."
+```
+
+El workflow solo se ejecuta en ramas que comienzan con `demo/loop-engineering-`. Así, el estado roto
+forma parte de la práctica y no convierte cada cambio documental del repositorio en un CI rojo.
+
+## 2. Ver el defecto
+
+Desde `videos/loop-engineering/demo`:
+
+```bash
+npm run demo
+```
+
+Salida registrada:
+
+```text
+Webhook delivery plan
+evt_invoice_paid_01 -> deliver
+evt_invoice_failed_02 -> drop
+evt_invoice_failed_02 -> drop
+evt_customer_invalid_03 -> deliver
+```
+
+Hay tres problemas visibles:
+
+- `evt_invoice_failed_02` aparece dos veces.
+- El `503` termina en `drop`, aunque es temporal.
+- El `400` termina en `deliver`, aunque es un fallo permanente.
+
+La misma política está expresada como cuatro comprobaciones:
 
 ```bash
 npm run verify
 ```
 
-En el estado inicial, la ejecución registrada produce:
+Estado inicial registrado:
 
 ```text
 tests 4
@@ -78,62 +149,50 @@ pass 1
 fail 3
 ```
 
-La demo no promete cuántos turnos utilizará el agente. Eso es probabilístico. La promesa es otra:
-la tarea solo se considera terminada cuando la misma verificación pasa.
+El primer push también deja el check `Loop Engineering demo / webhook-delivery` en rojo. Ese cambio
+externo es lo que después justifica usar un loop temporal.
 
-## Preparar la demo
+## 3. Converger con `/goal`
 
-```bash
-git clone https://github.com/gilbertsahumada/youtube-tutorials.git
-cd youtube-tutorials/videos/loop-engineering/demo
-npm run verify
-```
-
-Si el resultado inicial no termina con `pass 1` y `fail 3`, no continúes. Restaura la demo:
-
-```bash
-npm run demo:reset
-```
-
-El script avisa qué archivos va a restaurar antes de descartar cambios.
-
-## Opción 1: `/goal`
-
-Usa `/goal` cuando el trabajo debe continuar inmediatamente hasta alcanzar una condición verificable.
+Usa `/goal` cuando no hay nada que esperar y la siguiente acción debe comenzar inmediatamente.
 
 Abre Claude Code o Codex dentro de `videos/loop-engineering/demo` y pega exactamente:
 
 ```text
-/goal La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas. Arréglalo hasta que npm run verify termine con exit code 0. No modifiques tests, datos de ejemplo ni documentación. Si después de 10 turnos sigue fallando, detente y explica el bloqueo con la última salida real.
+/goal Este worker está procesando dos veces el mismo webhook, descarta un fallo temporal y trata un fallo permanente como entrega exitosa. Corrígelo hasta que npm run verify termine con exit code 0. No modifiques tests, eventos de ejemplo ni documentación. No hagas commit, push ni merge. Si te bloqueas, detente y conserva la última salida real.
 ```
 
-El objetivo contiene cuatro cosas:
+El goal contiene:
 
-| Parte | Texto |
-|---|---|
-| Síntoma | una fila no calza con las columnas |
-| Estado final | la exportación queda arreglada |
-| Evidencia | `npm run verify` termina con exit code 0 |
-| Límite | 10 turnos, sin modificar tests, datos o documentación |
+- Un resultado observable.
+- Límites sobre lo que no puede modificar.
+- Una comprobación mecánica.
+- Un estado bloqueado.
 
-En Claude Code, un evaluador separado revisa después de cada turno la evidencia que Claude dejó en la
-conversación. Si la condición todavía no se demuestra, abre otro turno. El evaluador no ejecuta
-comandos ni lee archivos por su cuenta.
+En Claude Code, un evaluador separado revisa después de cada turno la evidencia que Claude dejó en
+la conversación. No ejecuta herramientas por su cuenta.
 
-En Codex, el texto del goal funciona como primer prompt y criterio de finalización del trabajo. El
-goal se puede pausar, editar y continuar desde el mismo chat.
+En Codex, el objetivo queda asociado al chat y se puede pausar, editar, reanudar o borrar. La
+documentación pública no afirma que use internamente el mismo evaluador de Claude.
 
-No afirmamos que ambas implementaciones internas sean idénticas. Lo que comparten es el caso de uso:
-trabajo largo con un final explícito.
-
-Al terminar, comprueba fuera del agente:
+Cuando termine, verifica fuera del agente:
 
 ```bash
+npm run demo
 npm run verify
-git diff --name-only -- src
+git diff --name-only
 ```
 
-La verificación debe mostrar:
+La solución mínima validada produce:
+
+```text
+Webhook delivery plan
+evt_invoice_paid_01 -> deliver
+evt_invoice_failed_02 -> retry
+evt_customer_invalid_03 -> dead-letter
+```
+
+Y la comprobación termina con:
 
 ```text
 tests 4
@@ -141,190 +200,148 @@ pass 4
 fail 0
 ```
 
-El diff solo debe incluir:
+La implementación validada modifica únicamente:
 
 ```text
-src/csv.js
-src/server.js
+videos/loop-engineering/demo/src/delivery.js
 ```
 
-El número de turnos y la solución concreta pueden cambiar entre ejecuciones.
+La cantidad de turnos y la solución concreta de un agente pueden cambiar entre ejecuciones.
 
-## Opción 2: Stop hook mecánico
+## 4. Enviar la nueva evidencia a GitHub
 
-`/goal` evalúa una condición de alto nivel. Un Stop hook puede ejecutar el árbitro real justo cuando
-el agente intenta terminar.
+El goal termina cuando la comprobación local pasa. Eso no significa que tenga permiso para publicar.
 
-Esta demo incluye un hook compatible con Claude Code y Codex:
+```bash
+git add src/delivery.js
+git commit -m "fix: make webhook delivery idempotent"
+git push
+```
+
+El push inicia otra corrida de GitHub Actions. Ahora existe una razón real para esperar: el estado
+puede cambiar fuera del agente.
+
+## 5. Esperar con Claude Code `/loop`
+
+Claude Code ofrece `/loop` dentro de la sesión:
+
+```text
+/loop Revisa el PR asociado a la rama actual. Si CI sigue ejecutándose, informa el estado y vuelve a revisar. Si termina, resume el resultado y detén este loop. No modifiques archivos, no hagas push y no hagas merge.
+```
+
+Sin un intervalo explícito, Claude puede escoger el siguiente intervalo según lo que observa. También
+puedes fijarlo:
+
+```text
+/loop 5m revisa el PR asociado a la rama actual y detente cuando CI termine
+```
+
+`/loop` es correcto aquí porque GitHub puede cambiar mientras esperamos. No habría sido correcto
+usarlo para reparar el código local: esperar cinco minutos no mejora una prueba que ya está roja.
+
+## 6. Hacer el equivalente temporal en Codex
+
+Codex no documenta un comando `/loop` en la CLI. Para volver al mismo contexto por tiempo, crea una
+Scheduled Task dentro del chat:
+
+```text
+Cada 5 minutos, revisa el PR asociado a este proyecto.
+
+Si CI sigue ejecutándose, informa el estado y termina esta ejecución.
+Si CI terminó, resume el resultado y pausa esta tarea.
+No modifiques archivos, no hagas push y no hagas merge.
+```
+
+La tarea vuelve al mismo chat con su contexto existente. Una Standalone Scheduled Task es diferente:
+cada corrida empieza en un chat nuevo desde el prompt guardado.
+
+Para proyectos locales, el computador y ChatGPT Desktop deben seguir ejecutándose. En un repositorio
+Git, selecciona un worktree cuando la tarea pueda modificar archivos.
+
+## 7. Stop hooks
+
+Un Stop hook no espera tiempo. Se ejecuta cuando el agente intenta terminar.
+
+Esta demo incluye una comprobación compatible con ambas herramientas:
 
 ```text
 demo/scripts/stop-until-verified.mjs
 ```
 
-El hook:
-
-1. Ejecuta `npm run verify`.
-2. Si pasa, permite que el agente termine.
-3. Si falla, bloquea el cierre y devuelve la salida real como nueva instrucción.
-4. Si ya produjo una continuación, permite detenerse para evitar un loop infinito.
-
-Los ejemplos no están activos por defecto. Copia solo el de la herramienta que estés usando.
-
-### Claude Code
-
-```bash
-mkdir -p .claude
-cp examples/claude-settings.json .claude/settings.json
-```
-
-Reinicia Claude Code y revisa el hook antes de aceptar su ejecución.
-
-### Codex
-
-```bash
-mkdir -p .codex
-cp examples/codex-hooks.json .codex/hooks.json
-```
-
-Abre Codex, ejecuta `/hooks` y confía la definición después de revisarla.
-
-Luego usa un prompt normal:
+Ejemplos de configuración:
 
 ```text
-La exportación a CSV está fallando: abro el archivo en Excel y hay una fila donde los datos no calzan con las columnas. Arréglalo y verifica que quede bien.
+demo/examples/claude-settings.json
+demo/examples/codex-hooks.json
 ```
 
-La diferencia se ve al final:
+Si `npm run verify` falla, el hook devuelve la evidencia y abre una continuación. Si la
+continuación vuelve a fallar, permite detenerse para evitar un loop infinito.
 
-```text
-el agente intenta terminar
-  -> Stop hook ejecuta npm run verify
-  -> si falla, devuelve evidencia y abre una continuación
-  -> si pasa, permite terminar
-```
+Usa `/goal` para trabajo largo con una condición de alto nivel. Usa un Stop hook cuando necesitas
+que una comprobación concreta actúe como barrera.
 
-Para varias vueltas autónomas, usa `/goal`. El Stop hook de esta demo bloquea una vez por seguridad.
-Su trabajo es mostrar una verificación mecánica, no construir un loop infinito escondido.
+## 8. Trabajo durable y eventos
 
-## Opción 3: `/loop` en Claude Code
+Cuando el trabajo debe sobrevivir a la sesión:
 
-`/loop` sirve cuando el siguiente intento debe esperar. No es la herramienta correcta para reparar
-esta exportación, porque no hay ninguna razón para dormir cinco minutos entre correcciones.
-
-Sí es correcto para vigilar un sistema externo:
-
-```text
-/loop 5m revisa el PR actual. Si CI terminó, resume el resultado. Si hay un fallo nuevo, diagnostícalo. No modifiques ni publiques nada sin una tarea accionable.
-```
-
-La sesión debe seguir disponible. El prompt vuelve a ejecutarse por tiempo, aunque el turno anterior
-ya hubiera terminado correctamente.
-
-Comparación:
-
-```text
-/goal  -> continúa porque todavía no se demostró el estado final
-/loop  -> continúa porque pasó el intervalo
-```
-
-## Opción 4: Scheduled Tasks
-
-Usa una tarea programada cuando el trabajo debe regresar después, sin depender de una sesión abierta.
-
-Ejemplo para ChatGPT/Codex Desktop:
-
-```text
-Cada 15 minutos, revisa el PR asociado a este proyecto.
-
-1. Lee el estado de CI y los comentarios nuevos.
-2. Si no hay nada accionable, reporta el estado y termina esta ejecución.
-3. Si hay un fallo o comentario accionable, trabaja en un worktree aislado.
-4. Ejecuta las verificaciones del repositorio.
-5. Resume lo que cambió, la evidencia y cualquier bloqueo.
-6. No hagas merge y no publiques cambios sin autorización explícita.
-```
-
-En un repositorio Git, selecciona un worktree aislado para no mezclar la tarea con cambios locales.
-Una tarea creada dentro de un chat puede volver al mismo contexto. Una tarea independiente empieza
-cada ejecución desde el prompt guardado.
-
-Para archivos locales, el computador debe permanecer encendido y la aplicación ejecutándose. La
-interfaz de Scheduled Tasks está en ChatGPT Desktop o web, no en Codex CLI.
-
-Claude ofrece tres variantes según dónde deba vivir la tarea:
-
-- `/loop`, para polling rápido dentro de la sesión actual.
-- Desktop scheduled tasks, para archivos locales sin mantener una sesión abierta.
-- Routines, para ejecución durable en infraestructura de Anthropic.
-
-## Opción 5: loop personalizado
-
-Un controlador propio sigue teniendo sentido cuando necesitas una cola dinámica, presupuestos,
-reintentos, varios ejecutores o integración con sistemas que las herramientas nativas no cubren.
-
-Puedes construirlo con:
-
-- `claude -p`;
-- `codex exec`;
-- Claude Agent SDK;
-- Codex SDK;
-- GitHub Actions;
-- un script o servicio supervisor.
-
-Ese es el último escalón, no el primero. Si `/goal`, un hook o una tarea programada resuelven el
-problema, mantener un orquestador propio añade código sin añadir control útil.
+- En Claude, usa una Desktop task para archivos locales o una Routine para ejecución cloud. Una
+  Routine puede despertar por horario, API o evento de GitHub.
+- En Codex, usa una Scheduled Task dentro del chat si necesita conservar ese contexto, o una
+  Standalone Scheduled Task si cada corrida debe ser independiente.
+- Usa GitHub Actions, `claude -p`, `codex exec`, los SDK o un controlador propio cuando necesites
+  triggers, colas, presupuestos o políticas que las superficies nativas no expresan.
 
 ## Qué opción elegir
 
-| Necesidad | Opción |
-|---|---|
-| Trabajar sin pausas hasta demostrar un resultado | `/goal` |
-| Impedir que el agente termine con una comprobación fallando | Stop hook |
-| Esperar CI, un deployment o feedback externo | Claude Code `/loop` |
-| Volver cada cierto tiempo sin una sesión abierta | Scheduled Task o Routine |
-| Reaccionar inmediatamente a un evento del repositorio | GitHub Actions o webhook |
-| Controlar una cola, varios agentes y políticas propias | SDK o controlador personalizado |
+<table>
+  <thead>
+    <tr>
+      <th>Pregunta</th>
+      <th>Elección</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>¿Debe actuar otra vez inmediatamente porque falta el resultado?</td>
+      <td><code>/goal</code></td>
+    </tr>
+    <tr>
+      <td>¿Debe impedir que el agente termine si una comprobación falla?</td>
+      <td>Stop hook</td>
+    </tr>
+    <tr>
+      <td>¿Debe esperar porque CI o un deployment todavía puede cambiar?</td>
+      <td><code>/loop</code> o Scheduled Task dentro del chat</td>
+    </tr>
+    <tr>
+      <td>¿Debe volver aunque la sesión original haya terminado?</td>
+      <td>Desktop task, Routine o Standalone Scheduled Task</td>
+    </tr>
+    <tr>
+      <td>¿Debe reaccionar a una cola, API o evento externo?</td>
+      <td>Routine, GitHub Action, SDK o controlador propio</td>
+    </tr>
+  </tbody>
+</table>
 
 ## Restaurar
 
-El reset descarta cambios de implementación en `src/` y configuraciones temporales de hooks:
+Antes de hacer commit, puedes restaurar la implementación y eliminar configuraciones temporales:
 
 ```bash
 npm run demo:reset
 ```
 
-No restaura tests, documentación ni configuración base. Si detecta cambios rastreados en esas rutas,
-sale con error y muestra los archivos para que los revises.
-
-Después comprueba otra vez:
-
-```bash
-npm run verify
-```
-
-Debe volver a:
-
-```text
-tests 4
-pass 1
-fail 3
-```
+Si ya publicaste la rama de práctica, vuelve a `main` y crea una rama nueva para repetir el
+recorrido. No reutilices un PR que ya tiene la solución.
 
 ## Fuentes oficiales
 
-- [Claude Code: `/goal`](https://code.claude.com/docs/en/goal)
-- [Claude Code: `/loop` y tareas programadas](https://code.claude.com/docs/en/scheduled-tasks)
-- [Claude Code: hooks](https://code.claude.com/docs/en/hooks-guide)
-- [Codex: long-running work y `/goal`](https://learn.chatgpt.com/docs/long-running-work)
-- [Codex: Scheduled Tasks](https://learn.chatgpt.com/docs/automations)
-- [Codex: hooks](https://learn.chatgpt.com/docs/hooks)
-- [Anthropic: effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
-- [OpenAI: Harness Engineering](https://openai.com/index/harness-engineering/)
-
-## Idea central
-
-El harness prepara el entorno de una ejecución. El loop decide cómo se conectan las ejecuciones.
-
-Antes de automatizar, no preguntes solamente "¿qué prompt repito?". Pregunta:
-
-> ¿Qué inicia la siguiente vuelta y qué evidencia tiene autoridad para detenerla?
+- Claude Code `/goal`: https://code.claude.com/docs/en/goal
+- Claude Code `/loop` y scheduling: https://code.claude.com/docs/en/scheduled-tasks
+- Claude Code Routines: https://code.claude.com/docs/en/web-scheduled-tasks
+- Claude Code hooks: https://code.claude.com/docs/en/hooks
+- Codex Goal mode: https://learn.chatgpt.com/docs/long-running-work
+- Codex Scheduled Tasks: https://learn.chatgpt.com/docs/automations
+- Codex hooks: https://learn.chatgpt.com/docs/hooks

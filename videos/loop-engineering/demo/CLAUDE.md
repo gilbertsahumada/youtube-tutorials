@@ -2,4 +2,4 @@
 
 @AGENTS.md
 
-`AGENTS.md` is the canonical project guide. Follow its preparation and verification workflow before modifying this repository.
+`AGENTS.md` is the canonical project guide. Follow its verification workflow before modifying this repository.
