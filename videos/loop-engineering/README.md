@@ -1,7 +1,8 @@
 # Loop Engineering con Claude Code y Codex
 
-Loop Engineering no es repetir un prompt. Es diseñar qué inicia la siguiente vuelta, qué estado
-conserva y qué evidencia puede detenerla.
+Loop Engineering incluye automatización, aislamiento, contexto, verificación y estado persistente.
+Esta demo se concentra en su heartbeat: qué inicia la siguiente vuelta, qué estado conserva y qué
+evidencia puede detenerla.
 
 Esta demo sigue un solo trabajo durante todo su ciclo:
 
@@ -239,10 +240,10 @@ puedes fijarlo:
 `/loop` es correcto aquí porque GitHub puede cambiar mientras esperamos. No habría sido correcto
 usarlo para reparar el código local: esperar cinco minutos no mejora una prueba que ya está roja.
 
-## 6. Hacer el equivalente temporal en Codex
+## 6. Mapear el equivalente temporal en Codex
 
-Codex no documenta un comando `/loop` en la CLI. Para volver al mismo contexto por tiempo, crea una
-Scheduled Task dentro del chat:
+Codex no documenta un comando `/loop` en la CLI. Para volver al mismo contexto por tiempo, el
+mecanismo más cercano es una Scheduled Task dentro del chat:
 
 ```text
 Cada 5 minutos, revisa el PR asociado a este proyecto.
@@ -254,6 +255,10 @@ No modifiques archivos, no hagas push y no hagas merge.
 
 La tarea vuelve al mismo chat con su contexto existente. Una Standalone Scheduled Task es diferente:
 cada corrida empieza en un chat nuevo desde el prompt guardado.
+
+No intentes demostrar las dos herramientas esperando el mismo check. Cuando Claude Code `/loop`
+termina, la transición de CI ya ocurrió. Usa este bloque para comparar la primitiva y el estado que
+conserva Codex, no para fingir una segunda espera.
 
 Para proyectos locales, el computador y ChatGPT Desktop deben seguir ejecutándose. En un repositorio
 Git, selecciona un worktree cuando la tarea pueda modificar archivos.
