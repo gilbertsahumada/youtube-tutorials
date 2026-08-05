@@ -18,7 +18,12 @@ bug visible
 El ejemplo es un procesador de webhooks de facturación. El estado inicial duplica un evento,
 descarta un fallo temporal y entrega un fallo permanente como si hubiera funcionado.
 
-## La pregunta que separa los loops
+## Las dos preguntas que separan los loops
+
+La documentación compara dos decisiones diferentes. No todo lo que aparece abajo se llama
+literalmente loop: son primitivas que pueden hacer que el agente vuelva a actuar.
+
+### Eje 1: qué inicia la siguiente vuelta
 
 **¿Qué debe iniciar la siguiente vuelta?**
 
@@ -61,6 +66,42 @@ descarta un fallo temporal y entrega un fallo permanente como si hubiera funcion
       <td>Routine con trigger</td>
       <td>GitHub Action, SDK o controlador propio</td>
       <td>Ocurre el evento externo</td>
+    </tr>
+  </tbody>
+</table>
+
+### Eje 2: dónde debe sobrevivir el trabajo
+
+Después de elegir el disparador, decide dónde tiene que vivir la ejecución:
+
+<table>
+  <thead>
+    <tr>
+      <th>Necesidad</th>
+      <th>Claude Code</th>
+      <th>Codex</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Polling rápido con el contexto abierto</td>
+      <td><code>/loop</code> en la sesión</td>
+      <td>Scheduled Task dentro del chat</td>
+    </tr>
+    <tr>
+      <td>Archivos locales sin mantener abierta la sesión de terminal</td>
+      <td>Desktop task</td>
+      <td>Scheduled Task local en el proyecto o un worktree</td>
+    </tr>
+    <tr>
+      <td>Ejecución independiente sin depender del computador</td>
+      <td>Routine cloud</td>
+      <td>Scheduled Task web, normalmente standalone</td>
+    </tr>
+    <tr>
+      <td>Evento de GitHub, API o cola</td>
+      <td>Routine, GitHub Action o controlador</td>
+      <td>GitHub Action, SDK o controlador</td>
     </tr>
   </tbody>
 </table>
@@ -157,7 +198,14 @@ externo es lo que después justifica usar un loop temporal.
 
 Usa `/goal` cuando no hay nada que esperar y la siguiente acción debe comenzar inmediatamente.
 
-Abre Claude Code o Codex dentro de `videos/loop-engineering/demo` y pega exactamente:
+Para reproducir la corrida de Claude Code sin hooks ni plugins de tu configuración global, ábrelo
+dentro de `videos/loop-engineering/demo` así:
+
+```bash
+claude --setting-sources project,local
+```
+
+Después pega exactamente:
 
 ```text
 /goal Este worker está procesando dos veces el mismo webhook, descarta un fallo temporal y trata un fallo permanente como entrega exitosa. Corrígelo hasta que npm run verify termine con exit code 0. No modifiques tests, eventos de ejemplo ni documentación. No hagas commit, push ni merge. Si te bloqueas, detente y conserva la última salida real.
@@ -240,6 +288,14 @@ puedes fijarlo:
 `/loop` es correcto aquí porque GitHub puede cambiar mientras esperamos. No habría sido correcto
 usarlo para reparar el código local: esperar cinco minutos no mejora una prueba que ya está roja.
 
+En la corrida E2E registrada, el workflow `webhook-delivery` pasó en 11 segundos. Cuando `/loop`
+consultó por primera vez, los cinco checks del PR ya habían terminado. Informó el resultado y se
+detuvo sin volver a consultar.
+
+Eso también es una salida válida. El loop evaluó su condición de salida en la primera vuelta. No
+digas que esperó ni que hizo polling si CI ya había terminado. Para mostrar varias consultas hace
+falta un proceso externo que dure lo suficiente de manera natural.
+
 ## 6. Mapear el equivalente temporal en Codex
 
 Codex no documenta un comando `/loop` en la CLI. Para volver al mismo contexto por tiempo, el
@@ -299,6 +355,9 @@ Cuando el trabajo debe sobrevivir a la sesión:
 
 ## Qué opción elegir
 
+Haz las preguntas en este orden: primero qué inicia la siguiente vuelta; después dónde debe
+sobrevivir el trabajo.
+
 <table>
   <thead>
     <tr>
@@ -345,7 +404,7 @@ recorrido. No reutilices un PR que ya tiene la solución.
 
 - Claude Code `/goal`: https://code.claude.com/docs/en/goal
 - Claude Code `/loop` y scheduling: https://code.claude.com/docs/en/scheduled-tasks
-- Claude Code Routines: https://code.claude.com/docs/en/web-scheduled-tasks
+- Claude Code Routines: https://code.claude.com/docs/en/routines
 - Claude Code hooks: https://code.claude.com/docs/en/hooks
 - Codex Goal mode: https://learn.chatgpt.com/docs/long-running-work
 - Codex Scheduled Tasks: https://learn.chatgpt.com/docs/automations
