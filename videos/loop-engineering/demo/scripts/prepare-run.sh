@@ -33,7 +33,7 @@ EOF
 
 echo "Corrida preparada en $BRANCH."
 echo
-echo "Siguiente paso:"
-echo "  git add $DEMO_PATH/RUN.md"
+echo "Siguiente paso, desde $DEMO_PATH:"
+echo "  git add RUN.md"
 echo "  git commit -m \"demo: start loop engineering run\""
 echo "  git push -u origin $BRANCH"
