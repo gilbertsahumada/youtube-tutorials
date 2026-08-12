@@ -102,11 +102,83 @@ read, grep, find, ls
 
 No ejecuta tests, no modifica archivos y no instala dependencias. Por eso el comentario distingue entre evidencia encontrada, riesgos, preguntas abiertas y limitaciones.
 
-### Configuración de GitHub Actions
+### Autenticación: API key o suscripción
 
-Configura una **repository variable** llamada `PI_MODEL` con un modelo en formato `provider/model-id`, por ejemplo el modelo que tengas registrado y autenticado en Pi.
+Pi separa el **runtime** del **proveedor y la autenticación**. La misma skill puede ejecutarse usando una API key o una suscripción compatible.
 
-Configura también un **repository secret** llamado `PI_API_KEY` con la API key correspondiente.
+| Modalidad | Cómo se autentica | Mejor uso |
+|---|---|---|
+| API key | Variable de entorno, `/login` o `--api-key` | CI/CD y GitHub Actions |
+| Suscripción | `/login` mediante OAuth | Desarrollo local interactivo |
+
+#### Opción A: suscripción local
+
+Inicia Pi desde `videos/pi` y ejecuta:
+
+```bash
+cd videos/pi
+pi
+```
+
+Dentro de Pi:
+
+```text
+/login
+```
+
+Selecciona el proveedor de suscripción disponible. Pi documenta logins para Claude Pro/Max, ChatGPT Plus/Pro mediante Codex y GitHub Copilot; también existen otros proveedores con OAuth según la versión instalada.
+
+Después puedes seleccionar el modelo con `/model` y ejecutar la demo:
+
+```text
+/onboard-test Backend
+```
+
+Pi guarda las credenciales OAuth en:
+
+```text
+~/.pi/agent/auth.json
+```
+
+Los tokens pueden refrescarse automáticamente según el proveedor. Este archivo es personal y nunca debe subirse al repositorio ni imprimirse en logs.
+
+#### Opción B: API key local
+
+Por ejemplo, con el proveedor correspondiente:
+
+```bash
+export ANTHROPIC_API_KEY="..."
+cd videos/pi
+pi --model anthropic/<model-id>
+```
+
+También se puede ejecutar `/login` y elegir un proveedor de API key. La documentación de Pi contiene la variable específica de cada proveedor, como `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` u `OPENROUTER_API_KEY`.
+
+#### Qué ocurre en GitHub Actions
+
+El workflow [`pi-pr-evidence.yml`](../../.github/workflows/pi-pr-evidence.yml) utiliza **API-key auth** porque el runner es headless:
+
+```yaml
+PI_MODEL: ${{ vars.PI_MODEL }}
+PI_API_KEY: ${{ secrets.PI_API_KEY }}
+```
+
+Y Pi se inicia con:
+
+```bash
+pi --model "$PI_MODEL" --api-key "$PI_API_KEY"
+```
+
+La variable `PI_MODEL` debe tener el formato `provider/model-id`, y `PI_API_KEY` debe corresponder a ese proveedor.
+
+Una suscripción no se activa automáticamente en Actions: `/login` es un flujo de autenticación interactivo y las credenciales OAuth normalmente viven en el `auth.json` del usuario. Técnicamente se podría diseñar una integración headless con credenciales OAuth almacenadas de forma segura, si el proveedor lo permite, pero no se recomienda copiar credenciales personales de suscripción a un runner ni usar ese mecanismo como base de este MVP.
+
+Para CI/CD recomendamos una API key, una cuenta técnica o una credencial administrada por la organización. Para el video, la distinción es:
+
+```text
+suscripción OAuth → demo local interactiva
+API key           → revisión automatizada en GitHub Actions
+```
 
 El primer workflow procesa Pull Requests del mismo repositorio. Los Pull Requests desde forks quedan fuera para no exponer la API key a código no confiable. El workflow es advisory: no bloquea el merge.
 

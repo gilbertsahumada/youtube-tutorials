@@ -13,8 +13,9 @@ permissions:
 
 jobs:
   review:
-    # The first version does not expose the model API key to fork code. Support
-    # for external contributors can be added later with a GitHub App/workflow_run.
+    # This first version intentionally uses API-key auth. Subscription OAuth
+    # is documented for local interactive runs; it is not logged into here.
+    # The API key is never exposed to fork Pull Requests.
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
