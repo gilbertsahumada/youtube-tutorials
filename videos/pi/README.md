@@ -1,37 +1,37 @@
-# Tutorial de Pi: de cero a skill y extensión de onboarding
+# Tutorial de Pi: instalación, configuración, skills y extensiones
 
-Este README es el recorrido completo del primer video. La idea es empezar con Pi desde cero, entender su interfaz y sus primitivas, conectarlo con Codex y terminar construyendo un repositorio pequeño con una **skill** y una **extensión**.
+Este README sigue el orden del video. Primero instalamos Pi, iniciamos una sesión en un directorio vacío, nos autenticamos con Codex y recorremos la interfaz. Después explicamos los conceptos mientras usamos Pi y, recién entonces, creamos el repositorio de la demo desde cero.
 
-La demo final queda en esta carpeta. La revisión automatizada de Pull Requests pertenece al segundo demo, [`videos/pi-pr-evidence`](../pi-pr-evidence).
+La revisión automatizada de Pull Requests pertenece al segundo demo, [`videos/pi-pr-evidence`](../pi-pr-evidence).
 
-## Qué vas a construir
+## Orden de la grabación
 
-Al terminar tendrás:
+1. Instalar Pi.
+2. Abrir Pi en un directorio de paseo, sin recursos del proyecto.
+3. Ejecutar `/login` y conectarlo con ChatGPT/Codex.
+4. Mostrar los comandos más importantes y `/settings`.
+5. Explicar el modelo mental de Pi, sus tools, sesiones, thinking y contexto.
+6. Crear un repositorio vacío para la demo.
+7. Pedirle a Pi que proponga y cree una skill y una extensión.
+8. Revisar los archivos, explicar qué hace cada recurso y recargar Pi.
+9. Ejecutar el onboarding final en modo read-only.
 
-- Pi instalado y autenticado localmente con una suscripción de Codex.
-- Un modelo seleccionado y un nivel de thinking configurado.
-- Visibilidad del contexto cargado y del uso del context window.
-- Una skill `repository-onboarding` con reglas y un formato de salida.
-- Una extensión TypeScript con el comando `/onboard-test`.
-- Un flujo read-only que recibe el rol del desarrollador y ejecuta la skill.
-
-El flujo final es:
+El resultado final de esta demo es:
 
 ```text
-/onboard-test Backend
-        │
-        ▼
-extensión TypeScript
-        │  selecciona/transmite el rol
-        ▼
-skill repository-onboarding
-        │  define el proceso y las reglas
-        ▼
-Pi + herramientas read-only
-        │
-        ▼
-onboarding con evidencia del repositorio
+videos/pi/
+├── README.md
+└── .pi/
+    ├── package.json
+    ├── package-lock.json
+    ├── extensions/
+    │   └── onboarding.ts
+    └── skills/
+        └── repository-onboarding/
+            └── SKILL.md
 ```
+
+> Para grabar el recorrido no necesitas abrir Pi dentro del repositorio final de este tutorial. Comienza en un directorio vacío y construye allí la demo. Esta carpeta contiene el resultado reproducible que queda versionado.
 
 ---
 
@@ -50,9 +50,13 @@ Comprueba Node antes de empezar:
 ```bash
 node --version
 npm --version
+git --version
 ```
 
-> La instalación global de Pi y el `package.json` dentro de `.pi/` son cosas distintas. El CLI se instala globalmente para poder ejecutar `pi`; el paquete local sirve para resolver tipos e imports de las extensiones de este proyecto.
+La instalación global de Pi y el `package.json` dentro de `.pi/` son cosas distintas:
+
+- El CLI global permite ejecutar `pi` desde cualquier directorio.
+- El paquete local de `.pi/` proporciona tipos y resolución de imports para las extensiones de este proyecto.
 
 ---
 
@@ -64,7 +68,7 @@ La instalación oficial mediante npm es:
 npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 ```
 
-`--ignore-scripts` evita ejecutar scripts de ciclo de vida durante la instalación. Pi no los necesita para su uso normal.
+`--ignore-scripts` evita ejecutar scripts de ciclo de vida durante la instalación. Pi no los necesita para el uso normal.
 
 Comprueba que el CLI quedó disponible:
 
@@ -79,101 +83,48 @@ También existe el instalador oficial de `pi.dev`:
 curl -fsSL https://pi.dev/install.sh | sh
 ```
 
-En el video usaremos npm porque hace explícito qué paquete se instala.
+En el video usamos npm porque hace explícito qué paquete se instala.
 
 ---
 
-## 3. Qué es Pi
+## 3. Primera sesión: Pi antes de crear el repositorio
 
-Pi es un **coding harness minimalista para el terminal**. El modelo no modifica un repositorio directamente: Pi le proporciona un contexto, un conjunto de herramientas y un ciclo para ejecutar esas herramientas y devolver sus resultados al modelo.
-
-El ciclo mental es:
-
-```text
-prompt del usuario
-      → modelo
-      → llamada a una herramienta
-      → resultado de la herramienta
-      → siguiente decisión del modelo
-```
-
-Pi no intenta imponer un workflow completo. En lugar de incluir de forma obligatoria plan mode, subagentes, MCP o un sistema de permisos, permite construir esos comportamientos mediante extensiones, skills o paquetes.
-
-### Las cuatro herramientas por defecto
-
-En una sesión normal Pi expone inicialmente cuatro herramientas al modelo:
-
-| Herramienta | Para qué sirve |
-|---|---|
-| `read` | Leer archivos o fragmentos de archivos. |
-| `write` | Crear o sobrescribir archivos. |
-| `edit` | Modificar archivos mediante reemplazos exactos. |
-| `bash` | Ejecutar comandos del shell. |
-
-Pi también incluye tres herramientas built-in de lectura:
-
-```text
-grep, find, ls
-```
-
-Estas no forman parte del conjunto inicial de cuatro, pero se pueden habilitar mediante `--tools`. Por eso conviene explicar la diferencia:
-
-> **Pi tiene siete herramientas built-in, pero la sesión por defecto empieza con cuatro: `read`, `write`, `edit` y `bash`.**
-
-Para ver el conjunto completo puedes consultar:
+Antes de construir la demo, abre Pi en un directorio de paseo. Así puedes enseñar la aplicación sin que todavía existan skills o extensiones locales del proyecto:
 
 ```bash
-pi --help
-```
-
-Más adelante ejecutaremos la demo de onboarding con una allowlist read-only:
-
-```bash
-pi --tools read,grep,find,ls
-```
-
-Con ese comando el modelo no recibe `write`, `edit` ni `bash` como herramientas invocables.
-
----
-
-## 4. Primera sesión interactiva
-
-Pi trabaja sobre el directorio actual. Primero entra al repositorio que quieres explorar:
-
-```bash
-cd /ruta/al/repositorio
+mkdir -p ~/tmp/pi-tour
+cd ~/tmp/pi-tour
 pi
 ```
 
-Al iniciar puede aparecer una pregunta para confiar en el proyecto. Acepta la confianza únicamente si revisaste el repositorio y quieres permitir que Pi cargue sus recursos locales (`.pi`, extensiones, skills y settings).
+Este directorio puede estar vacío. No hace falta crear `.pi/`, `AGENTS.md` ni un repositorio Git para hacer el primer recorrido.
 
-Una primera pregunta útil es:
+Cuando Pi arranque, observa:
+
+- El encabezado de inicio.
+- El área de mensajes.
+- El editor inferior.
+- El footer con modelo, thinking, tokens y context window.
+
+Una primera solicitud para probar el ciclo básico:
 
 ```text
-Resume este repositorio y dime cómo ejecutar sus comprobaciones.
+Dime en qué directorio estoy y qué archivos puedes encontrar aquí.
 ```
 
-Observa el recorrido:
+Pi trabaja sobre el directorio actual. El modelo recibe un conjunto de tools, llama a una de ellas, recibe el resultado y decide si necesita continuar.
 
-1. Pi muestra el prompt.
-2. El modelo decide si necesita usar una herramienta.
-3. La herramienta aparece en la interfaz.
-4. Pi muestra el resultado.
-5. El modelo continúa hasta responder.
+### 3.1 Iniciar sesión con Codex
 
----
-
-## 5. Conectarse con OpenAI Codex
-
-Para usar la suscripción de ChatGPT localmente, inicia Pi y ejecuta:
+Dentro de Pi ejecuta:
 
 ```text
 /login
 ```
 
-En el selector elige la opción de **ChatGPT Plus/Pro (Codex)** o el nombre equivalente que muestre tu versión de Pi. Completa el flujo OAuth en el navegador.
+En el selector elige **ChatGPT Plus/Pro (Codex)**, o el nombre equivalente que muestre tu versión de Pi. Completa el flujo OAuth en el navegador y vuelve al terminal.
 
-Después vuelve a Pi. Las credenciales quedan gestionadas por Pi en:
+Las credenciales quedan gestionadas por Pi en:
 
 ```text
 ~/.pi/agent/auth.json
@@ -181,17 +132,19 @@ Después vuelve a Pi. Las credenciales quedan gestionadas por Pi en:
 
 Ese archivo contiene credenciales personales. Nunca lo subas al repositorio ni lo imprimas en logs.
 
-Confirma el proveedor y el modelo desde la interfaz:
+La suscripción OAuth es adecuada para el uso local interactivo. Para CI/CD utilizaremos una API key administrada como secret en el demo separado de revisión de Pull Requests; no copiamos credenciales personales de OAuth a GitHub Actions.
+
+Comprueba el modelo disponible:
 
 ```text
 /model
 ```
 
-Para Codex local usamos una suscripción OAuth; no copiamos una API key personal al proyecto. Para CI/CD utilizaremos una API key administrada como secret, en el demo separado de revisión de Pull Requests.
+Puedes seleccionar un modelo desde el selector o pulsar `Ctrl+L`.
 
-### API keys como alternativa
+### 3.2 API key como alternativa
 
-Pi también puede usar una API key de un proveedor. Por ejemplo:
+Pi también puede usar una API key. Por ejemplo, para un proveedor compatible con OpenAI:
 
 ```bash
 export OPENAI_API_KEY="..."
@@ -200,29 +153,69 @@ pi --model openai/<model-id>
 
 La variable depende del proveedor. Pi documenta las variables soportadas en [Providers](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/providers.md).
 
+No pongas una API key en este README, en una skill, en una extensión ni en el repositorio.
+
 ---
 
-## 6. Los comandos más importantes
+## 4. Los comandos más importantes
 
-Escribe `/` en el editor para abrir el autocompletado de comandos.
+Escribe `/` en el editor para abrir el autocompletado de comandos. Para el primer video, estos son los comandos que vale la pena mostrar:
 
-| Comando | Uso |
-|---|---|
-| `/login` / `/logout` | Gestionar OAuth o credenciales de proveedor. |
-| `/model` | Elegir otro modelo. También se puede usar `Ctrl+L`. |
-| `/settings` | Cambiar thinking, tema, transporte y otras opciones. |
-| `/session` | Ver el archivo de sesión, tokens, coste y estadísticas. |
-| `/resume` | Abrir una sesión anterior. |
-| `/new` | Crear una sesión nueva. |
-| `/tree` | Navegar por ramas de la sesión. |
-| `/compact` | Resumir el contexto anterior manualmente. |
-| `/reload` | Recargar context files, skills, extensiones, prompts y themes. |
-| `/trust` | Guardar la decisión de confianza del proyecto. |
-| `/hotkeys` | Ver todos los atajos activos. |
-| `/export` | Exportar una sesión a HTML o JSONL. |
-| `/quit` | Salir de Pi. |
+| Prioridad | Comando | Qué enseña |
+|---|---|---|
+| Imprescindible | `/login` | OAuth o API key del proveedor. |
+| Imprescindible | `/model` | Selección del modelo; también `Ctrl+L`. |
+| Imprescindible | `/settings` | Thinking, tema, compaction, transporte y preferencias. |
+| Imprescindible | `/session` | Sesión actual, archivo, tokens, coste y estadísticas. |
+| Muy útil | `/hotkeys` | Todos los atajos configurados. |
+| Muy útil | `/reload` | Recargar skills, extensiones, prompts, themes y contexto. |
+| Muy útil | `/trust` | Guardar la decisión de confianza del proyecto. |
+| Muy útil | `/compact` | Resumir el contexto anterior manualmente. |
+| Para sesiones | `/new` | Empezar una sesión nueva. |
+| Para sesiones | `/resume` | Elegir una sesión anterior. |
+| Para sesiones | `/tree` | Navegar por las ramas de una sesión. |
+| Para terminar | `/quit` | Salir de Pi. |
 
-### Atajos que conviene mostrar en el video
+Comandos adicionales que puedes mencionar si queda tiempo:
+
+- `/scoped-models`: seleccionar los modelos que participan en el ciclo de `Ctrl+P`.
+- `/name <nombre>`: asignar un nombre a la sesión.
+- `/export [archivo]`: exportar una sesión a HTML o JSONL.
+- `/copy`: copiar la última respuesta del asistente.
+- `/changelog`: consultar cambios de versión.
+- `/logout`: eliminar la credencial seleccionada.
+
+### 4.1 El recorrido recomendado en pantalla
+
+Después de `/login`, una secuencia corta y clara es:
+
+```text
+/model
+/settings
+/hotkeys
+/session
+```
+
+En `/settings` muestra especialmente:
+
+- `defaultThinkingLevel`.
+- `theme`.
+- `quietStartup`.
+- `tuiMode` (`regular` o `fullscreen`).
+- `compaction.enabled`.
+- `steeringMode` y `followUpMode`.
+- `transport`.
+- `defaultProjectTrust`, si quieres explicar confianza de proyectos.
+
+No necesitas cambiar todo. La intención es enseñar que Pi tiene una configuración global y otra por proyecto, y que el comportamiento se puede ajustar sin modificar el código de Pi.
+
+Para salir del recorrido:
+
+```text
+/quit
+```
+
+### 4.2 Atajos y sintaxis que conviene mostrar
 
 | Atajo o sintaxis | Uso |
 |---|---|
@@ -232,34 +225,108 @@ Escribe `/` en el editor para abrir el autocompletado de comandos.
 | `Shift+Enter` | Insertar una nueva línea en el editor. |
 | `Escape` | Cancelar la operación actual. |
 | `Ctrl+L` | Abrir el selector de modelos. |
+| `Ctrl+P` / `Shift+Ctrl+P` | Ciclar modelos configurados. |
 | `Shift+Tab` | Cambiar el nivel de thinking. |
-| `Ctrl+T` | Colapsar o expandir los bloques de thinking visibles. |
-| `Ctrl+O` | Colapsar o expandir la salida de herramientas. |
+| `Ctrl+T` | Colapsar o expandir bloques de thinking visibles. |
+| `Ctrl+O` | Colapsar o expandir la salida de tools. |
 | `Ctrl+G` | Abrir el editor externo configurado. |
 | `Ctrl+X` | Copiar el último mensaje del asistente. |
 | `Alt+Enter` | Encolar un follow-up mientras Pi está trabajando. |
 
-`!!` es especialmente útil para inspeccionar algo localmente sin gastar contexto del modelo. No es una herramienta read-only: es una orden explícita del usuario.
+`!!` no es una garantía de seguridad: es una orden explícita del usuario para no enviar esa salida al modelo. La tool `bash` sigue existiendo para el modelo si está activa.
 
-### Equivalentes desde el CLI
+### 4.3 Equivalentes desde el CLI
 
 Pi también se puede controlar desde la shell:
 
 ```bash
-pi                       # sesión interactiva nueva
-pi -c                    # continuar la sesión más reciente
-pi -r                    # elegir una sesión anterior
-pi --model <modelo>      # seleccionar un modelo al iniciar
-pi --thinking medium     # iniciar con un nivel de thinking
-pi -p "Resume el repo"   # modo print, sin TUI interactiva
-pi --no-session          # sesión efímera
-pi --tools read,grep,find,ls  # herramientas read-only
-pi --help                # referencia completa
+pi                              # sesión interactiva nueva
+pi -c                           # continuar la sesión más reciente
+pi -r                           # elegir una sesión anterior
+pi --model <modelo>             # seleccionar un modelo al iniciar
+pi --thinking medium            # iniciar con un nivel de thinking
+pi -p "Resume el directorio"    # modo print, sin TUI interactiva
+pi --no-session                 # sesión efímera
+pi --tools read,grep,find,ls    # herramientas read-only
+pi --list-models                # listar modelos disponibles
+pi --help                       # referencia completa
+```
+
+Para refrescar los catálogos de modelos:
+
+```bash
+pi update --models
 ```
 
 ---
 
-## 7. Seleccionar el modelo
+## 5. Qué es Pi
+
+Pi es un **coding harness minimalista para el terminal**. El modelo no modifica un repositorio directamente: Pi le proporciona contexto, un modelo, una sesión y un conjunto de tools para interactuar con el directorio actual.
+
+El ciclo mental es:
+
+```text
+prompt del usuario
+      → modelo
+      → llamada a una tool
+      → resultado de la tool
+      → siguiente decisión del modelo
+```
+
+Pi no intenta imponer un workflow completo. En lugar de incluir obligatoriamente plan mode, subagentes, MCP o un sistema de permisos, permite construir esos comportamientos mediante extensiones, skills o paquetes.
+
+### 5.1 Las cuatro tools por defecto
+
+En una sesión normal Pi expone inicialmente cuatro tools al modelo:
+
+| Tool | Para qué sirve |
+|---|---|
+| `read` | Leer archivos o fragmentos de archivos. |
+| `write` | Crear o sobrescribir archivos. |
+| `edit` | Modificar archivos mediante reemplazos exactos. |
+| `bash` | Ejecutar comandos del shell. |
+
+Pi también incluye tres tools built-in de lectura:
+
+```text
+grep, find, ls
+```
+
+Estas no forman parte del conjunto inicial de cuatro, pero se pueden habilitar mediante `--tools`. La forma precisa de decirlo en el video es:
+
+> Pi tiene siete tools built-in, pero la sesión por defecto empieza con cuatro: `read`, `write`, `edit` y `bash`.
+
+Para ver la lista completa:
+
+```bash
+pi --help
+```
+
+Para la ejecución final de esta demo usaremos una allowlist read-only:
+
+```bash
+pi --tools read,grep,find,ls
+```
+
+Con ese comando el modelo no recibe `write`, `edit` ni `bash` como tools invocables.
+
+### 5.2 El usuario y el modelo no tienen exactamente la misma interfaz
+
+El usuario puede escribir comandos como `!git status` o `!!git status` desde el editor. Eso es distinto de las tools que Pi habilita para que el modelo las invoque.
+
+Por eso distinguimos:
+
+- **Tools del modelo:** `read`, `write`, `edit`, `bash`, `grep`, `find`, `ls`.
+- **Comandos del usuario:** `/settings`, `/model`, `/reload`, `!comando`, etc.
+- **Extensiones:** código que puede registrar nuevos comandos, tools, eventos y UI.
+- **Skills:** instrucciones que el modelo carga bajo demanda.
+
+---
+
+## 6. Modelo, thinking y contexto
+
+### 6.1 Seleccionar el modelo
 
 Dentro de Pi:
 
@@ -267,70 +334,34 @@ Dentro de Pi:
 /model
 ```
 
-También puedes pulsar `Ctrl+L`. El selector muestra los modelos disponibles para los proveedores autenticados. Los catálogos pueden variar según la versión de Pi, la cuenta y el proveedor.
+También puedes pulsar `Ctrl+L`. El selector muestra los modelos disponibles para los proveedores autenticados. Los catálogos dependen de la versión de Pi, la cuenta y el proveedor.
 
-Desde la shell puedes listar modelos:
+Desde la shell:
 
 ```bash
 pi --list-models
 ```
 
-Si necesitas refrescar los catálogos:
-
-```bash
-pi update --models
-```
-
-También puedes seleccionar un modelo al iniciar:
+Al iniciar Pi también puedes indicar el modelo:
 
 ```bash
 pi --provider openai-codex --model <model-id>
 ```
 
-O usando el identificador completo:
+O usar el identificador completo:
 
 ```bash
 pi --model openai-codex/<model-id>
 ```
 
-No inventes el `<model-id>`: usa uno que aparezca en `/model` o `pi --list-models`.
+No inventes `<model-id>`: usa uno que aparezca en `/model` o `pi --list-models`.
 
-### Configuración persistente
-
-Pi acepta configuración global en:
-
-```text
-~/.pi/agent/settings.json
-```
-
-Y configuración por proyecto en:
-
-```text
-.pi/settings.json
-```
-
-La configuración del proyecto sobrescribe la global. Un ejemplo de valores que podrías añadir —combinándolos con tu archivo existente, no sobrescribiéndolo a ciegas— es:
-
-```json
-{
-  "defaultProvider": "openai-codex",
-  "defaultModel": "<model-id-visible-en-model>",
-  "defaultThinkingLevel": "medium",
-  "quietStartup": false,
-  "tuiMode": "regular"
-}
-```
-
-`defaultProvider` y `defaultModel` solo funcionan si el proveedor está autenticado y el modelo existe en tu catálogo.
-
----
-
-## 8. Configurar y mostrar el thinking
+### 6.2 Configurar el thinking
 
 El nivel de thinking se puede cambiar de tres formas:
 
 1. Desde `/settings`.
-2. Pulsando `Shift+Tab` para recorrer los niveles.
+2. Pulsando `Shift+Tab`.
 3. Al iniciar Pi:
 
 ```bash
@@ -343,22 +374,20 @@ Los niveles disponibles son:
 off, minimal, low, medium, high, xhigh, max
 ```
 
-No todos los modelos soportan todos los niveles. Pi ajusta el nivel a las capacidades del modelo; un modelo que no soporta reasoning termina usando `off`.
+No todos los modelos soportan todos los niveles. Pi ajusta el valor a las capacidades del modelo; un modelo que no soporta reasoning termina usando `off`.
 
 Hay dos conceptos distintos:
 
 - `Shift+Tab` cambia cuánto reasoning se solicita al modelo.
 - `Ctrl+T` solo colapsa o expande el bloque de thinking en pantalla.
 
-El borde del editor también cambia de color para reflejar el nivel activo. El footer muestra el nivel junto al modelo cuando el modelo soporta reasoning.
+El borde del editor cambia de color para reflejar el nivel activo. El footer muestra el nivel junto al modelo cuando el modelo soporta reasoning.
 
----
+### 6.3 Mostrar el contexto en pantalla
 
-## 9. Entender el contexto que aparece en pantalla
+Aquí conviene corregir una confusión frecuente: Pi muestra dos cosas relacionadas, pero no hay un único botón llamado `showContext`.
 
-Aquí conviene aclarar una confusión frecuente: Pi muestra **dos tipos de contexto**.
-
-### 9.1 Uso del context window en el footer
+#### Uso del context window
 
 El footer inferior muestra automáticamente información como:
 
@@ -366,13 +395,13 @@ El footer inferior muestra automáticamente información como:
 ↑tokens ↓tokens ... 12.4%/128k (auto)              modelo • medium
 ```
 
-El porcentaje representa el uso estimado del context window del modelo actual. También puede mostrar tokens de entrada/salida, cache, coste y el modelo seleccionado.
+El porcentaje representa el uso estimado del context window del modelo actual. También pueden aparecer tokens de entrada/salida, cache, coste y el modelo seleccionado.
 
-**No existe un setting `showContext` para activarlo**: el uso del contexto forma parte del footer interactivo por defecto. Si la terminal es muy estrecha, parte del footer puede truncarse.
+**No existe un setting `showContext` para activar este porcentaje:** el uso del contexto forma parte del footer interactivo por defecto. Si la terminal es muy estrecha, el footer puede truncarse.
 
-`/session` muestra información más detallada de la sesión y `/compact` permite resumir contexto manualmente. La compactación automática está activada por defecto y se puede revisar en `/settings`.
+`/session` muestra información más detallada y `/compact` permite resumir contexto manualmente. La compactación automática está activada por defecto y se puede revisar en `/settings`.
 
-### 9.2 Archivos de contexto cargados al iniciar
+#### Archivos de contexto cargados
 
 El encabezado de inicio puede listar secciones como:
 
@@ -389,9 +418,9 @@ La sección `Context` corresponde principalmente a `AGENTS.md` y `CLAUDE.md`. Pi
 - `~/.pi/agent/AGENTS.md` — instrucciones globales.
 - Directorios padres del directorio actual.
 - El directorio actual.
-- `CLAUDE.md` en las mismas ubicaciones.
+- `CLAUDE.md` en esas mismas ubicaciones.
 
-Para que este bloque sea visible, deja esta opción en `false`:
+Para que el encabezado sea visible, deja `quietStartup` en `false`:
 
 ```json
 {
@@ -399,54 +428,266 @@ Para que este bloque sea visible, deja esta opción en `false`:
 }
 ```
 
-Si quieres forzar el encabezado aunque exista una configuración silenciosa:
+Si existe una configuración silenciosa, puedes forzar el encabezado con:
 
 ```bash
 pi --verbose
 ```
 
-Para enseñar el concepto, crea un archivo `AGENTS.md` en la raíz del repositorio:
+No confundas estos conceptos:
 
-```markdown
-# Project Instructions
-
-- Este proyecto es una demo educativa de Pi.
-- Lee primero la documentación antes de modificar archivos.
-- No expongas credenciales ni secretos.
-```
-
-Reinicia Pi o ejecuta:
-
-```text
-/reload
-```
-
-Después observa que el archivo aparece como contexto cargado.
-
-### 9.3 No confundir los tres conceptos
-
-| Concepto | Dónde se observa | ¿Qué lo controla? |
+| Concepto | Dónde se observa | Qué lo controla |
 |---|---|---|
 | Uso actual del contexto | Footer: `%/contextWindow` | Pi lo muestra automáticamente. |
 | Instrucciones cargadas | Encabezado: `Context` | `AGENTS.md`, `CLAUDE.md`, `quietStartup` y `--verbose`. |
-| Capacidad del modelo | `/model` y metadata del modelo | El modelo seleccionado y su `contextWindow`. |
+| Capacidad del modelo | `/model` y metadata | El modelo y su `contextWindow`. |
 
-`TUI mode` (`regular` o `fullscreen`) cambia la disposición de la interfaz, pero no es el setting que activa el uso del contexto.
+`TUI mode` (`regular` o `fullscreen`) cambia la disposición de la interfaz, pero no activa el uso del contexto.
 
 ---
 
-## 10. Crear la estructura del repositorio
+## 7. Recursos globales y recursos locales
 
-A partir de aquí empieza la construcción de la demo. Desde la raíz de `youtube-tutorials`:
+Una parte importante del video es explicar que Pi puede tener recursos personales globales y recursos específicos de cada proyecto.
 
-```bash
-cd /ruta/a/youtube-tutorials
-mkdir -p videos/pi/.pi/extensions
-mkdir -p videos/pi/.pi/skills/repository-onboarding
-cd videos/pi
+### 7.1 Skills globales y locales
+
+Pi descubre skills en estas ubicaciones principales:
+
+| Alcance | Ubicación |
+|---|---|
+| Global | `~/.pi/agent/skills/` |
+| Global compatible | `~/.agents/skills/` |
+| Proyecto | `.pi/skills/` |
+| Proyecto compatible | `.agents/skills/` |
+
+Las skills de proyecto se buscan desde el directorio actual y sus ancestros hasta la raíz del repositorio Git. Una skill tiene como entrada un archivo `SKILL.md`.
+
+Ejemplos:
+
+```text
+~/.pi/agent/skills/review/SKILL.md          # personal, todos los proyectos
+~/.agents/skills/pdf-tools/SKILL.md        # personal/compartida
+mi-repo/.pi/skills/repository-onboarding/SKILL.md  # solo este proyecto
+mi-repo/.agents/skills/testing/SKILL.md    # solo este proyecto o árbol
 ```
 
-La estructura que vamos a crear es:
+### 7.2 Extensiones globales y locales
+
+Las extensiones se descubren en:
+
+| Alcance | Ubicación |
+|---|---|
+| Global | `~/.pi/agent/extensions/` |
+| Proyecto | `.pi/extensions/` |
+
+Una extensión es un módulo TypeScript o JavaScript que puede registrar comandos, tools, eventos, atajos y UI.
+
+Ejemplos:
+
+```text
+~/.pi/agent/extensions/safety-gate.ts       # protección personal global
+mi-repo/.pi/extensions/onboarding.ts        # comportamiento de este proyecto
+```
+
+### 7.3 Settings, contexto y otros recursos
+
+La misma idea se aplica a otros recursos:
+
+| Recurso | Global | Proyecto |
+|---|---|---|
+| Settings | `~/.pi/agent/settings.json` | `.pi/settings.json` |
+| Contexto | `~/.pi/agent/AGENTS.md` | `AGENTS.md` o `CLAUDE.md` |
+| Prompt templates | `~/.pi/agent/prompts/` | `.pi/prompts/` |
+| Themes | `~/.pi/agent/themes/` | `.pi/themes/` |
+
+Los settings de proyecto sobrescriben los globales. Los context files se combinan siguiendo el árbol de directorios.
+
+### 7.4 Qué conviene poner en cada lugar
+
+Usa recursos **globales** para workflows personales que quieres en todos tus proyectos:
+
+- Una skill personal para revisar seguridad.
+- Una extensión que pide confirmación antes de comandos destructivos.
+- Tus atajos, tema o preferencias de editor.
+
+Usa recursos **locales** para comportamientos que deben viajar con el repositorio:
+
+- `repository-onboarding`.
+- Convenciones del equipo.
+- Comandos específicos del proyecto.
+- Una extensión que añade un comando propio de esa aplicación.
+
+Para esta demo usamos recursos locales porque queremos que otra persona pueda clonar el repositorio y reproducirla. No colocamos la skill ni la extensión en `~/.pi/agent/`.
+
+### 7.5 Packages y alcance de instalación
+
+Pi también puede empaquetar skills, extensiones, prompts y themes:
+
+```bash
+pi install npm:@org/mi-paquete       # instalación global por defecto
+pi install npm:@org/mi-paquete -l    # instalación local del proyecto
+pi list                              # paquetes configurados
+```
+
+La instalación global escribe la configuración del usuario. `-l` usa `.pi/settings.json` y `.pi/` del proyecto. Esto es diferente de crear directamente `.pi/skills/` o `.pi/extensions/`, pero sirve para distribuir varios recursos juntos.
+
+Para probar un recurso solo durante una ejecución:
+
+```bash
+pi -e ./ruta/a/extension.ts
+pi --skill ./ruta/a/SKILL.md
+```
+
+Para controlar exactamente qué se descubre:
+
+```bash
+pi --no-extensions
+pi --no-skills
+pi --no-context-files
+```
+
+`--skill` explícito sigue pudiendo cargar una skill aunque se use `--no-skills`. Revisa siempre el código de una extensión y el contenido de una skill antes de confiar en ellos: las extensiones ejecutan código con tus permisos y las skills pueden instruir al modelo para realizar acciones.
+
+### 7.6 Project trust
+
+Pi puede pedir confianza antes de cargar recursos locales del proyecto. Confiar permite cargar `.pi/settings.json`, `.pi` y extensiones del proyecto.
+
+En el recorrido:
+
+1. Primero abrimos Pi en un directorio sin `.pi`.
+2. Después creamos `.pi/` con la skill y la extensión.
+3. Pi puede pedir confianza al reiniciar o al recargar.
+4. Aceptamos solo después de revisar los archivos.
+5. `/trust` guarda la decisión para futuras sesiones.
+
+La confianza del proyecto no es una revisión de seguridad automática. Es una autorización para cargar recursos dinámicos del proyecto.
+
+---
+
+## 8. Crear el repositorio desde cero
+
+Después del recorrido inicial, sal de Pi y crea un directorio nuevo. Debe estar vacío salvo por `.git`:
+
+```text
+/quit
+```
+
+```bash
+mkdir -p ~/projects/pi-onboarding-demo
+cd ~/projects/pi-onboarding-demo
+git init
+pi --verbose
+```
+
+Si tienes un repositorio remoto vacío, puedes clonarlo en lugar de ejecutar `git init`. No agregues todavía un README generado por GitHub si quieres que la primera pantalla sea realmente un repositorio sin archivos.
+
+En este primer arranque no deberían existir todavía:
+
+```text
+.pi/
+AGENTS.md
+CLAUDE.md
+```
+
+Esto permite enseñar la diferencia entre una sesión de Pi sin recursos locales y la sesión posterior, cuando el proyecto ya trae su propia skill y extensión.
+
+---
+
+## 9. Pedirle a Pi que cree la demo
+
+Puedes decirle a la audiencia que no tiene que memorizar el código: Pi puede proponer y crear una skill o una extensión si le explicas el objetivo. La práctica recomendable es separar **planificación**, **implementación** y **revisión**.
+
+### 9.1 Primero pide una propuesta
+
+Con las tools normales activas, escribe:
+
+```text
+Quiero construir una demo educativa de Pi en este repositorio vacío.
+
+La demo debe enseñar cómo una extensión recibe el rol de un desarrollador y
+le pide al modelo usar una skill llamada repository-onboarding.
+
+La skill debe analizar repositorios desconocidos en modo inicialmente read-only,
+respaldar afirmaciones con rutas reales y distinguir evidencia, inferencia y
+preguntas abiertas.
+
+Antes de crear o modificar archivos:
+1. Propón la estructura de directorios.
+2. Explica qué responsabilidad tendrá la skill.
+3. Explica qué responsabilidad tendrá la extensión.
+4. Indica qué dependencias locales necesitaríamos.
+5. Señala riesgos y decisiones abiertas.
+No escribas archivos todavía.
+```
+
+Esto muestra que Pi no es solo un generador de archivos: primero puede explorar el problema, razonar sobre la estructura y hacer preguntas.
+
+### 9.2 Después pide la implementación
+
+Cuando revises la propuesta, puedes solicitar:
+
+```text
+Implementa la propuesta aprobada.
+
+Crea únicamente una demo local de Pi con esta estructura:
+
+.pi/package.json
+.pi/extensions/onboarding.ts
+.pi/skills/repository-onboarding/SKILL.md
+
+La extensión debe registrar /onboard-test, aceptar un rol como argumento o
+mostrar un selector con Backend, Frontend, Fullstack y DevOps, comprobar que Pi
+esté idle y enviar al modelo un mensaje para usar repository-onboarding.
+
+La skill debe:
+- Trabajar inicialmente en modo read-only.
+- No modificar archivos ni instalar dependencias.
+- Respetar AGENTS.md, CLAUDE.md y la documentación local.
+- Citar rutas reales.
+- Separar evidencia, inferencia y preguntas abiertas.
+- Generar un onboarding progresivo según el rol.
+
+No ejecutes npm install ni agregues credenciales. Después de escribir, resume
+cada archivo y espera mi revisión.
+```
+
+Pídeselo a Pi, pero revisa siempre el diff antes de aceptar el resultado. Una extensión es código ejecutable y una skill puede cambiar la conducta del modelo.
+
+### 9.3 Revisa lo que creó
+
+Puedes pedirle a Pi que muestre el resultado o revisar desde otra terminal:
+
+```bash
+find . -maxdepth 5 -type f -not -path './.git/*' -print | sort
+git diff -- .
+```
+
+La estructura esperada es:
+
+```text
+.pi/
+├── package.json
+├── extensions/
+│   └── onboarding.ts
+└── skills/
+    └── repository-onboarding/
+        └── SKILL.md
+```
+
+Si el contenido es correcto, instala la dependencia local usando el lockfile versionado de la demo:
+
+```bash
+npm ci --prefix .pi
+```
+
+En un proyecto nuevo generado durante la grabación, crea el lockfile con la versión que decidas fijar y revísalo antes de versionarlo. En esta demo reproducible el paquete está fijado a `0.83.0` en `.pi/package.json` y en `.pi/package-lock.json`.
+
+---
+
+## 10. Crear la estructura final de la demo
+
+La demo versionada contiene:
 
 ```text
 videos/pi/
@@ -461,11 +702,11 @@ videos/pi/
             └── SKILL.md
 ```
 
-`.pi/` es la carpeta de recursos específicos del proyecto. Pi la descubre después de confiar en el proyecto.
+`.pi/` contiene recursos específicos del proyecto. Si Pi solicita confiar en el proyecto, revisa primero la extensión y la skill, y después acepta la confianza.
 
-### Dependencia local para la extensión
+### 10.1 El package local
 
-Crea o conserva `.pi/package.json`:
+`.pi/package.json` declara la dependencia que necesita la extensión para sus tipos e imports:
 
 ```json
 {
@@ -478,21 +719,15 @@ Crea o conserva `.pi/package.json`:
 }
 ```
 
-Después instala usando el lockfile:
+Instala sin crear dependencias en la raíz:
 
 ```bash
 npm ci --prefix .pi
 ```
 
-La instalación queda en `videos/pi/.pi/node_modules/` y no crea un `node_modules` en la raíz del repositorio.
+### 10.2 La skill `repository-onboarding`
 
-> El paquete local se usa para los tipos de TypeScript y la resolución de la extensión. El comando `pi` sigue siendo el CLI global que instalaste al principio.
-
----
-
-## 11. Crear la skill `repository-onboarding`
-
-Una **skill** es un paquete de instrucciones especializadas. No es un comando shell ni una función TypeScript. Le enseña al modelo cómo resolver una clase de problemas y cuándo debe aplicar ese procedimiento.
+Una **skill** es un paquete de instrucciones especializadas. No es un comando shell ni una función TypeScript: le enseña al modelo cómo resolver una clase de problemas y cuándo aplicar ese procedimiento.
 
 Crea:
 
@@ -500,7 +735,7 @@ Crea:
 .pi/skills/repository-onboarding/SKILL.md
 ```
 
-Una skill debe tener frontmatter con, al menos, `name` y `description`:
+Toda skill debe tener al menos `name` y `description` en el frontmatter:
 
 ```markdown
 ---
@@ -527,38 +762,30 @@ description: Analiza repositorios desconocidos y crea recorridos de onboarding p
 5. Entrega un onboarding progresivo con comandos verificables.
 ```
 
-En esta demo la versión completa está en [`SKILL.md`](.pi/skills/repository-onboarding/SKILL.md). Además del esqueleto anterior define:
+La versión completa está en [`SKILL.md`](.pi/skills/repository-onboarding/SKILL.md). También define los roles `Backend`, `Frontend`, `Fullstack` y `DevOps`, reglas de solo lectura y un formato de salida reproducible.
 
-- Los roles `Backend`, `Frontend`, `Fullstack` y `DevOps`.
-- El proceso de descubrimiento del repositorio.
-- La prohibición inicial de escribir, instalar, desplegar o ejecutar acciones destructivas.
-- La diferencia entre evidencia, inferencia y preguntas abiertas.
-- Un formato de salida para que el onboarding sea reproducible.
+Pi descubre las skills así:
 
-### Cómo Pi descubre y usa una skill
+1. Escanea las ubicaciones globales y locales al iniciar.
+2. Añade sus nombres y descripciones al system prompt.
+3. Cuando una tarea coincide, el modelo lee el `SKILL.md` completo con `read`.
+4. El modelo sigue las instrucciones usando las tools activas.
 
-1. Al iniciar, Pi escanea las ubicaciones de skills y añade sus nombres y descripciones al system prompt.
-2. Cuando el modelo necesita la skill, lee el `SKILL.md` completo con `read`.
-3. El modelo sigue las instrucciones y usa las herramientas disponibles.
-4. Puedes forzar la invocación mediante:
+Puedes forzarla con:
 
 ```text
 /skill:repository-onboarding Backend
 ```
 
-La activación de comandos `/skill:nombre` está habilitada por defecto. También se puede cargar una skill concreta desde el CLI:
+O cargarla desde el CLI:
 
 ```bash
 pi --skill .pi/skills/repository-onboarding/SKILL.md
 ```
 
-La descripción del frontmatter es importante: es la señal que ayuda al modelo a decidir cuándo debe cargar la skill. Revisa siempre el contenido de una skill antes de usarla; una skill puede instruir al modelo para realizar acciones peligrosas.
+### 10.3 La extensión `onboarding.ts`
 
----
-
-## 12. Crear la extensión `onboarding.ts`
-
-Una **extensión** es código TypeScript ejecutado por Pi. Permite añadir comandos, herramientas, eventos, atajos, UI, validaciones y otras integraciones.
+Una **extensión** es código TypeScript ejecutado por Pi. Puede añadir comandos, tools, eventos, atajos, UI y validaciones.
 
 Crea:
 
@@ -566,7 +793,7 @@ Crea:
 .pi/extensions/onboarding.ts
 ```
 
-Contenido de la extensión de esta demo:
+La extensión de esta demo es:
 
 ```typescript
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
@@ -617,74 +844,105 @@ export default function extension(pi: ExtensionAPI) {
 }
 ```
 
-### Qué hace cada parte
+Qué hace cada parte:
 
-- `pi.registerCommand("onboard-test", ...)` crea el comando `/onboard-test`.
-- `ctx.isIdle()` evita iniciar otro onboarding mientras Pi sigue procesando una tarea.
-- `ctx.ui.select()` muestra un selector interactivo si no se pasó un rol.
+- `pi.registerCommand("onboard-test", ...)` crea `/onboard-test`.
+- `ctx.isIdle()` evita iniciar otro onboarding mientras Pi trabaja.
+- `ctx.ui.select()` muestra el selector de rol.
 - `ctx.ui.notify()` muestra feedback en la interfaz.
-- `pi.sendUserMessage()` inyecta un mensaje de usuario real y dispara un nuevo turno del modelo.
-- El mensaje le dice al modelo que use `repository-onboarding`, transmite el rol y refuerza el modo read-only.
+- `pi.sendUserMessage()` inyecta un mensaje de usuario real y dispara un nuevo turno.
+- El mensaje transmite el rol y pide cargar `repository-onboarding`.
 
-La extensión **no contiene el conocimiento de onboarding**. Solo implementa la interacción y la orquestación mínima. La skill contiene el proceso de análisis.
+La extensión **no contiene el conocimiento de onboarding**. Implementa la interacción y la orquestación mínima; la skill contiene el proceso de análisis.
 
-Puedes probar una extensión explícitamente sin depender del autodescubrimiento:
+Puedes probar la extensión explícitamente:
 
 ```bash
 pi -e .pi/extensions/onboarding.ts
 ```
 
-En el flujo normal la extensión se carga automáticamente desde `.pi/extensions/` después de confiar en el proyecto.
+En el flujo normal se descubre automáticamente desde `.pi/extensions/` después de confiar en el proyecto.
 
 ---
 
-## 13. Skill versus extensión
+## 11. Skill versus extensión
 
 | | Skill | Extensión |
 |---|---|---|
-| Forma | `SKILL.md` con instrucciones | Módulo TypeScript |
+| Forma | `SKILL.md` con instrucciones | Módulo TypeScript/JavaScript |
 | Propósito | Enseñar un proceso especializado al modelo | Cambiar el comportamiento de Pi |
-| Se activa | Automáticamente por descripción o con `/skill:nombre` | Al cargar Pi o al invocar un comando/evento |
+| Activación | Descripción, `/skill:nombre` o `--skill` | Carga automática, `-e` o `--extension` |
 | Puede definir | Reglas, pasos, formato, scripts y referencias | Comandos, tools, hooks, UI, atajos y providers |
 | En esta demo | Analiza el repositorio y genera onboarding | Recibe el rol y envía el kickoff |
-| Riesgo | Puede instruir al modelo para ejecutar acciones | Ejecuta código con permisos del usuario |
+| Riesgo | Puede instruir al modelo para ejecutar acciones | Ejecuta código con los permisos del usuario |
 
 La separación es deliberada:
 
 ```text
 extensión = interacción y control
 skill     = conocimiento y procedimiento
-Pi        = runtime, sesión, modelo y herramientas
+Pi        = runtime, sesión, modelo y tools
 ```
 
-Si solo necesitas que el modelo siga un proceso, empieza por una skill. Si necesitas un selector, un comando, una confirmación, una integración externa o una regla que bloquee herramientas, añade una extensión.
+Si solo necesitas que el modelo siga un proceso, empieza por una skill. Si necesitas un selector, un comando, una confirmación, una integración externa o una regla que bloquee tools, añade una extensión.
 
 ---
 
-## 14. Ejecutar la demo completa en modo read-only
+## 12. Recargar y ejecutar la demo final
 
-Desde `videos/pi` instala las dependencias locales:
+Después de crear o modificar `SKILL.md` y `onboarding.ts`, si sigues en la sesión del proyecto ejecuta:
 
-```bash
-npm ci --prefix .pi
+```text
+/reload
 ```
 
-Inicia Pi con únicamente herramientas de lectura:
+Si todavía estás en la sesión del directorio vacío, sal y abre Pi desde el proyecto que acabas de crear:
 
-```bash
-pi --tools read,grep,find,ls
+```text
+/quit
 ```
 
-Acepta la confianza del proyecto si Pi la solicita. Si tienes `quietStartup` activado, inicia así para ver los recursos cargados:
+```bash
+cd ~/projects/pi-onboarding-demo
+pi --verbose
+```
+
+Acepta la confianza del proyecto después de revisar `.pi/` y, si hiciera falta, ejecuta `/reload` en esa nueva sesión.
+
+Pi recarga:
+
+- Context files.
+- Skills.
+- Extensions.
+- Prompt templates.
+- Themes.
+- Keybindings.
+
+Si cambió la confianza del proyecto o una configuración importante, reinicia Pi para que el recorrido sea claro y reproducible.
+
+Inicia la demo final con únicamente tools de lectura. Ejecuta el comando desde la raíz del repositorio que contiene la carpeta `videos/pi`:
 
 ```bash
+cd /ruta/a/youtube-tutorials
 pi --verbose --tools read,grep,find,ls
 ```
 
-En el encabezado deberías poder identificar la skill y la extensión cargadas. Luego ejecuta:
+Si durante la grabación estás dentro del repositorio creado desde cero, usa su ruta real en lugar de `/ruta/a/youtube-tutorials`.
+
+Acepta la confianza solo después de revisar `.pi/`. En el encabezado deberías poder identificar la skill y la extensión cargadas.
+
+Ejecuta:
 
 ```text
 /onboard-test Backend
+```
+
+La extensión y la skill deben existir en el proyecto actual. Si todavía estás en el directorio vacío, primero termina la creación de `.pi/` y reinicia Pi desde ese proyecto; `/onboard-test` no existirá antes de cargar `onboarding.ts`.
+
+Para probar únicamente la skill, sin el comando de la extensión:
+
+```text
+/skill:repository-onboarding Backend
 ```
 
 O sin argumentos para mostrar el selector:
@@ -712,36 +970,15 @@ Prueba también:
 7. El modelo usa `read`, `grep`, `find` y `ls`.
 8. La respuesta distingue evidencia, inferencias, preguntas abiertas y limitaciones.
 
-La allowlist read-only es una defensa adicional. La skill también prohíbe modificar archivos e instalar dependencias, pero la restricción de herramientas hace que el límite sea visible y verificable en la demo.
+La allowlist read-only es una defensa adicional. La skill también prohíbe modificar archivos e instalar dependencias, pero la restricción de tools hace que el límite sea visible y verificable.
 
 ---
 
-## 15. Recargar recursos mientras desarrollas
-
-Después de cambiar `SKILL.md` o `onboarding.ts`, puedes ejecutar:
-
-```text
-/reload
-```
-
-Pi recarga:
-
-- Context files.
-- Skills.
-- Extensions.
-- Prompt templates.
-- Themes.
-- Keybindings.
-
-Si cambiaste settings o la decisión de confianza, reiniciar Pi suele ser más claro para una demo reproducible.
-
----
-
-## 16. Solución de problemas
+## 13. Solución de problemas
 
 ### `pi: command not found`
 
-Comprueba dónde instala npm los binarios globales:
+Comprueba la versión y la ruta del binario:
 
 ```bash
 npm prefix -g
@@ -763,7 +1000,7 @@ Añade el directorio de binarios globales al `PATH` según tu instalación de No
 - Revisa que tenga `name` y `description` en el frontmatter.
 - Ejecuta `/reload` o reinicia Pi.
 - Acepta la confianza del proyecto.
-- Comprueba que `--no-skills` no esté siendo usado.
+- Comprueba que no estés usando `--no-skills` sin `--skill` explícito.
 
 ### La extensión no aparece
 
@@ -787,50 +1024,23 @@ Reinicia con la allowlist:
 pi --tools read,grep,find,ls
 ```
 
-No uses `--tools read,write,edit,bash` para esta parte del video si el objetivo es demostrar onboarding read-only.
+No uses `--tools read,write,edit,bash` para esta parte si el objetivo es demostrar onboarding read-only.
 
 ---
 
-## 17. Seguridad y reproducibilidad
+## 14. Seguridad y reproducibilidad
 
 - No subas `~/.pi/agent/auth.json`.
 - No pongas API keys en `README.md`, prompts, skills ni extensiones.
-- Revisa el código de toda extensión: las extensiones ejecutan TypeScript con los permisos del usuario.
+- Revisa el código de toda extensión: las extensiones ejecutan TypeScript con tus permisos.
 - Revisa también las skills: pueden indicarle al modelo que ejecute acciones.
 - Mantén `package-lock.json` versionado y usa `npm ci`.
-- Para el onboarding inicial, limita las herramientas a `read,grep,find,ls`.
-- La autenticación OAuth de suscripción es para uso local interactivo; la API key administrada para CI se documenta en el demo de PR evidence.
+- Para el onboarding inicial, limita las tools a `read,grep,find,ls`.
+- Usa recursos locales para que la demo viaje con el repositorio.
+- Usa recursos globales para preferencias y workflows personales, no para esconder dependencias de la demo.
+- La autenticación OAuth de suscripción es para uso local interactivo; la API key administrada para CI se documenta en `videos/pi-pr-evidence`.
 
 ---
-
-## Estructura final
-
-```text
-videos/pi/
-├── README.md
-└── .pi/
-    ├── package.json
-    ├── package-lock.json
-    ├── extensions/
-    │   └── onboarding.ts
-    └── skills/
-        └── repository-onboarding/
-            └── SKILL.md
-```
-
-Este primer demo enseña:
-
-```text
-Pi
-  → instalación y autenticación
-  → modelo y thinking
-  → contexto y sesiones
-  → skill
-  → extensión
-  → onboarding read-only
-```
-
-La segunda demo enseña Pi como reviewer de Pull Requests en GitHub Actions: [`videos/pi-pr-evidence`](../pi-pr-evidence).
 
 ## Documentación oficial consultada
 
@@ -841,3 +1051,6 @@ La segunda demo enseña Pi como reviewer de Pull Requests en GitHub Actions: [`v
 - [Skills](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md)
 - [Extensions](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md)
 - [Keybindings](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/keybindings.md)
+- [Pi Packages](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md)
+
+La segunda demo enseña Pi como reviewer read-only de Pull Requests en GitHub Actions: [`videos/pi-pr-evidence`](../pi-pr-evidence).
