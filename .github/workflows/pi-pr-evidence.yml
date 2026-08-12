@@ -6,6 +6,12 @@ on:
     paths:
       - "videos/pi/**"
 
+# Serialize runs for one PR so two synchronize events cannot publish duplicate
+# comments. Different Pull Requests continue independently.
+concurrency:
+  group: pi-pr-evidence-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 # The workflow publishes one advisory comment and never writes to the repository.
 permissions:
   contents: read
@@ -22,8 +28,6 @@ jobs:
     env:
       PI_MODEL: ${{ vars.PI_MODEL }}
       PI_API_KEY: ${{ secrets.PI_API_KEY }}
-      PI_RUNTIME: ${{ runner.temp }}/pi-runtime
-      REVIEW_DIR: .pi/runtime/pr-review
     defaults:
       run:
         working-directory: videos/pi
@@ -40,7 +44,55 @@ jobs:
         with:
           node-version: 22
 
+      - name: Prepare isolated paths and trusted review policy
+        id: prepare
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          PI_RUNTIME_PATH="$RUNNER_TEMP/pi-runtime"
+          REVIEW_DIR_PATH="$RUNNER_TEMP/pi-pr-evidence"
+          SKILL_PATH="$PI_RUNTIME_PATH/pr-evidence/SKILL.md"
+
+          echo "PI_RUNTIME=$PI_RUNTIME_PATH" >> "$GITHUB_ENV"
+          echo "REVIEW_DIR=$REVIEW_DIR_PATH" >> "$GITHUB_ENV"
+          echo "PI_REVIEW_PATH=$REVIEW_DIR_PATH/report.md" >> "$GITHUB_ENV"
+
+          rm -rf "$PI_RUNTIME_PATH" "$REVIEW_DIR_PATH"
+          mkdir -p "$PI_RUNTIME_PATH/pr-evidence" "$REVIEW_DIR_PATH"
+
+          if ! git cat-file -e "$BASE_SHA:videos/pi/.pi/skills/pr-evidence/SKILL.md"; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "reason=the base revision does not contain the pr-evidence skill; manual review is required" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git cat-file -e "$BASE_SHA:videos/pi/.pi/package.json"; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "reason=the base revision does not contain the Pi package manifest; manual review is required" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git cat-file -e "$BASE_SHA:videos/pi/.pi/package-lock.json"; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "reason=the base revision does not contain the Pi lockfile; manual review is required" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Policy and runtime inputs come from the trusted base revision, not
+          # from files that the Pull Request can change.
+          git show "$BASE_SHA:videos/pi/.pi/package.json" > "$PI_RUNTIME_PATH/package.json"
+          git show "$BASE_SHA:videos/pi/.pi/package-lock.json" > "$PI_RUNTIME_PATH/package-lock.json"
+          git show "$BASE_SHA:videos/pi/.pi/skills/pr-evidence/SKILL.md" > "$SKILL_PATH"
+
+          npm ci --prefix "$PI_RUNTIME_PATH" --ignore-scripts --no-audit --no-fund
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "skill_path=$SKILL_PATH" >> "$GITHUB_OUTPUT"
+
       - name: Validate Pi configuration
+        if: steps.prepare.outputs.ready == 'true'
         run: |
           test -n "$PI_MODEL" || {
             echo "::error::Define the PI_MODEL repository variable as provider/model-id."
@@ -51,46 +103,43 @@ jobs:
             exit 1
           }
 
-      - name: Prepare a trusted Pi runtime
-        run: |
-          rm -rf "$PI_RUNTIME"
-          mkdir -p "$PI_RUNTIME"
-          git show "${{ github.event.pull_request.base.sha }}:videos/pi/.pi/package.json" > "$PI_RUNTIME/package.json"
-          npm install --prefix "$PI_RUNTIME" --ignore-scripts --no-audit --no-fund
-
       - name: Capture Pull Request diff
+        if: steps.prepare.outputs.ready == 'true'
         run: |
-          mkdir -p "$REVIEW_DIR"
           git diff --no-ext-diff --unified=80 \
             "${{ github.event.pull_request.base.sha }}" \
             "${{ github.event.pull_request.head.sha }}" \
             -- . > "$REVIEW_DIR/pr.diff"
 
       - name: Run Pi in read-only mode
+        if: steps.prepare.outputs.ready == 'true'
         run: |
           "$PI_RUNTIME/node_modules/.bin/pi" \
             --print \
             --no-session \
             --no-extensions \
             --no-context-files \
-            --skill "$GITHUB_WORKSPACE/videos/pi/.pi/skills/pr-evidence/SKILL.md" \
+            --skill "${{ steps.prepare.outputs.skill_path }}" \
             --tools read,grep,find,ls \
             --model "$PI_MODEL" \
             --api-key "$PI_API_KEY" \
             --thinking low \
-            "Usa la skill pr-evidence. Revisa este Pull Request en modo read-only. El diff está en $GITHUB_WORKSPACE/videos/pi/$REVIEW_DIR/pr.diff. Lee primero ese archivo y genera únicamente el reporte Markdown definido por la skill." \
-            > "$REVIEW_DIR/report.md"
+            "Usa la skill pr-evidence. Revisa este Pull Request en modo read-only. El diff está en $REVIEW_DIR/pr.diff. Lee primero ese archivo y genera únicamente el reporte Markdown definido por la skill." \
+            > "$PI_REVIEW_PATH"
 
       - name: Publish or update the Pull Request comment
+        if: steps.prepare.outputs.ready == 'true'
         uses: actions/github-script@v7
-        env:
-          PI_REVIEW_PATH: ${{ github.workspace }}/videos/pi/.pi/runtime/pr-review/report.md
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require("fs");
             const marker = "<!-- pi-pr-evidence -->";
             const reportPath = process.env.PI_REVIEW_PATH;
+            if (!reportPath) {
+              throw new Error("PI_REVIEW_PATH was not initialized");
+            }
+
             let report = fs.readFileSync(reportPath, "utf8").trim();
 
             // Keep the comment below GitHub's size limit if a model ignores the
@@ -118,7 +167,9 @@ jobs:
             );
 
             const existing = comments.find(
-              (comment) => comment.body && comment.body.includes(marker),
+              (comment) =>
+                comment.user?.login === "github-actions[bot]" &&
+                comment.body?.includes(marker),
             );
 
             if (existing) {
@@ -137,6 +188,17 @@ jobs:
               });
             }
 
+      - name: Explain skipped bootstrap review
+        if: steps.prepare.outputs.ready != 'true'
+        run: |
+          {
+            echo "## Pi PR evidence review"
+            echo
+            echo "Automated review skipped; manual review is required."
+            echo
+            echo "**Reason:** ${{ steps.prepare.outputs.reason }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Remove runtime files
         if: always()
-        run: rm -rf "$REVIEW_DIR" "$PI_RUNTIME"
+        run: rm -rf "$RUNNER_TEMP/pi-pr-evidence" "$RUNNER_TEMP/pi-runtime"
