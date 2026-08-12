@@ -11,6 +11,7 @@ pi/
 ├── README.md
 └── .pi/
     ├── package.json
+    ├── package-lock.json
     ├── extensions/
     │   └── onboarding.ts
     └── skills/
@@ -32,7 +33,7 @@ Desde la raíz del repositorio:
 
 ```bash
 cd videos/pi
-npm install --prefix .pi
+npm ci --prefix .pi
 ```
 
 La instalación queda dentro de `.pi/`; no se crea un `node_modules` en la raíz del repositorio.
