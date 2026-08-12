@@ -73,3 +73,41 @@ Para probar otro rol:
 ```
 
 Esta demo no contiene una aplicación backend. El rol `Backend` sirve para observar cómo la extensión transmite el contexto del desarrollador a la skill.
+
+## Revisión de Pull Requests con Pi
+
+El workflow [`pi-pr-evidence.yml`](../../.github/workflows/pi-pr-evidence.yml) añade un primer caso de uso de CI: cuando un Pull Request modifica `videos/pi/**`, GitHub Actions genera el diff, ejecuta Pi en modo read-only y publica o actualiza un comentario advisory en el PR.
+
+El flujo es:
+
+```text
+Pull Request
+  → checkout del head
+  → diff de videos/pi
+  → Pi + pr-evidence
+  → comentario Markdown
+```
+
+La skill está en:
+
+```text
+.pi/skills/pr-evidence/SKILL.md
+```
+
+El agente solo recibe estas herramientas:
+
+```text
+read, grep, find, ls
+```
+
+No ejecuta tests, no modifica archivos y no instala dependencias. Por eso el comentario distingue entre evidencia encontrada, riesgos, preguntas abiertas y limitaciones.
+
+### Configuración de GitHub Actions
+
+Configura una **repository variable** llamada `PI_MODEL` con un modelo en formato `provider/model-id`, por ejemplo el modelo que tengas registrado y autenticado en Pi.
+
+Configura también un **repository secret** llamado `PI_API_KEY` con la API key correspondiente.
+
+El primer workflow procesa Pull Requests del mismo repositorio. Los Pull Requests desde forks quedan fuera para no exponer la API key a código no confiable. El workflow es advisory: no bloquea el merge.
+
+> El comentario se actualiza en cada nuevo commit del PR en lugar de crear comentarios duplicados. La ruta `videos/pi/**` limita el coste de la demo; para revisar todo el repositorio se puede ampliar el filtro `paths` del workflow.

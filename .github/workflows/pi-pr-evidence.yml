@@ -1,0 +1,141 @@
+name: Pi PR evidence review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "videos/pi/**"
+
+# The workflow publishes one advisory comment and never writes to the repository.
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    # The first version does not expose the model API key to fork code. Support
+    # for external contributors can be added later with a GitHub App/workflow_run.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PI_MODEL: ${{ vars.PI_MODEL }}
+      PI_API_KEY: ${{ secrets.PI_API_KEY }}
+      PI_RUNTIME: ${{ runner.temp }}/pi-runtime
+      REVIEW_DIR: .pi/runtime/pr-review
+    defaults:
+      run:
+        working-directory: videos/pi
+
+    steps:
+      - name: Checkout Pull Request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate Pi configuration
+        run: |
+          test -n "$PI_MODEL" || {
+            echo "::error::Define the PI_MODEL repository variable as provider/model-id."
+            exit 1
+          }
+          test -n "$PI_API_KEY" || {
+            echo "::error::Define the PI_API_KEY repository secret."
+            exit 1
+          }
+
+      - name: Prepare a trusted Pi runtime
+        run: |
+          rm -rf "$PI_RUNTIME"
+          mkdir -p "$PI_RUNTIME"
+          git show "${{ github.event.pull_request.base.sha }}:videos/pi/.pi/package.json" > "$PI_RUNTIME/package.json"
+          npm install --prefix "$PI_RUNTIME" --ignore-scripts --no-audit --no-fund
+
+      - name: Capture Pull Request diff
+        run: |
+          mkdir -p "$REVIEW_DIR"
+          git diff --no-ext-diff --unified=80 \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            -- . > "$REVIEW_DIR/pr.diff"
+
+      - name: Run Pi in read-only mode
+        run: |
+          "$PI_RUNTIME/node_modules/.bin/pi" \
+            --print \
+            --no-session \
+            --no-extensions \
+            --no-context-files \
+            --skill "$GITHUB_WORKSPACE/videos/pi/.pi/skills/pr-evidence/SKILL.md" \
+            --tools read,grep,find,ls \
+            --model "$PI_MODEL" \
+            --api-key "$PI_API_KEY" \
+            --thinking low \
+            "Usa la skill pr-evidence. Revisa este Pull Request en modo read-only. El diff está en $GITHUB_WORKSPACE/videos/pi/$REVIEW_DIR/pr.diff. Lee primero ese archivo y genera únicamente el reporte Markdown definido por la skill." \
+            > "$REVIEW_DIR/report.md"
+
+      - name: Publish or update the Pull Request comment
+        uses: actions/github-script@v7
+        env:
+          PI_REVIEW_PATH: ${{ github.workspace }}/videos/pi/.pi/runtime/pr-review/report.md
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const marker = "<!-- pi-pr-evidence -->";
+            const reportPath = process.env.PI_REVIEW_PATH;
+            let report = fs.readFileSync(reportPath, "utf8").trim();
+
+            // Keep the comment below GitHub's size limit if a model ignores the
+            // requested concise format.
+            if (report.length > 60000) {
+              report = `${report.slice(0, 59500)}\n\n_Report truncated by the workflow._`;
+            }
+
+            const body = [
+              marker,
+              report,
+              "",
+              "<sub>Pi PR evidence review · advisory · read-only</sub>",
+            ].join("\n");
+
+            const issueNumber = context.payload.pull_request.number;
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                per_page: 100,
+              },
+            );
+
+            const existing = comments.find(
+              (comment) => comment.body && comment.body.includes(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body,
+              });
+            }
+
+      - name: Remove runtime files
+        if: always()
+        run: rm -rf "$REVIEW_DIR" "$PI_RUNTIME"
