@@ -1,0 +1,597 @@
+# Continuación del tutorial: comandos, sesiones y navegación en Pi
+
+Este documento complementa [`README.md`](README.md). El README principal explica la instalación, la autenticación, las skills y las extensiones. Esta continuación propone una demo más pausada para enseñar los comandos, las sesiones y la diferencia entre `tree`, `find` y `ls`.
+
+La demo está pensada para ejecutarse localmente, en modo interactivo. No es un workflow para GitHub Actions.
+
+---
+
+## 1. Preparar el directorio de la demo
+
+Para enseñar los comandos de forma limpia, empieza en un directorio pequeño y separado del repositorio final:
+
+```bash
+mkdir -p ~/tmp/pi-commands-demo/src/components
+mkdir -p ~/tmp/pi-commands-demo/docs
+mkdir -p ~/tmp/pi-commands-demo/scripts
+
+touch \
+  ~/tmp/pi-commands-demo/README.md \
+  ~/tmp/pi-commands-demo/package.json \
+  ~/tmp/pi-commands-demo/.gitignore \
+  ~/tmp/pi-commands-demo/.env.example \
+  ~/tmp/pi-commands-demo/src/index.ts \
+  ~/tmp/pi-commands-demo/src/components/App.tsx \
+  ~/tmp/pi-commands-demo/docs/architecture.md \
+  ~/tmp/pi-commands-demo/scripts/check.sh
+
+cd ~/tmp/pi-commands-demo
+pi --name "Pi: comandos y sesiones"
+```
+
+No uses `--no-session` en esta parte: queremos que Pi guarde la conversación para poder demostrar `/tree`, `/resume`, `/fork` y `/clone`.
+
+> Si todavía no has completado `/login`, hazlo según la primera parte del tutorial.
+
+---
+
+## 2. Hay tres clases de comandos
+
+Antes de mostrar muchos comandos, conviene separar tres conceptos que suelen confundirse:
+
+| Clase | Ejemplos | Quién los ejecuta |
+|---|---|---|
+| Comandos slash | `/model`, `/settings`, `/tree` | Pi controla la aplicación o la sesión. |
+| Comandos del usuario | `!git status`, `!!pwd` | El usuario pide al shell que ejecute un comando. |
+| Tools del modelo | `read`, `grep`, `find`, `ls`, `bash` | El modelo las llama a través de Pi. |
+
+Escribe `/` en el editor para mostrar el autocompletado de comandos slash.
+
+### 2.1 Comandos slash
+
+Los comandos slash no son prompts normales. Le dicen a Pi que cambie el modelo, navegue la sesión, recargue recursos o abra una pantalla de configuración.
+
+Ejemplos:
+
+```text
+/model
+/settings
+/session
+/tree
+```
+
+### 2.2 Comandos del usuario: `!` y `!!`
+
+Desde el editor de Pi, comprueba primero si `tree` está disponible y usa `find` como fallback:
+
+```text
+!pwd
+!command -v tree >/dev/null 2>&1 && tree -a -L 3 -I '.git|node_modules|dist' || find . -maxdepth 3 -print | sort
+!!git status --short
+```
+
+La diferencia es:
+
+- `!comando`: ejecuta el comando y envía su salida al modelo.
+- `!!comando`: ejecuta el comando, pero no envía su salida al modelo.
+
+`!!` no es un sandbox. El comando sigue ejecutándose con tus permisos; simplemente su salida no se añade a la conversación.
+
+### 2.3 Tools del modelo
+
+En una sesión normal Pi puede ofrecer estas siete tools built-in:
+
+```text
+read, write, edit, bash, grep, find, ls
+```
+
+La sesión inicial empieza normalmente con:
+
+```text
+read, write, edit, bash
+```
+
+Para una ejecución read-only:
+
+```bash
+pi --tools read,grep,find,ls
+```
+
+Las tools son diferentes de `!comando`: en el primer caso el modelo decide cuándo llamar a una tool; en el segundo, el usuario escribe explícitamente un comando.
+
+---
+
+## 3. Comandos para enseñar primero
+
+Después de iniciar Pi, muestra esta secuencia:
+
+```text
+/model
+/settings
+/hotkeys
+/session
+```
+
+### `/model`
+
+Abre el selector de modelos disponibles para los proveedores autenticados.
+
+También puedes usar:
+
+```text
+Ctrl+L
+```
+
+Desde la shell:
+
+```bash
+pi --list-models
+```
+
+**Qué explicar:** cambiar de modelo no cambia el repositorio ni la sesión. Cambia el modelo que continuará trabajando sobre el contexto actual.
+
+### `/settings`
+
+Abre la configuración de Pi. Para este video merece la pena enseñar:
+
+- nivel de thinking por defecto;
+- tema;
+- `quietStartup`;
+- compactación automática;
+- modo de entrega de mensajes;
+- transporte;
+- confianza por defecto del proyecto.
+
+No es necesario cambiar todas las opciones. La idea es mostrar que Pi tiene configuración global y configuración específica del proyecto.
+
+### `/hotkeys`
+
+Muestra los atajos disponibles y sus acciones. Es útil porque algunos atajos cambian según la pantalla en la que estés.
+
+Atajos principales:
+
+| Atajo | Uso |
+|---|---|
+| `Ctrl+L` | Seleccionar modelo. |
+| `Ctrl+P` | Ciclar al siguiente modelo. |
+| `Shift+Ctrl+P` | Ciclar al modelo anterior. |
+| `Shift+Tab` | Cambiar el nivel de thinking. |
+| `Ctrl+T` | Colapsar o expandir el thinking. |
+| `Ctrl+O` | Colapsar o expandir la salida de tools. |
+| `Shift+Enter` | Insertar una nueva línea. |
+| `Alt+Enter` | Encolar un follow-up. |
+| `Escape` | Cancelar la operación actual. |
+| `Ctrl+X` | Copiar la última respuesta. |
+| `Ctrl+G` | Abrir el editor externo. |
+
+### `/session`
+
+Muestra información de la sesión actual, incluyendo normalmente:
+
+- archivo de sesión;
+- identificador;
+- mensajes;
+- tokens;
+- coste.
+
+Pi guarda las sesiones en:
+
+```text
+~/.pi/agent/sessions/
+```
+
+Una sesión es un archivo JSONL con una estructura de árbol. Esa estructura es la razón por la que `/tree` es tan interesante.
+
+---
+
+## 4. El comando favorito: `/tree`
+
+`/tree` navega el árbol de la **sesión actual**. No muestra los directorios del proyecto.
+
+Para crear ramas visibles durante la grabación, utiliza este recorrido:
+
+### 4.1 Crear el primer camino
+
+Envía un prompt como:
+
+```text
+Estoy diseñando una pequeña aplicación para explorar repositorios.
+Propón una arquitectura basada en una CLI y explica sus componentes.
+```
+
+Después envía:
+
+```text
+Desarrolla la alternativa A: una CLI simple con un único proceso.
+```
+
+### 4.2 Volver atrás y crear una alternativa
+
+Ahora ejecuta:
+
+```text
+/tree
+```
+
+En el navegador:
+
+1. Selecciona el mensaje anterior desde el que quieres continuar.
+2. Pulsa `Enter`.
+3. Edita el prompt que aparece en el editor.
+4. Cambia la solicitud por algo como:
+
+```text
+Ahora desarrolla la alternativa B: separar la CLI y un servicio worker.
+```
+
+5. Envía el prompt.
+6. Ejecuta `/tree` otra vez.
+
+Ahora deberías poder ver el camino original y la nueva alternativa como ramas de una misma sesión.
+
+Puedes etiquetar una entrada seleccionada desde el árbol con:
+
+```text
+Shift+L
+```
+
+### 4.3 Qué hace exactamente `/tree`
+
+Las sesiones de Pi se guardan como árboles: cada entrada tiene un padre y la conversación activa termina en una hoja. `/tree` permite mover la hoja activa a un punto anterior y continuar desde ahí sin crear otro archivo de sesión.
+
+Cuando se abandona una rama, Pi puede generar un resumen de esa rama para conservar el contexto importante sin volver a reproducir toda la conversación.
+
+### 4.4 Por qué `/tree` es tan útil
+
+`/tree` es especialmente bueno para:
+
+- explorar varias alternativas sin perder el trabajo anterior;
+- comparar dos diseños desde el mismo punto de partida;
+- probar prompts diferentes;
+- volver a una decisión anterior;
+- experimentar sin crear muchas sesiones independientes;
+- conservar la historia de cómo se llegó a una solución.
+
+La frase para la grabación puede ser:
+
+> `/tree` convierte una conversación lineal en un espacio de exploración. Puedo probar una alternativa, volver atrás y probar otra sin borrar la primera.
+
+---
+
+## 5. `/tree` no es `/resume`, `/fork` ni `/clone`
+
+Estos comandos están relacionados, pero resuelven problemas distintos:
+
+| Comando | Qué hace | ¿Crea otro archivo? |
+|---|---|---:|
+| `/tree` | Navega todas las ramas de la sesión actual. | No |
+| `/resume` | Busca y abre una sesión anterior del proyecto. | No |
+| `/fork` | Crea una sesión nueva a partir de un mensaje del usuario. | Sí |
+| `/clone` | Duplica la rama activa completa en una sesión nueva. | Sí |
+| `/new` | Comienza una sesión nueva. | Sí |
+| `/compact` | Resume contexto antiguo para reducir tokens. | No |
+
+También existen comandos de shell relacionados:
+
+```bash
+pi -r                  # abrir el selector de sesiones anteriores
+pi -c                  # continuar la sesión más reciente
+pi --fork <path|id>    # bifurcar una sesión por archivo o ID
+pi --no-session        # ejecutar sin guardar sesión
+```
+
+### Cuándo usar cada uno
+
+- Usa `/tree` para mantener alternativas relacionadas dentro de una misma conversación.
+- Usa `/resume` cuando quieres recuperar una conversación anterior.
+- Usa `/fork` cuando quieres iniciar una nueva sesión desde un prompt específico.
+- Usa `/clone` cuando quieres una copia independiente del camino actual.
+- Usa `/new` cuando el tema cambió por completo.
+- Usa `/compact` cuando la conversación creció y quieres liberar contexto.
+
+La diferencia que conviene enfatizar es:
+
+> `/tree` organiza ramas dentro de una sesión; `/resume` selecciona entre sesiones distintas.
+
+---
+
+## 6. Otros comandos de sesión
+
+### `/new`
+
+Empieza una conversación nueva. La sesión anterior queda guardada y se puede recuperar con `/resume`.
+
+### `/name <nombre>`
+
+Asigna un nombre fácil de reconocer:
+
+```text
+/name exploración de arquitectura
+```
+
+Los nombres ayudan a encontrar la sesión en `/resume`.
+
+### `/compact`
+
+Resume mensajes antiguos y conserva una versión más pequeña del contexto. Es útil cuando la conversación es larga.
+
+No es lo mismo que `/tree`:
+
+- `/tree` cambia de camino en la conversación.
+- `/compact` reduce el tamaño del camino actual.
+
+### `/export [archivo]`
+
+Exporta la sesión para revisarla o compartirla en otro formato. Revisa siempre el contenido antes de publicar una exportación: puede incluir prompts, respuestas, rutas y resultados de tools.
+
+### `/import <archivo>`
+
+Importa una sesión exportada y permite continuarla.
+
+### `/share`
+
+Publica la sesión como un gist privado de GitHub. No lo uses durante una demo con secretos o información sensible.
+
+---
+
+## 7. Comandos de recursos del proyecto
+
+### `/reload`
+
+Recarga los recursos sin reiniciar Pi:
+
+- skills;
+- extensiones;
+- prompt templates;
+- themes;
+- context files;
+- keybindings.
+
+En esta demo es el comando que permite enseñar el ciclo:
+
+```text
+crear o modificar recurso
+  → revisar archivo
+  → /reload
+  → probar el recurso
+```
+
+Después de crear la extensión de onboarding, ejecuta:
+
+```text
+/reload
+```
+
+Y prueba:
+
+```text
+/onboard-test Backend
+```
+
+Si no pasas un rol, la extensión muestra el selector:
+
+```text
+/onboard-test
+```
+
+### `/trust`
+
+Guarda la decisión de confianza del proyecto para futuras sesiones.
+
+Conviene explicarlo así:
+
+> Confiar en un proyecto permite que Pi cargue sus recursos dinámicos. No significa que Pi haya auditado la seguridad de esos archivos.
+
+Una extensión puede ejecutar código con los permisos del proceso, por lo que siempre hay que revisarla antes de confiar.
+
+### `/skill:<nombre>`
+
+Invoca explícitamente una skill disponible:
+
+```text
+/skill:repository-onboarding Backend
+```
+
+Una skill es conocimiento e instrucciones para el modelo. No es lo mismo que una extensión: la extensión añade comportamiento ejecutable a Pi; la skill orienta cómo resolver una tarea.
+
+---
+
+## 8. `tree`, `find` y `ls` desde el terminal
+
+También existe un comando del sistema llamado `tree`. No hay que confundirlo con el comando slash `/tree`.
+
+```text
+/tree       → árbol de una sesión de Pi
+ tree       → árbol de directorios del filesystem
+```
+
+### `ls`: mirar un directorio
+
+```bash
+ls
+ls -la
+ls -la src
+```
+
+`ls` responde principalmente:
+
+> ¿Qué hay aquí?
+
+Es muy bueno para inspeccionar un único directorio, pero no siempre muestra la jerarquía completa.
+
+### `find`: buscar rutas
+
+```bash
+find . -maxdepth 3 -type f | sort
+find . -type f -name '*.ts' | sort
+find . -type d -name node_modules -prune -o -type f -print | sort
+```
+
+`find` responde principalmente:
+
+> ¿Qué rutas cumplen esta condición?
+
+Es más preciso y automatizable que `tree`, especialmente cuando quieres filtrar por tipo, nombre, profundidad o fecha. Su salida suele ser plana.
+
+### `tree`: entender la forma del proyecto
+
+```bash
+tree -a -L 3 -I '.git|node_modules|dist'
+```
+
+`tree` responde principalmente:
+
+> ¿Cómo está organizado este directorio?
+
+Por eso es tan bueno para onboarding: muestra la jerarquía de un vistazo.
+
+Una forma sencilla de explicarlo durante el video:
+
+| Comando | Pregunta que responde | Mejor uso |
+|---|---|---|
+| `ls` | ¿Qué hay en este directorio? | Inspección local y rápida. |
+| `find` | ¿Qué rutas coinciden con este filtro? | Búsqueda precisa y scripts. |
+| `tree` | ¿Cuál es la forma del proyecto? | Orientación y explicación visual. |
+
+### Por qué `tree` es mi favorito
+
+`find` puede mostrar más información, pero normalmente entrega una lista plana. `tree` conserva las relaciones padre-hijo y permite ver rápidamente:
+
+- dónde está el punto de entrada;
+- qué carpetas son módulos;
+- dónde viven los tests y la documentación;
+- qué recursos están ocultos, como `.pi/`;
+- qué áreas están separadas entre sí;
+- si el repositorio parece pequeño, monolítico o dividido en paquetes.
+
+La frase sugerida para la grabación:
+
+> Me encanta `tree` porque antes de leer archivos me da un mapa mental del repositorio. `find` me ayuda a buscar y `ls` a inspeccionar; `tree` me ayuda a orientarme.
+
+### Si `tree` no está instalado
+
+Puedes usar este fallback:
+
+```bash
+find . -maxdepth 3 -print | sort
+```
+
+En macOS, si quieres instalar el comando de forma permanente:
+
+```bash
+brew install tree
+```
+
+Para la demo, también puedes mostrar el fallback y explicar que `tree` es una comodidad visual, no una dependencia de Pi.
+
+---
+
+## 9. Secuencia completa para grabar
+
+Esta es una secuencia corta que combina los conceptos:
+
+```text
+/model
+/settings
+/hotkeys
+/session
+```
+
+Desde el editor de Pi:
+
+```text
+!pwd
+!command -v tree >/dev/null 2>&1 && tree -a -L 3 -I '.git|node_modules|dist' || find . -maxdepth 3 -print | sort
+!find . -maxdepth 3 -type f | sort
+```
+
+Después envía dos prompts relacionados:
+
+```text
+Propón dos formas de organizar una aplicación pequeña que analiza repositorios.
+Explica primero la alternativa A.
+```
+
+```text
+Desarrolla la alternativa A con más detalle y enumera sus riesgos.
+```
+
+Crea una rama alternativa:
+
+```text
+/tree
+```
+
+Selecciona el primer prompt, edítalo y envía:
+
+```text
+Ahora desarrolla la alternativa B y compárala con la alternativa A.
+```
+
+Vuelve a mostrar:
+
+```text
+/tree
+/session
+```
+
+Finalmente enseña los comandos de cierre:
+
+```text
+/export ~/tmp/pi-commands-session.html
+/new
+/resume
+```
+
+Sal de Pi con:
+
+```text
+/quit
+```
+
+---
+
+## 10. Comandos adicionales para mencionar
+
+No todos necesitan una demostración completa:
+
+| Comando | Uso |
+|---|---|
+| `/login` | Iniciar autenticación. |
+| `/logout` | Eliminar la credencial seleccionada. |
+| `/scoped-models` | Elegir los modelos que participan en `Ctrl+P`. |
+| `/copy` | Copiar la última respuesta del asistente. |
+| `/changelog` | Mostrar cambios de versión. |
+| `/quit` | Salir de Pi. |
+
+Para la primera grabación es mejor enseñar pocos comandos con una historia clara que mostrar una lista larga sin contexto.
+
+---
+
+## 11. Qué no funciona igual en GitHub Actions
+
+Esta demo es interactiva y local. En GitHub Actions normalmente usarás un prompt explícito:
+
+```bash
+pi --print --no-session "Resume el contenido de README.md"
+```
+
+Por eso no puedes depender de:
+
+- `/tree`;
+- `/resume`;
+- selectores interactivos;
+- `/settings` durante el job;
+- la autenticación OAuth local;
+- una extensión que espere `ctx.ui.select()`.
+
+En Actions se prefieren:
+
+```text
+skill explícita
++ tools allowlist
++ prompt determinista
++ salida Markdown/JSON
+```
+
+El recorrido `/tree` pertenece especialmente a la experiencia local de Pi: es una de las razones por las que una sesión interactiva puede ser mucho más exploratoria que un job headless.
