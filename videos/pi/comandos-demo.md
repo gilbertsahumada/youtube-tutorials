@@ -62,11 +62,11 @@ Ejemplos:
 
 ### 2.2 Comandos del usuario: `!` y `!!`
 
-Desde el editor de Pi:
+Desde el editor de Pi, comprueba primero si `tree` está disponible y usa `find` como fallback:
 
 ```text
 !pwd
-!tree -a -L 3 -I '.git|node_modules|dist'
+!command -v tree >/dev/null 2>&1 && tree -a -L 3 -I '.git|node_modules|dist' || find . -maxdepth 3 -print | sort
 !!git status --short
 ```
 
@@ -172,8 +172,7 @@ Muestra información de la sesión actual, incluyendo normalmente:
 - identificador;
 - mensajes;
 - tokens;
-- coste;
-- modelo actual.
+- coste.
 
 Pi guarda las sesiones en:
 
@@ -272,12 +271,12 @@ Estos comandos están relacionados, pero resuelven problemas distintos:
 | `/new` | Comienza una sesión nueva. | Sí |
 | `/compact` | Resume contexto antiguo para reducir tokens. | No |
 
-También existen equivalentes de shell:
+También existen comandos de shell relacionados:
 
 ```bash
 pi -r                  # abrir el selector de sesiones anteriores
 pi -c                  # continuar la sesión más reciente
-pi --fork <path|id>    # crear una sesión nueva desde otra
+pi --fork <path|id>    # bifurcar una sesión por archivo o ID
 pi --no-session        # ejecutar sin guardar sesión
 ```
 
@@ -502,7 +501,7 @@ Desde el editor de Pi:
 
 ```text
 !pwd
-!tree -a -L 3 -I '.git|node_modules|dist'
+!command -v tree >/dev/null 2>&1 && tree -a -L 3 -I '.git|node_modules|dist' || find . -maxdepth 3 -print | sort
 !find . -maxdepth 3 -type f | sort
 ```
 
@@ -571,10 +570,10 @@ Para la primera grabación es mejor enseñar pocos comandos con una historia cla
 
 ## 11. Qué no funciona igual en GitHub Actions
 
-Esta demo es interactiva y local. En GitHub Actions normalmente usarás:
+Esta demo es interactiva y local. En GitHub Actions normalmente usarás un prompt explícito:
 
 ```bash
-pi --print --no-session
+pi --print --no-session "Resume el contenido de README.md"
 ```
 
 Por eso no puedes depender de:
