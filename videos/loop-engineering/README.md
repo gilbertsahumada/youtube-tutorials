@@ -1,15 +1,16 @@
 # Loop Engineering con Claude Code y Codex
 
-## La pregunta que manda
+## El problema que vamos a seguir
 
-Repetir un prompt no basta para diseñar un loop. Un loop útil tiene que responder tres preguntas:
+Un agente no siempre necesita otra vuelta por la misma razón. Puede faltar código que todavía se
+puede cambiar en local, GitHub puede estar ejecutando CI o la sesión puede haber terminado. Si se
+usa el mismo mecanismo para esos tres estados, se repite trabajo o se pierde el siguiente paso.
 
-1. ¿Qué debe provocar la próxima acción?
-2. ¿Dónde debe sobrevivir el estado?
-3. ¿Qué evidencia lo detiene?
+Esta demo sigue un procesador de webhooks de facturación. Al principio duplica un evento, descarta
+un fallo temporal y trata un fallo permanente como una entrega exitosa. El recorrido lleva ese
+defecto desde la terminal hasta un PR y vuelve a comprobarlo después de que cambia CI.
 
-Este proyecto responde las tres siguiendo un solo PR de principio a fin. No es un catálogo de
-herramientas. Es una historia continua:
+No es un catálogo de herramientas. Es una historia continua:
 
 ```text
 bug visible
@@ -20,8 +21,16 @@ bug visible
   -> una tarea durable puede volver cuando la sesión ya no existe
 ```
 
-El ejemplo es un procesador de webhooks de facturación. Al principio procesa dos veces el mismo
-evento, descarta un fallo temporal y trata un fallo permanente como una entrega exitosa.
+El objetivo es decidir qué debe iniciar cada vuelta, qué estado debe sobrevivir y qué evidencia
+permite detenerla.
+
+## La pregunta que manda
+
+Antes de elegir un comando, responde estas tres preguntas:
+
+1. ¿Qué debe provocar la próxima acción?
+2. ¿Dónde debe sobrevivir el estado?
+3. ¿Qué evidencia lo detiene?
 
 ## Antes de empezar
 
