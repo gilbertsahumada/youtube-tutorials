@@ -33,6 +33,37 @@ No uses `--no-session` en esta parte: queremos que Pi guarde la conversación pa
 
 > Si todavía no has completado `/login`, hazlo según la primera parte del tutorial.
 
+### Para esta grabación: usar el proyecto ya creado
+
+Como la primera demo ya fue grabada en `~/projects/pi-first-project`, no necesitas crear el directorio de ejemplo anterior. Puedes continuar directamente allí:
+
+```bash
+cd ~/projects/pi-first-project
+
+# Crear una sesión nueva para esta parte del video:
+pi --name "Pi: comandos y sesiones"
+```
+
+Si quieres recuperar una sesión anterior de ese proyecto:
+
+```bash
+pi -c    # continuar la sesión más reciente
+pi -r    # elegir una sesión desde el selector
+```
+
+Antes de iniciar Pi, enseña la estructura del proyecto con `tree` y usa `find` si el comando no está instalado:
+
+```bash
+if command -v tree >/dev/null 2>&1; then
+  tree -a -L 4 -I '.git|node_modules|dist'
+else
+  printf '%s\n' 'tree no está instalado; usando find como fallback:'
+  find . -maxdepth 4 -print | sort
+fi
+```
+
+Este proyecto contiene recursos locales de Pi dentro de `.pi/`. Revisa la extensión y la skill antes de aceptar la confianza del proyecto si Pi la solicita.
+
 ---
 
 ## 2. Hay tres clases de comandos
@@ -79,23 +110,85 @@ La diferencia es:
 
 ### 2.3 Tools del modelo
 
-En una sesión normal Pi puede ofrecer estas siete tools built-in:
+En una sesión normal Pi tiene siete tools built-in disponibles:
 
 ```text
 read, write, edit, bash, grep, find, ls
 ```
 
-La sesión inicial empieza normalmente con:
+Pero la configuración estándar activa inicialmente solo cuatro:
 
 ```text
 read, write, edit, bash
 ```
 
-Para una ejecución read-only:
+Las otras tres (`grep`, `find` y `ls`) no están desinstaladas ni bloqueadas: son tools built-in read-only opcionales. Pi las separa del conjunto estándar para que puedas elegir explícitamente la superficie de herramientas que tendrá el modelo.
+
+### Activar las siete tools
+
+Si quieres iniciar Pi con todas las tools built-in activas:
+
+```bash
+pi --tools read,write,edit,bash,grep,find,ls
+```
+
+`--tools` funciona como una allowlist estricta. Por eso, si escribes solamente:
+
+```bash
+pi --tools grep,find,ls
+```
+
+Pi tendrá esas tres tools, pero no tendrá automáticamente las cuatro predeterminadas. Para activar las siete debes incluirlas todas.
+
+### Activar solo las tools read-only
+
+Para revisar un repositorio sin permitir que el modelo escriba archivos ni ejecute `bash`:
 
 ```bash
 pi --tools read,grep,find,ls
 ```
+
+### Dejarlo configurado
+
+Puedes definir `defaultTools` en la configuración global:
+
+```text
+~/.pi/agent/settings.json
+```
+
+O solo para el proyecto:
+
+```text
+.pi/settings.json
+```
+
+Ejemplo para activar las siete al iniciar:
+
+```json
+{
+  "defaultTools": [
+    "read",
+    "write",
+    "edit",
+    "bash",
+    "grep",
+    "find",
+    "ls"
+  ]
+}
+```
+
+La configuración de proyecto reemplaza la lista global. Reinicia Pi después de cambiar `defaultTools` para comprobar la nueva lista inicial.
+
+También existen opciones para reducir herramientas:
+
+```bash
+pi --exclude-tools bash       # quitar bash del conjunto resultante
+pi --no-builtin-tools         # desactivar las tools built-in
+pi --no-tools                 # desactivar todas las tools
+```
+
+La utilidad práctica de `grep`, `find` y `ls` es que ofrecen operaciones de búsqueda y exploración read-only sin dar al modelo acceso a `bash`. En una sesión normal, `bash` podría ejecutar esas mismas utilidades, pero una allowlist explícita permite controlar mejor qué puede hacer el modelo.
 
 Las tools son diferentes de `!comando`: en el primer caso el modelo decide cuándo llamar a una tool; en el segundo, el usuario escribe explícitamente un comando.
 
@@ -292,6 +385,24 @@ pi --no-session        # ejecutar sin guardar sesión
 La diferencia que conviene enfatizar es:
 
 > `/tree` organiza ramas dentro de una sesión; `/resume` selecciona entre sesiones distintas.
+
+### Seleccionar un punto anterior o copiarlo
+
+`/tree` y `/fork` permiten partir desde un punto anterior, pero de maneras diferentes:
+
+- `/tree` muestra el árbol completo y permite seleccionar distintos tipos de entradas. Si eliges un mensaje del usuario, Pi lo coloca en el editor para editarlo y crear una nueva rama. Si eliges una respuesta del asistente o una tool, puedes continuar desde allí directamente.
+- `/fork` abre un selector de mensajes anteriores del usuario y crea una sesión nueva desde el prompt elegido.
+- `/clone` no muestra un selector de puntos anteriores: duplica la rama activa completa en una sesión nueva.
+
+Si quieres clonar un punto anterior, combina los comandos:
+
+```text
+/tree
+→ selecciona el punto de la conversación
+→ /clone
+```
+
+Así `/tree` mueve la rama activa al punto elegido y `/clone` copia ese estado a otro archivo de sesión.
 
 ---
 
