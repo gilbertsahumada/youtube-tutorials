@@ -108,7 +108,7 @@ Pi tiene ejemplos de extensiones que implementan plan mode y sub-agents, pero no
 2. Mostrar las tools y cómo se activan.
 3. Demostrar `/tree` como el feature central de sesiones.
 4. Recorrer los comandos slash y los comandos del usuario.
-5. Terminar con `tree`, `find`, `ls`, JSON y las diferencias con GitHub Actions.
+5. Terminar con `tree`, `find`, `ls` y las diferencias con GitHub Actions.
 
 ---
 
@@ -239,56 +239,6 @@ pi --no-tools                 # desactivar todas las tools
 La utilidad práctica de `grep`, `find` y `ls` es que ofrecen operaciones de búsqueda y exploración read-only sin dar al modelo acceso a `bash`. En una sesión normal, `bash` podría ejecutar esas mismas utilidades, pero una allowlist explícita permite controlar mejor qué puede hacer el modelo.
 
 Las tools son diferentes de `!comando`: en el primer caso el modelo decide cuándo llamar a una tool; en el segundo, el usuario escribe explícitamente un comando.
-
-### 3.4 Las tres comillas de los bloques de código
-
-Cuando Pi muestra algo como:
-
-```json
-{
-  "defaultTools": [
-    "read",
-    "write",
-    "edit",
-    "bash",
-    "grep",
-    "find",
-    "ls"
-  ]
-}
-```
-
-las tres comillas invertidas no son parte del JSON. Son **delimitadores de un bloque de código Markdown**:
-
-- la primera línea (` ```json `) abre el bloque y `json` indica el lenguaje;
-- las líneas intermedias contienen el código;
-- la última línea (` ``` `) cierra el bloque.
-
-La etiqueta puede ser `bash`, `text`, `json`, `typescript` u otro lenguaje. Sirve como pista para el resaltado de sintaxis.
-
-### ¿Por qué se ven las comillas en Pi?
-
-No es un error ni una extensión ausente. Pi usa el renderer Markdown de `@earendil-works/pi-tui` y, deliberadamente, dibuja las líneas de apertura y cierre como el borde del bloque de código. Por eso en el terminal puedes ver literalmente:
-
-````text
-```json
-...
-```
-````
-
-El contenido puede estar coloreado, pero las fences siguen visibles para marcar el inicio y el final del bloque.
-
-### ¿Se puede cambiar?
-
-Hay tres niveles de personalización:
-
-1. **Tema:** un tema personalizado puede cambiar el color de `mdCodeBlockBorder`, que controla el estilo visual de esas líneas.
-2. **Markdown transformer:** una extensión puede usar `registerMarkdownTransformer()` para transformar el Markdown antes de renderizarlo, aunque el renderer built-in seguirá tratando los bloques como bloques de código.
-3. **Renderer propio:** para eliminar o reemplazar completamente las fences habría que crear una extensión con un renderer TUI propio. No encontré una extensión oficial lista para instalar que haga exactamente eso.
-
-Los ejemplos `message-renderer.ts` y `built-in-tool-renderer.ts` muestran cómo personalizar mensajes o resultados de tools. No cambian automáticamente todos los bloques Markdown normales del asistente.
-
-Para la demo, yo explicaría que las fences son Markdown visible en el TUI, no datos adicionales. Si solo quieres una salida más limpia en un prompt concreto, puedes pedirle al modelo: `muestra el comando sin bloques Markdown`; pero eso es una instrucción al modelo, no un cambio del renderer.
 
 ---
 
