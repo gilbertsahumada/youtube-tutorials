@@ -33,18 +33,16 @@ No uses `--no-session` en esta parte: queremos que Pi guarde la conversación pa
 
 > Si todavía no has completado `/login`, hazlo según la primera parte del tutorial.
 
-### Para esta grabación: usar el proyecto ya creado
+### Para esta grabación: reutilizar el proyecto del video
 
-Como la primera demo ya fue grabada en `~/projects/pi-first-project`, no necesitas crear el directorio de ejemplo anterior. Puedes continuar directamente allí:
+Como la primera demo ya fue grabada en el [video de YouTube](https://youtu.be/fvXWPim2RzM), no necesitas crear el directorio de ejemplo anterior. Abre una terminal en la raíz del proyecto que construiste durante ese video y ejecuta:
 
 ```bash
-cd ~/projects/pi-first-project
-
 # Crear una sesión nueva para esta parte del video:
 pi --name "Pi: comandos y sesiones"
 ```
 
-Si quieres recuperar una sesión anterior de ese proyecto:
+Si quieres recuperar una sesión anterior del proyecto:
 
 ```bash
 pi -c    # continuar la sesión más reciente
@@ -62,7 +60,7 @@ else
 fi
 ```
 
-Este proyecto contiene recursos locales de Pi dentro de `.pi/`. Revisa la extensión y la skill antes de aceptar la confianza del proyecto si Pi la solicita.
+El proyecto creado durante el video contiene recursos locales de Pi dentro de `.pi/`. Revisa la extensión y la skill antes de aceptar la confianza del proyecto si Pi la solicita.
 
 ---
 
@@ -100,7 +98,7 @@ Un plan mode real normalmente añade comportamiento verificable, por ejemplo:
 - guardar un plan y su progreso;
 - ofrecer comandos como `/plan` o `/todos`.
 
-Pi tiene ejemplos de extensiones que implementan plan mode y sub-agents, pero no vienen activos por defecto. En `~/projects/pi-first-project/.pi/` la extensión local de esta demo es `onboarding.ts`; este proyecto no define un plan mode ni un sistema de sub-agents. Si aparece `/plan` o `/todos` en tu sesión, significa que una extensión o paquete global/local los añadió.
+Pi tiene ejemplos de extensiones que implementan plan mode y sub-agents, pero no vienen activos por defecto. La extensión local de esta demo es `onboarding.ts`; el proyecto del video no define un plan mode ni un sistema de sub-agents. Si aparece `/plan` o `/todos` en tu sesión, significa que una extensión o paquete global/local los añadió.
 
 > `thinking` y `plan mode` tampoco son lo mismo: `Shift+Tab` cambia el nivel de reasoning del modelo; no activa un workflow de planificación.
 
@@ -242,9 +240,9 @@ La utilidad práctica de `grep`, `find` y `ls` es que ofrecen operaciones de bú
 
 Las tools son diferentes de `!comando`: en el primer caso el modelo decide cuándo llamar a una tool; en el segundo, el usuario escribe explícitamente un comando.
 
-### 3.4 Visualizar JSON en la terminal de Pi
+### 3.4 Las tres comillas de los bloques de código
 
-Cuando Pi muestra un bloque como:
+Cuando Pi muestra algo como:
 
 ```json
 {
@@ -260,37 +258,37 @@ Cuando Pi muestra un bloque como:
 }
 ```
 
-el TUI lo está renderizando como **Markdown con un bloque de código `json`**. Normalmente hay resaltado de sintaxis, pero no es un árbol JSON interactivo y no permite expandir o colapsar cada propiedad.
+las tres comillas invertidas no son parte del JSON. Son **delimitadores de un bloque de código Markdown**:
 
-Para inspeccionar el archivo real de forma legible puedes usar `jq` desde el shell. En el proyecto actual existe `.pi/package.json`:
+- la primera línea (` ```json `) abre el bloque y `json` indica el lenguaje;
+- las líneas intermedias contienen el código;
+- la última línea (` ``` `) cierra el bloque.
 
-```bash
-jq . .pi/package.json
+La etiqueta puede ser `bash`, `text`, `json`, `typescript` u otro lenguaje. Sirve como pista para el resaltado de sintaxis.
+
+### ¿Por qué se ven las comillas en Pi?
+
+No es un error ni una extensión ausente. Pi usa el renderer Markdown de `@earendil-works/pi-tui` y, deliberadamente, dibuja las líneas de apertura y cierre como el borde del bloque de código. Por eso en el terminal puedes ver literalmente:
+
+````text
+```json
+...
 ```
+````
 
-Desde el editor de Pi:
+El contenido puede estar coloreado, pero las fences siguen visibles para marcar el inicio y el final del bloque.
 
-```text
-!!jq . .pi/package.json
-```
+### ¿Se puede cambiar?
 
-`!!` muestra la salida al usuario sin añadirla al contexto del modelo. Si usas `!jq ...`, la salida también se envía al modelo.
+Hay tres niveles de personalización:
 
-Si después creas `.pi/settings.json` para configurar `defaultTools`, puedes aplicar el mismo comando cambiando la ruta:
+1. **Tema:** un tema personalizado puede cambiar el color de `mdCodeBlockBorder`, que controla el estilo visual de esas líneas.
+2. **Markdown transformer:** una extensión puede usar `registerMarkdownTransformer()` para transformar el Markdown antes de renderizarlo, aunque el renderer built-in seguirá tratando los bloques como bloques de código.
+3. **Renderer propio:** para eliminar o reemplazar completamente las fences habría que crear una extensión con un renderer TUI propio. No encontré una extensión oficial lista para instalar que haga exactamente eso.
 
-```bash
-jq . .pi/settings.json
-```
+Los ejemplos `message-renderer.ts` y `built-in-tool-renderer.ts` muestran cómo personalizar mensajes o resultados de tools. No cambian automáticamente todos los bloques Markdown normales del asistente.
 
-Si `jq` no está instalado:
-
-```bash
-python3 -m json.tool .pi/package.json
-```
-
-Pi no trae un visualizador JSON plegable built-in ni encontré una extensión oficial de Pi dedicada a ese caso. Sí permite construirlo: una extensión puede registrar un renderer de mensajes o entradas y usar componentes de `pi-tui`. Los ejemplos oficiales `message-renderer.ts` y `built-in-tool-renderer.ts` muestran ese patrón.
-
-Para esta demo no hace falta instalar una extensión adicional: usa el bloque `json` para explicar la configuración y `jq` para mostrar el contenido formateado. Un visualizador interactivo externo como `jless` puede ser útil, pero se ejecutaría fuera de Pi y no es una extensión de Pi.
+Para la demo, yo explicaría que las fences son Markdown visible en el TUI, no datos adicionales. Si solo quieres una salida más limpia en un prompt concreto, puedes pedirle al modelo: `muestra el comando sin bloques Markdown`; pero eso es una instrucción al modelo, no un cambio del renderer.
 
 ---
 
