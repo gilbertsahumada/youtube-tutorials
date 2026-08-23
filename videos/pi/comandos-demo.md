@@ -6,43 +6,21 @@ La demo está pensada para ejecutarse localmente, en modo interactivo. No es un 
 
 ---
 
-## 1. Preparar el directorio de la demo
+## 1. Reutilizar el proyecto del video
 
-Para enseñar los comandos de forma limpia, empieza en un directorio pequeño y separado del repositorio final:
-
-```bash
-mkdir -p ~/tmp/pi-commands-demo/src/components
-mkdir -p ~/tmp/pi-commands-demo/docs
-mkdir -p ~/tmp/pi-commands-demo/scripts
-
-touch \
-  ~/tmp/pi-commands-demo/README.md \
-  ~/tmp/pi-commands-demo/package.json \
-  ~/tmp/pi-commands-demo/.gitignore \
-  ~/tmp/pi-commands-demo/.env.example \
-  ~/tmp/pi-commands-demo/src/index.ts \
-  ~/tmp/pi-commands-demo/src/components/App.tsx \
-  ~/tmp/pi-commands-demo/docs/architecture.md \
-  ~/tmp/pi-commands-demo/scripts/check.sh
-
-cd ~/tmp/pi-commands-demo
-pi --name "Pi: comandos y sesiones"
-```
-
-No uses `--no-session` en esta parte: queremos que Pi guarde la conversación para poder demostrar `/tree`, `/resume`, `/fork` y `/clone`.
+Como la primera demo ya fue grabada en el [video de YouTube](https://youtu.be/fvXWPim2RzM), esta continuación reutiliza el proyecto que construiste allí. Abre una terminal en la raíz de ese proyecto.
 
 > Si todavía no has completado `/login`, hazlo según la primera parte del tutorial.
 
-### Para esta grabación: reutilizar el proyecto del video
+No uses `--no-session` en esta parte: queremos que Pi guarde la conversación para poder demostrar `/tree`, `/resume`, `/fork` y `/clone`.
 
-Como la primera demo ya fue grabada en el [video de YouTube](https://youtu.be/fvXWPim2RzM), no necesitas crear el directorio de ejemplo anterior. Abre una terminal en la raíz del proyecto que construiste durante ese video y ejecuta:
+Para crear una sesión nueva para esta parte del video:
 
 ```bash
-# Crear una sesión nueva para esta parte del video:
 pi --name "Pi: comandos y sesiones"
 ```
 
-Si quieres recuperar una sesión anterior del proyecto:
+Si quieres recuperar una sesión anterior:
 
 ```bash
 pi -c    # continuar la sesión más reciente
