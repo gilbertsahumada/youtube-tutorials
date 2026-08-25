@@ -6,36 +6,91 @@ La demo está pensada para ejecutarse localmente, en modo interactivo. No es un 
 
 ---
 
-## 1. Preparar el directorio de la demo
+## 1. Reutilizar el proyecto del video
 
-Para enseñar los comandos de forma limpia, empieza en un directorio pequeño y separado del repositorio final:
-
-```bash
-mkdir -p ~/tmp/pi-commands-demo/src/components
-mkdir -p ~/tmp/pi-commands-demo/docs
-mkdir -p ~/tmp/pi-commands-demo/scripts
-
-touch \
-  ~/tmp/pi-commands-demo/README.md \
-  ~/tmp/pi-commands-demo/package.json \
-  ~/tmp/pi-commands-demo/.gitignore \
-  ~/tmp/pi-commands-demo/.env.example \
-  ~/tmp/pi-commands-demo/src/index.ts \
-  ~/tmp/pi-commands-demo/src/components/App.tsx \
-  ~/tmp/pi-commands-demo/docs/architecture.md \
-  ~/tmp/pi-commands-demo/scripts/check.sh
-
-cd ~/tmp/pi-commands-demo
-pi --name "Pi: comandos y sesiones"
-```
-
-No uses `--no-session` en esta parte: queremos que Pi guarde la conversación para poder demostrar `/tree`, `/resume`, `/fork` y `/clone`.
+Como la primera demo ya fue grabada en el [video de YouTube](https://youtu.be/fvXWPim2RzM), esta continuación reutiliza el proyecto que construiste allí. Abre una terminal en la raíz de ese proyecto.
 
 > Si todavía no has completado `/login`, hazlo según la primera parte del tutorial.
 
+No uses `--no-session` en esta parte: queremos que Pi guarde la conversación para poder demostrar `/tree`, `/resume`, `/fork` y `/clone`.
+
+Para crear una sesión nueva para esta parte del video:
+
+```bash
+pi
+```
+
+Si quieres recuperar una sesión anterior:
+
+```bash
+pi -c    # continuar la sesión más reciente
+pi -r    # elegir una sesión desde el selector
+```
+
+Antes de iniciar Pi, enseña la estructura del proyecto con `tree` y usa `find` si el comando no está instalado:
+
+```bash
+if command -v tree >/dev/null 2>&1; then
+  tree -a -L 4 -I '.git|node_modules|dist'
+else
+  printf '%s\n' 'tree no está instalado; usando find como fallback:'
+  find . -maxdepth 4 -print | sort
+fi
+```
+
+El proyecto creado durante el video contiene recursos locales de Pi dentro de `.pi/`. Revisa la extensión y la skill antes de aceptar la confianza del proyecto si Pi la solicita.
+
 ---
 
-## 2. Hay tres clases de comandos
+## 2. Modelo mental: Pi es deliberadamente minimalista
+
+Pi es un **coding harness minimalista para el terminal**: conecta un modelo con el contexto de una sesión y un conjunto de tools para trabajar sobre el directorio actual.
+
+Antes de hablar de las tools, conviene explicar algo importante: Pi mantiene pequeño su núcleo y no incorpora ciertos workflows como funciones built-in.
+
+| Pi no incluye por defecto | Qué significa |
+|---|---|
+| **Sub-agents** | No existe un coordinador built-in que divida automáticamente el trabajo entre agentes independientes. |
+| **MCP** | No incluye un cliente o flujo MCP incorporado. |
+| **Plan mode** | No existe un modo especial que bloquee cambios, gestione un plan y luego lo ejecute. |
+| **To-dos** | No hay un gestor de tareas obligatorio dentro del core. |
+| **Permission popups** | Pi no impone un sistema general de permisos antes de cada tool. |
+| **Background bash** | No trae un bash persistente en segundo plano como workflow built-in. |
+
+Esto no significa que esas capacidades sean imposibles. Se pueden añadir mediante extensiones, paquetes, el SDK o herramientas externas como containers y `tmux`. La decisión de Pi es no imponer un workflow único.
+
+### ¿Por qué Pi pudo decir que estaba planificando?
+
+Un modelo puede escribir una respuesta como:
+
+```text
+Voy a planificar los pasos antes de modificar los archivos.
+```
+
+Eso puede ser simplemente el estilo de respuesta del modelo, una instrucción de una skill o una petición del usuario. También puede aparecer junto al bloque de thinking. No significa que se haya activado un **plan mode** real.
+
+Un plan mode real normalmente añade comportamiento verificable, por ejemplo:
+
+- deshabilitar `write` y `edit` durante la exploración;
+- limitar los comandos de `bash` a una allowlist read-only;
+- guardar un plan y su progreso;
+- ofrecer comandos como `/plan` o `/todos`.
+
+Pi tiene ejemplos de extensiones que implementan plan mode y sub-agents, pero no vienen activos por defecto. La extensión local de esta demo es `onboarding.ts`; el proyecto del video no define un plan mode ni un sistema de sub-agents. Si aparece `/plan` o `/todos` en tu sesión, significa que una extensión o paquete global/local los añadió.
+
+> `thinking` y `plan mode` tampoco son lo mismo: `Shift+Tab` cambia el nivel de reasoning del modelo; no activa un workflow de planificación.
+
+### Orden recomendado para la grabación
+
+1. Explicar este modelo mental minimalista.
+2. Mostrar las tools y cómo se activan.
+3. Demostrar `/tree` como el feature central de sesiones.
+4. Recorrer los comandos slash y los comandos del usuario.
+5. Terminar con `tree`, `find`, `ls` y las diferencias con GitHub Actions.
+
+---
+
+## 3. Hay tres clases de comandos
 
 Antes de mostrar muchos comandos, conviene separar tres conceptos que suelen confundirse:
 
@@ -47,7 +102,7 @@ Antes de mostrar muchos comandos, conviene separar tres conceptos que suelen con
 
 Escribe `/` en el editor para mostrar el autocompletado de comandos slash.
 
-### 2.1 Comandos slash
+### 3.1 Comandos slash
 
 Los comandos slash no son prompts normales. Le dicen a Pi que cambie el modelo, navegue la sesión, recargue recursos o abra una pantalla de configuración.
 
@@ -60,7 +115,7 @@ Ejemplos:
 /tree
 ```
 
-### 2.2 Comandos del usuario: `!` y `!!`
+### 3.2 Comandos del usuario: `!` y `!!`
 
 Desde el editor de Pi, comprueba primero si `tree` está disponible y usa `find` como fallback:
 
@@ -77,110 +132,91 @@ La diferencia es:
 
 `!!` no es un sandbox. El comando sigue ejecutándose con tus permisos; simplemente su salida no se añade a la conversación.
 
-### 2.3 Tools del modelo
+### 3.3 Tools del modelo
 
-En una sesión normal Pi puede ofrecer estas siete tools built-in:
+En una sesión normal Pi tiene siete tools built-in disponibles:
 
 ```text
 read, write, edit, bash, grep, find, ls
 ```
 
-La sesión inicial empieza normalmente con:
+Pero la configuración estándar activa inicialmente solo cuatro:
 
 ```text
 read, write, edit, bash
 ```
 
-Para una ejecución read-only:
+Las otras tres (`grep`, `find` y `ls`) no están desinstaladas ni bloqueadas: son tools built-in read-only opcionales. Pi las separa del conjunto estándar para que puedas elegir explícitamente la superficie de herramientas que tendrá el modelo.
+
+### Activar las siete tools
+
+Si quieres iniciar Pi con todas las tools built-in activas:
+
+```bash
+pi --tools read,write,edit,bash,grep,find,ls
+```
+
+`--tools` funciona como una allowlist estricta. Por eso, si escribes solamente:
+
+```bash
+pi --tools grep,find,ls
+```
+
+Pi tendrá esas tres tools, pero no tendrá automáticamente las cuatro predeterminadas. Para activar las siete debes incluirlas todas.
+
+### Activar solo las tools read-only
+
+Para revisar un repositorio sin permitir que el modelo escriba archivos ni ejecute `bash`:
 
 ```bash
 pi --tools read,grep,find,ls
 ```
 
-Las tools son diferentes de `!comando`: en el primer caso el modelo decide cuándo llamar a una tool; en el segundo, el usuario escribe explícitamente un comando.
+### Dejarlo configurado
 
----
-
-## 3. Comandos para enseñar primero
-
-Después de iniciar Pi, muestra esta secuencia:
+Puedes definir `defaultTools` en la configuración global:
 
 ```text
-/model
-/settings
-/hotkeys
-/session
+~/.pi/agent/settings.json
 ```
 
-### `/model`
-
-Abre el selector de modelos disponibles para los proveedores autenticados.
-
-También puedes usar:
+O solo para el proyecto:
 
 ```text
-Ctrl+L
+.pi/settings.json
 ```
 
-Desde la shell:
+Ejemplo para activar las siete al iniciar:
+
+```json
+{
+  "defaultTools": [
+    "read",
+    "write",
+    "edit",
+    "bash",
+    "grep",
+    "find",
+    "ls"
+  ]
+}
+```
+
+La configuración de proyecto reemplaza la lista global. Reinicia Pi después de cambiar `defaultTools` para comprobar la nueva lista inicial.
+
+Pi tampoco trae un comando `/tools` built-in. El repositorio de Pi incluye un ejemplo de extensión llamado `tools.ts` que añade un selector interactivo `/tools` y usa `pi.setActiveTools()` para cambiar la lista durante la sesión. Es una extensión opcional: si la cargas, revisa primero su código.
+
+También existen opciones para reducir herramientas:
 
 ```bash
-pi --list-models
+pi --exclude-tools bash       # quitar bash del conjunto resultante
+pi --no-builtin-tools         # desactivar las tools built-in
+pi --no-tools                 # desactivar todas las tools
 ```
 
-**Qué explicar:** cambiar de modelo no cambia el repositorio ni la sesión. Cambia el modelo que continuará trabajando sobre el contexto actual.
+La utilidad práctica de `grep`, `find` y `ls` es que ofrecen operaciones de búsqueda y exploración read-only sin dar al modelo acceso a `bash`. En una sesión normal, `bash` podría ejecutar esas mismas utilidades, pero una allowlist explícita permite controlar mejor qué puede hacer el modelo.
 
-### `/settings`
-
-Abre la configuración de Pi. Para este video merece la pena enseñar:
-
-- nivel de thinking por defecto;
-- tema;
-- `quietStartup`;
-- compactación automática;
-- modo de entrega de mensajes;
-- transporte;
-- confianza por defecto del proyecto.
-
-No es necesario cambiar todas las opciones. La idea es mostrar que Pi tiene configuración global y configuración específica del proyecto.
-
-### `/hotkeys`
-
-Muestra los atajos disponibles y sus acciones. Es útil porque algunos atajos cambian según la pantalla en la que estés.
-
-Atajos principales:
-
-| Atajo | Uso |
-|---|---|
-| `Ctrl+L` | Seleccionar modelo. |
-| `Ctrl+P` | Ciclar al siguiente modelo. |
-| `Shift+Ctrl+P` | Ciclar al modelo anterior. |
-| `Shift+Tab` | Cambiar el nivel de thinking. |
-| `Ctrl+T` | Colapsar o expandir el thinking. |
-| `Ctrl+O` | Colapsar o expandir la salida de tools. |
-| `Shift+Enter` | Insertar una nueva línea. |
-| `Alt+Enter` | Encolar un follow-up. |
-| `Escape` | Cancelar la operación actual. |
-| `Ctrl+X` | Copiar la última respuesta. |
-| `Ctrl+G` | Abrir el editor externo. |
-
-### `/session`
-
-Muestra información de la sesión actual, incluyendo normalmente:
-
-- archivo de sesión;
-- identificador;
-- mensajes;
-- tokens;
-- coste.
-
-Pi guarda las sesiones en:
-
-```text
-~/.pi/agent/sessions/
-```
-
-Una sesión es un archivo JSONL con una estructura de árbol. Esa estructura es la razón por la que `/tree` es tan interesante.
+Las tools son diferentes de `!comando`: en el primer caso el modelo decide cuándo llamar a una tool; en el segundo, el usuario escribe explícitamente un comando.
 
 ---
 
@@ -293,9 +329,110 @@ La diferencia que conviene enfatizar es:
 
 > `/tree` organiza ramas dentro de una sesión; `/resume` selecciona entre sesiones distintas.
 
+### Seleccionar un punto anterior o copiarlo
+
+`/tree` y `/fork` permiten partir desde un punto anterior, pero de maneras diferentes:
+
+- `/tree` muestra el árbol completo y permite seleccionar distintos tipos de entradas. Si eliges un mensaje del usuario, Pi lo coloca en el editor para editarlo y crear una nueva rama. Si eliges una respuesta del asistente o una tool, puedes continuar desde allí directamente.
+- `/fork` abre un selector de mensajes anteriores del usuario y crea una sesión nueva desde el prompt elegido.
+- `/clone` no muestra un selector de puntos anteriores: duplica la rama activa completa en una sesión nueva.
+
+Si quieres clonar un punto anterior, combina los comandos:
+
+```text
+/tree
+→ selecciona el punto de la conversación
+→ /clone
+```
+
+Así `/tree` mueve la rama activa al punto elegido y `/clone` copia ese estado a otro archivo de sesión.
+
 ---
 
-## 6. Otros comandos de sesión
+## 6. Comandos para enseñar después de `/tree`
+
+Después de demostrar las ramas de sesión, recorre los comandos principales:
+
+```text
+/model
+/settings
+/hotkeys
+/session
+```
+
+### `/model`
+
+Abre el selector de modelos disponibles para los proveedores autenticados.
+
+También puedes usar:
+
+```text
+Ctrl+L
+```
+
+Desde la shell:
+
+```bash
+pi --list-models
+```
+
+**Qué explicar:** cambiar de modelo no cambia el repositorio ni la sesión. Cambia el modelo que continuará trabajando sobre el contexto actual.
+
+### `/settings`
+
+Abre la configuración de Pi. Para este video merece la pena enseñar:
+
+- nivel de thinking por defecto;
+- tema;
+- `quietStartup`;
+- compactación automática;
+- modo de entrega de mensajes;
+- transporte;
+- confianza por defecto del proyecto.
+
+No es necesario cambiar todas las opciones. La idea es mostrar que Pi tiene configuración global y configuración específica del proyecto.
+
+### `/hotkeys`
+
+Muestra los atajos disponibles y sus acciones. Es útil porque algunos atajos cambian según la pantalla en la que estés.
+
+Atajos principales:
+
+| Atajo | Uso |
+|---|---|
+| `Ctrl+L` | Seleccionar modelo. |
+| `Ctrl+P` | Ciclar al siguiente modelo. |
+| `Shift+Ctrl+P` | Ciclar al modelo anterior. |
+| `Shift+Tab` | Cambiar el nivel de thinking. |
+| `Ctrl+T` | Colapsar o expandir el thinking. |
+| `Ctrl+O` | Colapsar o expandir la salida de tools. |
+| `Shift+Enter` | Insertar una nueva línea. |
+| `Alt+Enter` | Encolar un follow-up. |
+| `Escape` | Cancelar la operación actual. |
+| `Ctrl+X` | Copiar la última respuesta. |
+| `Ctrl+G` | Abrir el editor externo. |
+
+### `/session`
+
+Muestra información de la sesión actual, incluyendo normalmente:
+
+- archivo de sesión;
+- identificador;
+- mensajes;
+- tokens;
+- coste.
+
+Pi guarda las sesiones en:
+
+```text
+~/.pi/agent/sessions/
+```
+
+Una sesión es un archivo JSONL con una estructura de árbol. Esa estructura es la razón por la que `/tree` es tan interesante.
+
+---
+
+## 7. Otros comandos de sesión
 
 ### `/new`
 
@@ -334,7 +471,7 @@ Publica la sesión como un gist privado de GitHub. No lo uses durante una demo c
 
 ---
 
-## 7. Comandos de recursos del proyecto
+## 8. Comandos de recursos del proyecto
 
 ### `/reload`
 
@@ -396,7 +533,7 @@ Una skill es conocimiento e instrucciones para el modelo. No es lo mismo que una
 
 ---
 
-## 8. `tree`, `find` y `ls` desde el terminal
+## 9. `tree`, `find` y `ls` desde el terminal
 
 También existe un comando del sistema llamado `tree`. No hay que confundirlo con el comando slash `/tree`.
 
@@ -486,7 +623,7 @@ Para la demo, también puedes mostrar el fallback y explicar que `tree` es una c
 
 ---
 
-## 9. Secuencia completa para grabar
+## 10. Secuencia completa para grabar
 
 Esta es una secuencia corta que combina los conceptos:
 
@@ -551,7 +688,7 @@ Sal de Pi con:
 
 ---
 
-## 10. Comandos adicionales para mencionar
+## 11. Comandos adicionales para mencionar
 
 No todos necesitan una demostración completa:
 
@@ -568,7 +705,7 @@ Para la primera grabación es mejor enseñar pocos comandos con una historia cla
 
 ---
 
-## 11. Qué no funciona igual en GitHub Actions
+## 12. Qué no funciona igual en GitHub Actions
 
 Esta demo es interactiva y local. En GitHub Actions normalmente usarás un prompt explícito:
 
