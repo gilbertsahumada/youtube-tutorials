@@ -17,7 +17,7 @@ No uses `--no-session` en esta parte: queremos que Pi guarde la conversación pa
 Para crear una sesión nueva para esta parte del video:
 
 ```bash
-pi --name "Pi: comandos y sesiones"
+pi
 ```
 
 Si quieres recuperar una sesión anterior:
