@@ -266,7 +266,21 @@ Las sesiones de Pi se guardan como árboles: cada entrada tiene un padre y la co
 
 Cuando se abandona una rama, Pi puede generar un resumen de esa rama para conservar el contexto importante sin volver a reproducir toda la conversación.
 
-### 4.4 Por qué `/tree` es tan útil
+### 4.4 `/tree` no es Git
+
+`/tree` solo cambia la posición activa dentro del árbol de la sesión de Pi. No crea, cambia ni fusiona ramas de Git, y tampoco hace `commit`, `checkout`, `reset` ni revierte archivos.
+
+Si una tool modificó archivos mientras estabas en la alternativa A, esos cambios siguen en el directorio de trabajo aunque vuelvas a una conversación anterior o abras la alternativa B. La nueva rama de conversación verá el estado actual de los archivos, no una copia antigua.
+
+Comprueba el estado real del repositorio con Git cuando lo necesites:
+
+```text
+!!git status --short
+```
+
+Si solo conversaste sin usar tools que escriban o ejecuten comandos, no hay cambios en los archivos. `/fork` y `/clone` tampoco crean una copia del repositorio: solo crean otra sesión de Pi.
+
+### 4.5 Por qué `/tree` es tan útil
 
 `/tree` es especialmente bueno para:
 
@@ -304,6 +318,16 @@ pi -c                  # continuar la sesión más reciente
 pi --fork <path|id>    # bifurcar una sesión por archivo o ID
 pi --no-session        # ejecutar sin guardar sesión
 ```
+
+### `continue` y `resume`
+
+Son dos formas de volver a una sesión guardada:
+
+- `pi -c` o `pi --continue` abre automáticamente la sesión más reciente del proyecto actual.
+- `pi -r` o `pi --resume` abre un selector para que elijas una sesión anterior.
+- `/resume` hace lo mismo que `pi -r`, pero desde una sesión ya iniciada.
+
+Ninguno crea una sesión nueva. Después de abrir la sesión elegida, puedes usar `/tree` para navegar sus ramas.
 
 ### Cuándo usar cada uno
 
