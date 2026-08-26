@@ -89,15 +89,13 @@ En el video usamos npm porque hace explícito qué paquete se instala.
 
 ## 3. Primera sesión: Pi antes de crear el repositorio
 
-Antes de construir la demo, abre Pi en un directorio de paseo. Así puedes enseñar la aplicación sin que todavía existan skills o extensiones locales del proyecto:
+Antes de construir la demo, abre Pi en un directorio vacío de paseo. Así puedes enseñar la aplicación sin que todavía existan skills o extensiones locales del proyecto. Entra en cualquier directorio vacío y ejecuta:
 
 ```bash
-mkdir -p ~/tmp/pi-tour
-cd ~/tmp/pi-tour
 pi
 ```
 
-Este directorio puede estar vacío. No hace falta crear `.pi/`, `AGENTS.md` ni un repositorio Git para hacer el primer recorrido.
+El directorio puede estar vacío. No hace falta crear `.pi/`, `AGENTS.md` ni un repositorio Git para hacer el primer recorrido.
 
 Cuando Pi arranque, observa:
 
@@ -567,15 +565,15 @@ La confianza del proyecto no es una revisión de seguridad automática. Es una a
 
 ## 8. Crear el repositorio desde cero
 
-Después del recorrido inicial, sal de Pi y crea un directorio nuevo. Debe estar vacío salvo por `.git`:
+Después del recorrido inicial, sal de Pi y crea o clona un repositorio vacío. Debe estar vacío salvo por `.git`:
 
 ```text
 /quit
 ```
 
+Entra en ese repositorio y ejecuta:
+
 ```bash
-mkdir -p ~/projects/pi-onboarding-demo
-cd ~/projects/pi-onboarding-demo
 git init
 pi --verbose
 ```
@@ -903,7 +901,6 @@ Si todavía estás en la sesión del directorio vacío, sal y abre Pi desde el p
 ```
 
 ```bash
-cd ~/projects/pi-onboarding-demo
 pi --verbose
 ```
 
@@ -920,14 +917,11 @@ Pi recarga:
 
 Si cambió la confianza del proyecto o una configuración importante, reinicia Pi para que el recorrido sea claro y reproducible.
 
-Inicia la demo final con únicamente tools de lectura. Ejecuta el comando desde la raíz del repositorio que contiene la carpeta `videos/pi`:
+Inicia la demo final con únicamente tools de lectura desde la raíz del repositorio que contiene la carpeta `videos/pi`:
 
 ```bash
-cd /ruta/a/youtube-tutorials
 pi --verbose --tools read,grep,find,ls
 ```
-
-Si durante la grabación estás dentro del repositorio creado desde cero, usa su ruta real en lugar de `/ruta/a/youtube-tutorials`.
 
 Acepta la confianza solo después de revisar `.pi/`. En el encabezado deberías poder identificar la skill y la extensión cargadas.
 

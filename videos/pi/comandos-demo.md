@@ -675,7 +675,7 @@ Vuelve a mostrar:
 Finalmente enseña los comandos de cierre:
 
 ```text
-/export ~/tmp/pi-commands-session.html
+/export ./pi-commands-session.html
 /new
 /resume
 ```
