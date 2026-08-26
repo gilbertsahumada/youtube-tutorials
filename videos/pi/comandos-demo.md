@@ -1,6 +1,6 @@
 # Continuación del tutorial: comandos, sesiones y navegación en Pi
 
-Este documento complementa [`README.md`](README.md). El README principal explica la instalación, la autenticación, las skills y las extensiones. Esta continuación propone una demo más pausada para enseñar los comandos, las sesiones y la diferencia entre los comandos de Pi y las utilidades del shell como `tree`, `find` y `ls`.
+Este documento complementa [`README.md`](README.md). El README principal explica la instalación, la autenticación, las skills y las extensiones. Esta continuación propone una demo más pausada para enseñar los comandos, las tools y las sesiones.
 
 La demo está pensada para ejecutarse localmente, en modo interactivo.
 
@@ -25,17 +25,6 @@ Si quieres recuperar una sesión anterior:
 ```bash
 pi -c    # continuar la sesión más reciente
 pi -r    # elegir una sesión desde el selector
-```
-
-Antes de iniciar Pi, enseña la estructura del proyecto con `tree` y usa `find` si el comando no está instalado:
-
-```bash
-if command -v tree >/dev/null 2>&1; then
-  tree -a -L 4 -I '.git|node_modules|dist'
-else
-  printf '%s\n' 'tree no está instalado; usando find como fallback:'
-  find . -maxdepth 4 -print | sort
-fi
 ```
 
 El proyecto creado durante el video contiene recursos locales de Pi dentro de `.pi/`. Revisa la extensión y la skill antes de aceptar la confianza del proyecto si Pi la solicita.
@@ -86,7 +75,7 @@ Pi tiene ejemplos de extensiones que implementan plan mode y sub-agents, pero no
 2. Mostrar las tools y cómo se activan.
 3. Demostrar `/tree` como el feature central de sesiones.
 4. Recorrer los comandos slash y los comandos del usuario.
-5. Terminar con `tree`, `find` y `ls`.
+5. Terminar revisando las tools read-only.
 
 ---
 
@@ -117,11 +106,11 @@ Ejemplos:
 
 ### 3.2 Comandos del usuario: `!` y `!!`
 
-Desde el editor de Pi, comprueba primero si `tree` está disponible y usa `find` como fallback:
+Desde el editor de Pi, prueba comandos del usuario y compara `!` con `!!`:
 
 ```text
 !pwd
-!command -v tree >/dev/null 2>&1 && tree -a -L 3 -I '.git|node_modules|dist' || find . -maxdepth 3 -print | sort
+!git status --short
 !!git status --short
 ```
 
@@ -146,7 +135,7 @@ Pero la configuración estándar activa inicialmente solo cuatro:
 read, write, edit, bash
 ```
 
-Las otras tres (`grep`, `find` y `ls`) no están desinstaladas ni bloqueadas: son tools built-in read-only opcionales. Pi las separa del conjunto estándar para que puedas elegir explícitamente la superficie de herramientas que tendrá el modelo.
+Las otras tres (`grep`, `find` y `ls`) no están desinstaladas ni bloqueadas: son tools built-in read-only opcionales. Pi las separa del conjunto estándar para que puedas elegir explícitamente la superficie de herramientas que tendrá el modelo. Las activaremos y probaremos más adelante.
 
 ### Activar las siete tools
 
@@ -217,8 +206,6 @@ pi --no-tools                 # desactivar todas las tools
 La utilidad práctica de `grep`, `find` y `ls` es que ofrecen operaciones de búsqueda y exploración read-only sin dar al modelo acceso a `bash`. En una sesión normal, `bash` podría ejecutar esas mismas utilidades, pero una allowlist explícita permite controlar mejor qué puede hacer el modelo.
 
 Las tools son diferentes de `!comando`: en el primer caso el modelo decide cuándo llamar a una tool; en el segundo, el usuario escribe explícitamente un comando.
-
-`find` y `ls` pueden aparecer en dos contextos: como tools read-only del modelo, cuando están activadas, y como comandos del shell que el usuario ejecuta con `!` o desde otra terminal. No son comandos slash. `tree` solo es una utilidad externa del shell; Pi no tiene una tool built-in llamada `tree`.
 
 ---
 
@@ -535,101 +522,7 @@ Una skill es conocimiento e instrucciones para el modelo. No es lo mismo que una
 
 ---
 
-## 9. Utilidades del shell: `tree`, `find` y `ls`
-
-Esta sección trata de comandos del sistema, no de comandos slash de Pi. La coincidencia entre `tree` y `/tree` es solo el nombre:
-
-```text
-/tree  → comando slash de Pi: ramas de la sesión actual
-tree   → comando del shell: estructura de directorios
-find   → comando del shell o tool del modelo: búsqueda de rutas
-ls     → comando del shell o tool del modelo: listado de directorios
-```
-
-Cuando escribes `!find` o `!ls` dentro de Pi, el usuario está ejecutando un comando del shell. Eso es diferente de una llamada del modelo a las tools `find` o `ls`.
-
-### `ls`: mirar un directorio
-
-```bash
-ls
-ls -la
-ls -la src
-```
-
-`ls` responde principalmente:
-
-> ¿Qué hay aquí?
-
-Es muy bueno para inspeccionar un único directorio, pero no siempre muestra la jerarquía completa.
-
-### `find`: buscar rutas
-
-```bash
-find . -maxdepth 3 -type f | sort
-find . -type f -name '*.ts' | sort
-find . -type d -name node_modules -prune -o -type f -print | sort
-```
-
-`find` responde principalmente:
-
-> ¿Qué rutas cumplen esta condición?
-
-Es más preciso y automatizable que `tree`, especialmente cuando quieres filtrar por tipo, nombre, profundidad o fecha. Su salida suele ser plana.
-
-### `tree`: entender la forma del proyecto
-
-```bash
-tree -a -L 3 -I '.git|node_modules|dist'
-```
-
-`tree` responde principalmente:
-
-> ¿Cómo está organizado este directorio?
-
-Por eso es tan bueno para onboarding: muestra la jerarquía de un vistazo.
-
-Una forma sencilla de explicarlo durante el video:
-
-| Utilidad del shell | Pregunta que responde | Mejor uso |
-|---|---|---|
-| `ls` | ¿Qué hay en este directorio? | Inspección local y rápida. |
-| `find` | ¿Qué rutas coinciden con este filtro? | Búsqueda precisa y scripts. |
-| `tree` | ¿Cuál es la forma del proyecto? | Orientación y explicación visual. |
-
-### Por qué `tree` es mi favorito
-
-`find` puede mostrar más información, pero normalmente entrega una lista plana. `tree` conserva las relaciones padre-hijo y permite ver rápidamente:
-
-- dónde está el punto de entrada;
-- qué carpetas son módulos;
-- dónde viven los tests y la documentación;
-- qué recursos están ocultos, como `.pi/`;
-- qué áreas están separadas entre sí;
-- si el repositorio parece pequeño, monolítico o dividido en paquetes.
-
-La frase sugerida para la grabación:
-
-> Me encanta `tree` porque antes de leer archivos me da un mapa mental del repositorio. `find` me ayuda a buscar y `ls` a inspeccionar; `tree` me ayuda a orientarme.
-
-### Si `tree` no está instalado
-
-Puedes usar este fallback:
-
-```bash
-find . -maxdepth 3 -print | sort
-```
-
-En macOS, si quieres instalar el comando de forma permanente:
-
-```bash
-brew install tree
-```
-
-Para la demo, también puedes mostrar el fallback y explicar que `tree` es una comodidad visual, no una dependencia de Pi.
-
----
-
-## 10. Secuencia completa para grabar
+## 9. Secuencia completa para grabar
 
 Esta es una secuencia corta que combina los conceptos:
 
@@ -644,8 +537,8 @@ Desde el editor de Pi, estos son comandos del usuario que se ejecutan en el shel
 
 ```text
 !pwd
-!command -v tree >/dev/null 2>&1 && tree -a -L 3 -I '.git|node_modules|dist' || find . -maxdepth 3 -print | sort
-!find . -maxdepth 3 -type f | sort
+!git status --short
+!!git status --short
 ```
 
 Después envía dos prompts relacionados:
@@ -694,7 +587,7 @@ Sal de Pi con:
 
 ---
 
-## 11. Comandos adicionales para mencionar
+## 10. Comandos adicionales para mencionar
 
 No todos necesitan una demostración completa:
 
