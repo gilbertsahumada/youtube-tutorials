@@ -2,7 +2,7 @@
 
 Este documento complementa [`README.md`](README.md). El README principal explica la instalación, la autenticación, las skills y las extensiones. Esta continuación propone una demo más pausada para enseñar los comandos, las sesiones y la diferencia entre `tree`, `find` y `ls`.
 
-La demo está pensada para ejecutarse localmente, en modo interactivo. No es un workflow para GitHub Actions.
+La demo está pensada para ejecutarse localmente, en modo interactivo.
 
 ---
 
@@ -86,7 +86,7 @@ Pi tiene ejemplos de extensiones que implementan plan mode y sub-agents, pero no
 2. Mostrar las tools y cómo se activan.
 3. Demostrar `/tree` como el feature central de sesiones.
 4. Recorrer los comandos slash y los comandos del usuario.
-5. Terminar con `tree`, `find`, `ls` y las diferencias con GitHub Actions.
+5. Terminar con `tree`, `find` y `ls`.
 
 ---
 
@@ -702,33 +702,3 @@ No todos necesitan una demostración completa:
 | `/quit` | Salir de Pi. |
 
 Para la primera grabación es mejor enseñar pocos comandos con una historia clara que mostrar una lista larga sin contexto.
-
----
-
-## 12. Qué no funciona igual en GitHub Actions
-
-Esta demo es interactiva y local. En GitHub Actions normalmente usarás un prompt explícito:
-
-```bash
-pi --print --no-session "Resume el contenido de README.md"
-```
-
-Por eso no puedes depender de:
-
-- `/tree`;
-- `/resume`;
-- selectores interactivos;
-- `/settings` durante el job;
-- la autenticación OAuth local;
-- una extensión que espere `ctx.ui.select()`.
-
-En Actions se prefieren:
-
-```text
-skill explícita
-+ tools allowlist
-+ prompt determinista
-+ salida Markdown/JSON
-```
-
-El recorrido `/tree` pertenece especialmente a la experiencia local de Pi: es una de las razones por las que una sesión interactiva puede ser mucho más exploratoria que un job headless.
