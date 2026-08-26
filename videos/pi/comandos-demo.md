@@ -1,6 +1,6 @@
 # Continuación del tutorial: comandos, sesiones y navegación en Pi
 
-Este documento complementa [`README.md`](README.md). El README principal explica la instalación, la autenticación, las skills y las extensiones. Esta continuación propone una demo más pausada para enseñar los comandos, las sesiones y la diferencia entre `tree`, `find` y `ls`.
+Este documento complementa [`README.md`](README.md). El README principal explica la instalación, la autenticación, las skills y las extensiones. Esta continuación propone una demo más pausada para enseñar los comandos, las sesiones y la diferencia entre los comandos de Pi y las utilidades del shell como `tree`, `find` y `ls`.
 
 La demo está pensada para ejecutarse localmente, en modo interactivo.
 
@@ -217,6 +217,8 @@ pi --no-tools                 # desactivar todas las tools
 La utilidad práctica de `grep`, `find` y `ls` es que ofrecen operaciones de búsqueda y exploración read-only sin dar al modelo acceso a `bash`. En una sesión normal, `bash` podría ejecutar esas mismas utilidades, pero una allowlist explícita permite controlar mejor qué puede hacer el modelo.
 
 Las tools son diferentes de `!comando`: en el primer caso el modelo decide cuándo llamar a una tool; en el segundo, el usuario escribe explícitamente un comando.
+
+`find` y `ls` pueden aparecer en dos contextos: como tools read-only del modelo, cuando están activadas, y como comandos del shell que el usuario ejecuta con `!` o desde otra terminal. No son comandos slash. `tree` solo es una utilidad externa del shell; Pi no tiene una tool built-in llamada `tree`.
 
 ---
 
@@ -533,14 +535,18 @@ Una skill es conocimiento e instrucciones para el modelo. No es lo mismo que una
 
 ---
 
-## 9. `tree`, `find` y `ls` desde el terminal
+## 9. Utilidades del shell: `tree`, `find` y `ls`
 
-También existe un comando del sistema llamado `tree`. No hay que confundirlo con el comando slash `/tree`.
+Esta sección trata de comandos del sistema, no de comandos slash de Pi. La coincidencia entre `tree` y `/tree` es solo el nombre:
 
 ```text
-/tree       → árbol de una sesión de Pi
- tree       → árbol de directorios del filesystem
+/tree  → comando slash de Pi: ramas de la sesión actual
+tree   → comando del shell: estructura de directorios
+find   → comando del shell o tool del modelo: búsqueda de rutas
+ls     → comando del shell o tool del modelo: listado de directorios
 ```
+
+Cuando escribes `!find` o `!ls` dentro de Pi, el usuario está ejecutando un comando del shell. Eso es diferente de una llamada del modelo a las tools `find` o `ls`.
 
 ### `ls`: mirar un directorio
 
@@ -584,7 +590,7 @@ Por eso es tan bueno para onboarding: muestra la jerarquía de un vistazo.
 
 Una forma sencilla de explicarlo durante el video:
 
-| Comando | Pregunta que responde | Mejor uso |
+| Utilidad del shell | Pregunta que responde | Mejor uso |
 |---|---|---|
 | `ls` | ¿Qué hay en este directorio? | Inspección local y rápida. |
 | `find` | ¿Qué rutas coinciden con este filtro? | Búsqueda precisa y scripts. |
@@ -634,7 +640,7 @@ Esta es una secuencia corta que combina los conceptos:
 /session
 ```
 
-Desde el editor de Pi:
+Desde el editor de Pi, estos son comandos del usuario que se ejecutan en el shell:
 
 ```text
 !pwd
