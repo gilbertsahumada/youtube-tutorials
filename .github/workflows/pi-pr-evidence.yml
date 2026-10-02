@@ -27,7 +27,9 @@ jobs:
     timeout-minutes: 10
     env:
       PI_MODEL: ${{ vars.PI_MODEL }}
-      PI_API_KEY: ${{ secrets.PI_API_KEY }}
+      # Optional. Set this only when PI_MODEL points to a custom
+      # OpenAI-compatible endpoint. Leave it empty for Pi's built-in providers.
+      PI_BASE_URL: ${{ vars.PI_BASE_URL }}
     defaults:
       run:
         working-directory: videos/pi-pr-evidence
@@ -38,6 +40,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          # Pi only needs the local checkout; do not leave GITHUB_TOKEN in .git/config.
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -52,15 +56,17 @@ jobs:
           set -euo pipefail
 
           PI_RUNTIME_PATH="$RUNNER_TEMP/pi-runtime"
+          PI_CONFIG_PATH="$PI_RUNTIME_PATH/pi-config"
           REVIEW_DIR_PATH="$RUNNER_TEMP/pi-pr-evidence"
           SKILL_PATH="$PI_RUNTIME_PATH/pr-evidence/SKILL.md"
 
           echo "PI_RUNTIME=$PI_RUNTIME_PATH" >> "$GITHUB_ENV"
+          echo "PI_CODING_AGENT_DIR=$PI_CONFIG_PATH" >> "$GITHUB_ENV"
           echo "REVIEW_DIR=$REVIEW_DIR_PATH" >> "$GITHUB_ENV"
           echo "PI_REVIEW_PATH=$REVIEW_DIR_PATH/report.md" >> "$GITHUB_ENV"
 
           rm -rf "$PI_RUNTIME_PATH" "$REVIEW_DIR_PATH"
-          mkdir -p "$PI_RUNTIME_PATH/pr-evidence" "$REVIEW_DIR_PATH"
+          mkdir -p "$PI_RUNTIME_PATH/pr-evidence" "$PI_CONFIG_PATH" "$REVIEW_DIR_PATH"
 
           if ! git cat-file -e "$BASE_SHA:videos/pi-pr-evidence/.pi/skills/pr-evidence/SKILL.md"; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -92,19 +98,98 @@ jobs:
           echo "skill_path=$SKILL_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Validate Pi configuration
+        id: config
         if: steps.prepare.outputs.ready == 'true'
+        env:
+          PI_API_KEY: ${{ secrets.PI_API_KEY }}
         run: |
-          test -n "$PI_MODEL" || {
-            echo "::error::Define the PI_MODEL repository variable as provider/model-id."
-            exit 1
+          if [[ -z "${PI_MODEL:-}" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=define the PI_MODEL repository variable as provider/model-id" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -z "$PI_API_KEY" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=define the PI_API_KEY repository secret for the selected provider" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$PI_MODEL" != */* ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=PI_MODEL must use the provider/model-id format" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          provider="${PI_MODEL%%/*}"
+          model_id="${PI_MODEL#*/}"
+          if [[ -z "$provider" || -z "$model_id" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=PI_MODEL must include both a provider and a model id" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ -n "${PI_BASE_URL:-}" && "$PI_BASE_URL" != https://* ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=PI_BASE_URL must use HTTPS when configuring a custom provider" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "provider=$provider" >> "$GITHUB_OUTPUT"
+          echo "model_id=$model_id" >> "$GITHUB_OUTPUT"
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
+      - name: Configure custom OpenAI-compatible provider
+        id: provider
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
+        env:
+          PI_PROVIDER: ${{ steps.config.outputs.provider }}
+          PI_MODEL_ID: ${{ steps.config.outputs.model_id }}
+        run: |
+          set -euo pipefail
+
+          # An empty PI_BASE_URL means that Pi should resolve the provider
+          # from its built-in catalog. Otherwise register the arbitrary
+          # OpenAI-compatible endpoint without putting the API key on disk.
+          if [[ -z "${PI_BASE_URL:-}" ]]; then
+            echo "mode=builtin" >> "$GITHUB_OUTPUT"
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PI_MODEL="$PI_MODEL" \
+          PI_PROVIDER="$PI_PROVIDER" \
+          PI_MODEL_ID="$PI_MODEL_ID" \
+          PI_BASE_URL="$PI_BASE_URL" \
+          python3 - "$PI_CODING_AGENT_DIR/models.json" <<'PY'
+          import json
+          import os
+          import sys
+
+          path = sys.argv[1]
+          config = {
+              "providers": {
+                  os.environ["PI_PROVIDER"]: {
+                      "baseUrl": os.environ["PI_BASE_URL"].rstrip("/"),
+                      "api": "openai-completions",
+                      "models": [
+                          {
+                              "id": os.environ["PI_MODEL_ID"],
+                              "name": os.environ["PI_MODEL"],
+                              "input": ["text"],
+                          }
+                      ],
+                  }
+              }
           }
-          test -n "$PI_API_KEY" || {
-            echo "::error::Define the PI_API_KEY repository secret."
-            exit 1
-          }
+          with open(path, "w", encoding="utf-8") as stream:
+              json.dump(config, stream, indent=2)
+              stream.write("\n")
+          PY
+
+          echo "mode=openai-compatible" >> "$GITHUB_OUTPUT"
+          echo "configured=true" >> "$GITHUB_OUTPUT"
 
       - name: Capture Pull Request diff
-        if: steps.prepare.outputs.ready == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true' && steps.provider.outputs.configured == 'true'
         run: |
           git diff --no-ext-diff --unified=80 \
             "${{ github.event.pull_request.base.sha }}" \
@@ -112,7 +197,10 @@ jobs:
             -- . > "$REVIEW_DIR/pr.diff"
 
       - name: Run Pi in read-only mode
-        if: steps.prepare.outputs.ready == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true' && steps.provider.outputs.configured == 'true'
+        env:
+          # Keep the provider credential out of checkout and bootstrap steps.
+          PI_API_KEY: ${{ secrets.PI_API_KEY }}
         run: |
           "$PI_RUNTIME/node_modules/.bin/pi" \
             --print \
@@ -129,7 +217,7 @@ jobs:
             > "$PI_REVIEW_PATH"
 
       - name: Publish or update the Pull Request comment
-        if: steps.prepare.outputs.ready == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true' && steps.provider.outputs.configured == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -188,6 +276,17 @@ jobs:
                 body,
               });
             }
+
+      - name: Explain skipped configuration
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured != 'true'
+        run: |
+          {
+            echo "## Pi PR evidence review"
+            echo
+            echo "Automated review skipped; manual review is required."
+            echo
+            echo "**Reason:** ${{ steps.config.outputs.reason }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Explain skipped bootstrap review
         if: steps.prepare.outputs.ready != 'true'
