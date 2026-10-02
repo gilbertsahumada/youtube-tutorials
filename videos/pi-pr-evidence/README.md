@@ -75,6 +75,16 @@ rg -n "videos/pi-pr-evidence|branches: \[main\]|PI_MODEL|PI_BASE_URL|PI_API_KEY"
 
 La cadena `videos/pi-pr-evidence` aparece en más de un lugar: en el disparador, el directorio de trabajo y las rutas que se copian desde `BASE_SHA`. Debes reemplazar todas las apariciones relevantes, no solo la primera.
 
+El workflow actual se activa cuando cambia `videos/pi-pr-evidence/**`. Si también quieres que se active cuando alguien modifique únicamente el workflow, añade su ruta al bloque `paths`:
+
+```yaml
+paths:
+  - "videos/pi-pr-evidence/**"
+  - ".github/workflows/pi-pr-evidence.yml"
+```
+
+Es una decisión de alcance: si no añades esa segunda ruta, los cambios exclusivos del workflow requieren revisión manual.
+
 ### Valores que no debes reemplazar
 
 GitHub calcula automáticamente estos valores para cada PR:
