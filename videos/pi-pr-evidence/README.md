@@ -107,6 +107,28 @@ La ruta explícita apunta a una copia de `pr-evidence/SKILL.md` obtenida desde `
 
 En otras palabras: apagamos el descubrimiento automático y activamos una única skill mediante una allowlist.
 
+La skill es un **manual de instrucciones** para Pi: define cómo revisar el PR y cómo escribir el reporte. No es una herramienta. Las herramientas son las capacidades que Pi puede usar:
+
+```text
+skill  = reglas de revisión
+read, grep, find, ls = cosas que Pi puede hacer
+```
+
+El workflow copia la skill confiable desde:
+
+```text
+BASE_SHA:videos/pi-pr-evidence/.pi/skills/pr-evidence/SKILL.md
+```
+
+y después ejecuta conceptualmente:
+
+```text
+--no-skills                         # no cargues skills automáticamente
+--skill /tmp/.../pr-evidence/SKILL.md  # carga únicamente esta skill aprobada
+```
+
+Por eso `--no-skills` no significa "Pi no puede usar ninguna skill"; significa "Pi no puede descubrirlas por su cuenta".
+
 ### Credenciales del checkout
 
 `actions/checkout` puede guardar `GITHUB_TOKEN` en `.git/config` para que pasos posteriores hagan operaciones Git autenticadas. Este workflow solo necesita leer el historial local para generar el diff, por eso usa:
