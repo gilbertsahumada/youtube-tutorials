@@ -27,6 +27,9 @@ jobs:
     timeout-minutes: 10
     env:
       PI_MODEL: ${{ vars.PI_MODEL }}
+      # Optional. Set this only when PI_MODEL points to a custom
+      # OpenAI-compatible endpoint. Leave it empty for Pi's built-in providers.
+      PI_BASE_URL: ${{ vars.PI_BASE_URL }}
     defaults:
       run:
         working-directory: videos/pi-pr-evidence
@@ -65,26 +68,6 @@ jobs:
           rm -rf "$PI_RUNTIME_PATH" "$REVIEW_DIR_PATH"
           mkdir -p "$PI_RUNTIME_PATH/pr-evidence" "$PI_CONFIG_PATH" "$REVIEW_DIR_PATH"
 
-          # DashScope exposes DeepSeek through an OpenAI-compatible endpoint.
-          # This config contains no credential; the key is passed at runtime.
-          cat > "$PI_CONFIG_PATH/models.json" <<'JSON'
-          {
-            "providers": {
-              "dashscope": {
-                "baseUrl": "https://maas.qwencloudapi.com/compatible-mode/v1",
-                "api": "openai-completions",
-                "models": [
-                  {
-                    "id": "deepseek-v4.1-flash",
-                    "name": "DeepSeek V4.1 Flash",
-                    "input": ["text"]
-                  }
-                ]
-              }
-            }
-          }
-          JSON
-
           if ! git cat-file -e "$BASE_SHA:videos/pi-pr-evidence/.pi/skills/pr-evidence/SKILL.md"; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "reason=the base revision does not contain the pr-evidence skill; manual review is required" >> "$GITHUB_OUTPUT"
@@ -120,25 +103,93 @@ jobs:
         env:
           PI_API_KEY: ${{ secrets.PI_API_KEY }}
         run: |
-          if [[ -z "$PI_MODEL" ]]; then
+          if [[ -z "${PI_MODEL:-}" ]]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "reason=define the PI_MODEL repository variable as dashscope/deepseek-v4.1-flash" >> "$GITHUB_OUTPUT"
+            echo "reason=define the PI_MODEL repository variable as provider/model-id" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if [[ -z "$PI_API_KEY" ]]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "reason=define the PI_API_KEY repository secret with the DashScope API key" >> "$GITHUB_OUTPUT"
+            echo "reason=define the PI_API_KEY repository secret for the selected provider" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if [[ "$PI_MODEL" != "dashscope/deepseek-v4.1-flash" ]]; then
+          if [[ "$PI_MODEL" != */* ]]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "reason=PI_MODEL must be dashscope/deepseek-v4.1-flash for this DashScope configuration" >> "$GITHUB_OUTPUT"
+            echo "reason=PI_MODEL must use the provider/model-id format" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+
+          provider="${PI_MODEL%%/*}"
+          model_id="${PI_MODEL#*/}"
+          if [[ -z "$provider" || -z "$model_id" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=PI_MODEL must include both a provider and a model id" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ -n "${PI_BASE_URL:-}" && "$PI_BASE_URL" != https://* ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=PI_BASE_URL must use HTTPS when configuring a custom provider" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "provider=$provider" >> "$GITHUB_OUTPUT"
+          echo "model_id=$model_id" >> "$GITHUB_OUTPUT"
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
+      - name: Configure custom OpenAI-compatible provider
+        id: provider
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
+        env:
+          PI_PROVIDER: ${{ steps.config.outputs.provider }}
+          PI_MODEL_ID: ${{ steps.config.outputs.model_id }}
+        run: |
+          set -euo pipefail
+
+          # An empty PI_BASE_URL means that Pi should resolve the provider
+          # from its built-in catalog. Otherwise register the arbitrary
+          # OpenAI-compatible endpoint without putting the API key on disk.
+          if [[ -z "${PI_BASE_URL:-}" ]]; then
+            echo "mode=builtin" >> "$GITHUB_OUTPUT"
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PI_MODEL="$PI_MODEL" \
+          PI_PROVIDER="$PI_PROVIDER" \
+          PI_MODEL_ID="$PI_MODEL_ID" \
+          PI_BASE_URL="$PI_BASE_URL" \
+          python3 - "$PI_CODING_AGENT_DIR/models.json" <<'PY'
+          import json
+          import os
+          import sys
+
+          path = sys.argv[1]
+          config = {
+              "providers": {
+                  os.environ["PI_PROVIDER"]: {
+                      "baseUrl": os.environ["PI_BASE_URL"].rstrip("/"),
+                      "api": "openai-completions",
+                      "models": [
+                          {
+                              "id": os.environ["PI_MODEL_ID"],
+                              "name": os.environ["PI_MODEL"],
+                              "input": ["text"],
+                          }
+                      ],
+                  }
+              }
+          }
+          with open(path, "w", encoding="utf-8") as stream:
+              json.dump(config, stream, indent=2)
+              stream.write("\n")
+          PY
+
+          echo "mode=openai-compatible" >> "$GITHUB_OUTPUT"
           echo "configured=true" >> "$GITHUB_OUTPUT"
 
       - name: Capture Pull Request diff
-        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true' && steps.provider.outputs.configured == 'true'
         run: |
           git diff --no-ext-diff --unified=80 \
             "${{ github.event.pull_request.base.sha }}" \
@@ -146,7 +197,7 @@ jobs:
             -- . > "$REVIEW_DIR/pr.diff"
 
       - name: Run Pi in read-only mode
-        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true' && steps.provider.outputs.configured == 'true'
         env:
           # Keep the provider credential out of checkout and bootstrap steps.
           PI_API_KEY: ${{ secrets.PI_API_KEY }}
@@ -166,7 +217,7 @@ jobs:
             > "$PI_REVIEW_PATH"
 
       - name: Publish or update the Pull Request comment
-        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true' && steps.provider.outputs.configured == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

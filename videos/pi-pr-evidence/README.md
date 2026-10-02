@@ -105,37 +105,45 @@ El runner es headless, por lo que esta demo utiliza una API key, no una suscripc
 
 Configura en el repositorio:
 
-- Repository variable: `PI_MODEL` con el valor `dashscope/deepseek-v4.1-flash`.
-- Repository secret: `PI_API_KEY` con la API key de DashScope.
+- Repository variable: `PI_MODEL`, con el formato `provider/model-id`.
+- Repository secret: `PI_API_KEY`, con la API key del provider seleccionado.
+- Repository variable opcional: `PI_BASE_URL`, únicamente si se utilizará un endpoint OpenAI-compatible que Pi no tenga registrado de forma nativa.
 
-La clave puede llamarse `DASHSCOPE_API_KEY` en tu entorno local, pero en GitHub Actions se guarda bajo el nombre genérico `PI_API_KEY`.
+La API key no se escribe en `models.json` ni se incluye en el prompt. El workflow solo la entrega al proceso de Pi mediante `--api-key`.
 
-### Provider Qwen/DashScope
+### Providers nativos de Pi
 
-Pi incluye providers específicos para algunos planes de Qwen, pero la clave y el endpoint de este tutorial usan el modo compatible con OpenAI de DashScope. Por eso el workflow registra temporalmente un provider llamado `dashscope` con:
-
-```text
-https://maas.qwencloudapi.com/compatible-mode/v1
-```
-
-El modelo se selecciona como:
+Pi incluye adapters y catálogos para varios providers. Si el provider y el modelo ya están soportados por Pi, deja `PI_BASE_URL` vacío y configura únicamente, por ejemplo:
 
 ```text
-dashscope/deepseek-v4.1-flash
+PI_MODEL=provider/model-id
+PI_API_KEY=<clave del provider>
 ```
 
-El `models.json` temporal no contiene credenciales. La API key se inyecta únicamente al ejecutar Pi mediante `--api-key`. Para desarrollo local, la configuración equivalente es:
+El valor concreto de `PI_MODEL` depende del catálogo y de la autenticación del provider que elijas. Este tutorial no obliga a utilizar DashScope, Qwen ni DeepSeek.
+
+### Providers compatibles con OpenAI
+
+Pi también puede utilizar un endpoint que implemente suficientemente la API de OpenAI Chat Completions mediante `api: "openai-completions"`. Para un provider arbitrario, configura:
+
+```text
+PI_MODEL=my-provider/my-model
+PI_BASE_URL=https://example.invalid/compatible-mode/v1
+PI_API_KEY=<clave del provider>
+```
+
+Cuando `PI_BASE_URL` está definido, el workflow crea un `models.json` temporal equivalente a:
 
 ```json
 {
   "providers": {
-    "dashscope": {
-      "baseUrl": "https://maas.qwencloudapi.com/compatible-mode/v1",
+    "my-provider": {
+      "baseUrl": "https://example.invalid/compatible-mode/v1",
       "api": "openai-completions",
       "models": [
         {
-          "id": "deepseek-v4.1-flash",
-          "name": "DeepSeek V4.1 Flash",
+          "id": "my-model",
+          "name": "my-provider/my-model",
           "input": ["text"]
         }
       ]
@@ -144,14 +152,25 @@ El `models.json` temporal no contiene credenciales. La API key se inyecta única
 }
 ```
 
-Guarda esa configuración en `~/.pi/agent/models.json` o combínala con tu archivo existente y ejecuta:
+Esto permite cambiar el modelo y el provider mediante variables del repositorio, sin modificar el workflow ni el código de Pi. El endpoint debe soportar streaming y tool calling, no solo una solicitud de chat simple, porque Pi necesita llamar a `read`, `grep`, `find` y `ls` durante la revisión. Esta revisión usa texto; un modelo multimodal requeriría declarar también la capacidad de imágenes en su metadata.
+
+### Ejemplo de este tutorial: DashScope + DeepSeek
+
+En este tutorial yo utilizaré DashScope como provider compatible con OpenAI y DeepSeek como modelo:
+
+```text
+PI_MODEL=dashscope/deepseek-v4.1-flash
+PI_BASE_URL=https://maas.qwencloudapi.com/compatible-mode/v1
+```
+
+`https://maas.qwencloudapi.com/compatible-mode/v1` es el endpoint específico de DashScope que elegí para mi cuenta; no es un requisito de Pi ni una configuración que deban copiar quienes utilicen otro provider. El mismo flujo puede utilizar cualquier otro endpoint que cumpla el contrato compatible y tenga tool calling.
+
+Para desarrollo local, registra esos valores en `~/.pi/agent/models.json` (o combínalos con tu archivo existente) y ejecuta:
 
 ```bash
 export DASHSCOPE_API_KEY="..."
 pi --model dashscope/deepseek-v4.1-flash --api-key "$DASHSCOPE_API_KEY"
 ```
-
-El endpoint debe ser compatible con streaming y tool calling, no solo con una solicitud de chat simple, porque Pi necesita llamar a `read`, `grep`, `find` y `ls` durante la revisión.
 
 No compartas la clave en el repositorio ni la incluyas en el prompt. Para desarrollo local también puedes utilizar una suscripción mediante `/login`; esa modalidad se explica en [`videos/pi`](../pi) y no se copia a GitHub Actions.
 
@@ -163,7 +182,7 @@ El workflow:
 - Solo procesa PRs del mismo repositorio en esta primera versión.
 - No expone la API key a PRs provenientes de forks.
 - Inyecta `PI_API_KEY` únicamente en los pasos que validan y ejecutan Pi.
-- Genera el provider DashScope en un directorio temporal sin incluir credenciales.
+- Genera, cuando se define `PI_BASE_URL`, el registro temporal del provider OpenAI-compatible sin incluir credenciales.
 - No persiste `GITHUB_TOKEN` en el checkout (`persist-credentials: false`).
 - Carga la skill y el runtime desde la revisión base confiable.
 - Guarda los archivos temporales bajo `$RUNNER_TEMP`.
@@ -180,7 +199,7 @@ Después de fusionar la demo, los siguientes PRs que modifiquen `videos/pi-pr-ev
 
 ## Probar el workflow
 
-1. Configura `PI_MODEL` y `PI_API_KEY` en la configuración del repositorio.
+1. Configura `PI_MODEL` y `PI_API_KEY`; añade `PI_BASE_URL` si utilizarás un endpoint OpenAI-compatible personalizado.
 2. Crea una rama desde `main`.
 3. Modifica un archivo dentro de `videos/pi-pr-evidence/**`.
 4. Abre un Pull Request.
