@@ -53,15 +53,37 @@ jobs:
           set -euo pipefail
 
           PI_RUNTIME_PATH="$RUNNER_TEMP/pi-runtime"
+          PI_CONFIG_PATH="$PI_RUNTIME_PATH/pi-config"
           REVIEW_DIR_PATH="$RUNNER_TEMP/pi-pr-evidence"
           SKILL_PATH="$PI_RUNTIME_PATH/pr-evidence/SKILL.md"
 
           echo "PI_RUNTIME=$PI_RUNTIME_PATH" >> "$GITHUB_ENV"
+          echo "PI_CODING_AGENT_DIR=$PI_CONFIG_PATH" >> "$GITHUB_ENV"
           echo "REVIEW_DIR=$REVIEW_DIR_PATH" >> "$GITHUB_ENV"
           echo "PI_REVIEW_PATH=$REVIEW_DIR_PATH/report.md" >> "$GITHUB_ENV"
 
           rm -rf "$PI_RUNTIME_PATH" "$REVIEW_DIR_PATH"
-          mkdir -p "$PI_RUNTIME_PATH/pr-evidence" "$REVIEW_DIR_PATH"
+          mkdir -p "$PI_RUNTIME_PATH/pr-evidence" "$PI_CONFIG_PATH" "$REVIEW_DIR_PATH"
+
+          # DashScope exposes DeepSeek through an OpenAI-compatible endpoint.
+          # This config contains no credential; the key is passed at runtime.
+          cat > "$PI_CONFIG_PATH/models.json" <<'JSON'
+          {
+            "providers": {
+              "dashscope": {
+                "baseUrl": "https://maas.qwencloudapi.com/compatible-mode/v1",
+                "api": "openai-completions",
+                "models": [
+                  {
+                    "id": "deepseek-v4.1-flash",
+                    "name": "DeepSeek V4.1 Flash",
+                    "input": ["text"]
+                  }
+                ]
+              }
+            }
+          }
+          JSON
 
           if ! git cat-file -e "$BASE_SHA:videos/pi-pr-evidence/.pi/skills/pr-evidence/SKILL.md"; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -93,21 +115,30 @@ jobs:
           echo "skill_path=$SKILL_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Validate Pi configuration
+        id: config
         if: steps.prepare.outputs.ready == 'true'
         env:
           PI_API_KEY: ${{ secrets.PI_API_KEY }}
         run: |
-          test -n "$PI_MODEL" || {
-            echo "::error::Define the PI_MODEL repository variable as provider/model-id."
-            exit 1
-          }
-          test -n "$PI_API_KEY" || {
-            echo "::error::Define the PI_API_KEY repository secret."
-            exit 1
-          }
+          if [[ -z "$PI_MODEL" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=define the PI_MODEL repository variable as dashscope/deepseek-v4.1-flash" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -z "$PI_API_KEY" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=define the PI_API_KEY repository secret with the DashScope API key" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$PI_MODEL" != "dashscope/deepseek-v4.1-flash" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "reason=PI_MODEL must be dashscope/deepseek-v4.1-flash for this DashScope configuration" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "configured=true" >> "$GITHUB_OUTPUT"
 
       - name: Capture Pull Request diff
-        if: steps.prepare.outputs.ready == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
         run: |
           git diff --no-ext-diff --unified=80 \
             "${{ github.event.pull_request.base.sha }}" \
@@ -115,7 +146,7 @@ jobs:
             -- . > "$REVIEW_DIR/pr.diff"
 
       - name: Run Pi in read-only mode
-        if: steps.prepare.outputs.ready == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
         env:
           # Keep the provider credential out of checkout and bootstrap steps.
           PI_API_KEY: ${{ secrets.PI_API_KEY }}
@@ -135,7 +166,7 @@ jobs:
             > "$PI_REVIEW_PATH"
 
       - name: Publish or update the Pull Request comment
-        if: steps.prepare.outputs.ready == 'true'
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -194,6 +225,17 @@ jobs:
                 body,
               });
             }
+
+      - name: Explain skipped configuration
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured != 'true'
+        run: |
+          {
+            echo "## Pi PR evidence review"
+            echo
+            echo "Automated review skipped; manual review is required."
+            echo
+            echo "**Reason:** ${{ steps.config.outputs.reason }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Explain skipped bootstrap review
         if: steps.prepare.outputs.ready != 'true'

@@ -105,27 +105,55 @@ El runner es headless, por lo que esta demo utiliza una API key, no una suscripc
 
 Configura en el repositorio:
 
-- Repository variable: `PI_MODEL`.
-- Repository secret: `PI_API_KEY`.
+- Repository variable: `PI_MODEL` con el valor `dashscope/deepseek-v4.1-flash`.
+- Repository secret: `PI_API_KEY` con la API key de DashScope.
 
-`PI_MODEL` debe tener el formato:
+La clave puede llamarse `DASHSCOPE_API_KEY` en tu entorno local, pero en GitHub Actions se guarda bajo el nombre genérico `PI_API_KEY`.
 
-```text
-provider/model-id
-```
+### Provider Qwen/DashScope
 
-Ejemplos conceptuales:
+Pi incluye providers específicos para algunos planes de Qwen, pero la clave y el endpoint de este tutorial usan el modo compatible con OpenAI de DashScope. Por eso el workflow registra temporalmente un provider llamado `dashscope` con:
 
 ```text
-anthropic/<model-id>
-openai/<model-id>
-google/<model-id>
-openrouter/<model-id>
+https://maas.qwencloudapi.com/compatible-mode/v1
 ```
 
-La API key debe corresponder al proveedor seleccionado. No compartas la clave en el repositorio ni la incluyas en el prompt.
+El modelo se selecciona como:
 
-Para desarrollo local, Pi también puede utilizar una suscripción mediante `/login`. Esa modalidad se explica en [`videos/pi`](../pi) y no se copia a GitHub Actions.
+```text
+dashscope/deepseek-v4.1-flash
+```
+
+El `models.json` temporal no contiene credenciales. La API key se inyecta únicamente al ejecutar Pi mediante `--api-key`. Para desarrollo local, la configuración equivalente es:
+
+```json
+{
+  "providers": {
+    "dashscope": {
+      "baseUrl": "https://maas.qwencloudapi.com/compatible-mode/v1",
+      "api": "openai-completions",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "name": "DeepSeek V4.1 Flash",
+          "input": ["text"]
+        }
+      ]
+    }
+  }
+}
+```
+
+Guarda esa configuración en `~/.pi/agent/models.json` o combínala con tu archivo existente y ejecuta:
+
+```bash
+export DASHSCOPE_API_KEY="..."
+pi --model dashscope/deepseek-v4.1-flash --api-key "$DASHSCOPE_API_KEY"
+```
+
+El endpoint debe ser compatible con streaming y tool calling, no solo con una solicitud de chat simple, porque Pi necesita llamar a `read`, `grep`, `find` y `ls` durante la revisión.
+
+No compartas la clave en el repositorio ni la incluyas en el prompt. Para desarrollo local también puedes utilizar una suscripción mediante `/login`; esa modalidad se explica en [`videos/pi`](../pi) y no se copia a GitHub Actions.
 
 ## Seguridad del workflow
 
@@ -135,6 +163,7 @@ El workflow:
 - Solo procesa PRs del mismo repositorio en esta primera versión.
 - No expone la API key a PRs provenientes de forks.
 - Inyecta `PI_API_KEY` únicamente en los pasos que validan y ejecutan Pi.
+- Genera el provider DashScope en un directorio temporal sin incluir credenciales.
 - No persiste `GITHUB_TOKEN` en el checkout (`persist-credentials: false`).
 - Carga la skill y el runtime desde la revisión base confiable.
 - Guarda los archivos temporales bajo `$RUNNER_TEMP`.
@@ -147,7 +176,7 @@ El workflow:
 
 Cuando se introduce esta demo por primera vez, la rama base todavía no contiene la skill ni el package de `pi-pr-evidence`. En ese caso el workflow omite la revisión automática y deja una explicación en el Step Summary.
 
-Después de fusionar la demo, los siguientes PRs que modifiquen `videos/pi-pr-evidence/**` podrán ejecutar el análisis real. La condición de confianza para PRs del mismo repositorio sigue requiriendo protección de ramas, revisión de cambios en workflows y environments protegidos cuando la API key sea sensible.
+Después de fusionar la demo, los siguientes PRs que modifiquen `videos/pi-pr-evidence/**` podrán ejecutar el análisis real. Si `PI_MODEL` o `PI_API_KEY` no están configurados, el workflow omite la revisión y explica el motivo en el Step Summary, pero no marca el CI como fallido. La condición de confianza para PRs del mismo repositorio sigue requiriendo protección de ramas, revisión de cambios en workflows y environments protegidos cuando la API key sea sensible.
 
 ## Probar el workflow
 
