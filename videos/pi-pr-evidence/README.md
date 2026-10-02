@@ -2,7 +2,7 @@
 
 Esta demo es independiente de [`videos/pi`](../pi), que contiene la introducción básica a Pi y el onboarding local.
 
-Aquí Pi se ejecuta desde GitHub Actions para revisar Pull Requests que modifican esta carpeta y publicar un comentario advisory en el PR.
+Aquí Pi se ejecuta desde GitHub Actions para revisar Pull Requests dirigidos a `main` que modifican esta carpeta y publicar un comentario advisory en el PR.
 
 ## Flujo
 
@@ -10,9 +10,18 @@ Aquí Pi se ejecuta desde GitHub Actions para revisar Pull Requests que modifica
 Pull Request
   → checkout del head
   → diff de videos/pi-pr-evidence
-  → Pi + skill pr-evidence
+  → una llamada a Pi con un prompt
   → comentario Markdown en GitHub
 ```
+
+El workflow hace seis cosas:
+
+1. Obtiene el checkout y el historial necesario para calcular el diff.
+2. Instala Pi desde el manifiesto y lockfile de la rama base confiable.
+3. Copia la skill `pr-evidence` desde esa misma rama base.
+4. Guarda el diff y llama una vez a Pi con un prompt.
+5. Guarda la respuesta Markdown de Pi.
+6. Usa `actions/github-script` para crear o actualizar el comentario del PR.
 
 El workflow está en:
 
@@ -86,6 +95,17 @@ El paso que ejecuta Pi usa estas opciones para limitar el contexto y las capacid
 | `--tools read,grep,find,ls` | Reemplaza la lista de herramientas por una allowlist de lectura. | No habilita `bash`, `edit` ni `write`; Pi no puede ejecutar comandos ni modificar archivos. |
 
 Estas opciones limitan las capacidades del agente, pero no constituyen un sandbox completo. El runner y sus archivos deben tratarse como recursos sensibles, y el contenido del Pull Request continúa siendo información no confiable.
+
+### Por qué usamos `--no-skills` y `--skill` juntos
+
+No son opciones contradictorias:
+
+- `--no-skills` significa: **no busques ni cargues skills automáticamente** desde el checkout del Pull Request.
+- `--skill <ruta>` significa: **carga explícitamente esta skill concreta**.
+
+La ruta explícita apunta a una copia de `pr-evidence/SKILL.md` obtenida desde `BASE_SHA`, la rama base confiable. Así Pi no acepta cualquier skill que el PR pueda añadir o modificar, pero sí recibe la política de revisión que nosotros elegimos.
+
+En otras palabras: apagamos el descubrimiento automático y activamos una única skill mediante una allowlist.
 
 ### Credenciales del checkout
 

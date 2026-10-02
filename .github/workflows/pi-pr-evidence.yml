@@ -1,54 +1,58 @@
 name: Pi PR evidence review
 
 on:
+  # Run only for Pull Requests whose target branch is main.
   pull_request:
+    branches: [main]
     types: [opened, synchronize, reopened]
     paths:
       - "videos/pi-pr-evidence/**"
 
-# Serialize runs for one PR so two synchronize events cannot publish duplicate
-# comments. Different Pull Requests continue independently.
+# If the PR changes again while a review is running, keep only the newest run.
 concurrency:
   group: pi-pr-evidence-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-# The workflow publishes one advisory comment and never writes to the repository.
+# Pi only reads the repository. The separate github-script step publishes one
+# advisory comment using GITHUB_TOKEN.
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
   review:
-    # This first version intentionally uses API-key auth. Subscription OAuth
-    # is documented for local interactive runs; it is not logged into here.
-    # The API key is never exposed to fork Pull Requests.
+    # Do not expose the provider key to Pull Requests coming from forks.
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
+      # Required: provider/model-id, for example dashscope/deepseek-v4.1-flash.
       PI_MODEL: ${{ vars.PI_MODEL }}
-      # Optional. Set this only when PI_MODEL points to a custom
-      # OpenAI-compatible endpoint. Leave it empty for Pi's built-in providers.
+      # Optional: only for a custom OpenAI-compatible endpoint.
       PI_BASE_URL: ${{ vars.PI_BASE_URL }}
     defaults:
       run:
         working-directory: videos/pi-pr-evidence
 
     steps:
-      - name: Checkout Pull Request head
+      # 1. Check out the PR so Git can calculate the diff.
+      - name: 1. Checkout Pull Request
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-          # Pi only needs the local checkout; do not leave GITHUB_TOKEN in .git/config.
+          # Do not leave GITHUB_TOKEN in .git/config for Pi to read.
           persist-credentials: false
 
-      - name: Set up Node.js
+      # 2. Install Node because Pi is a Node CLI.
+      - name: 2. Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Prepare isolated paths and trusted review policy
+      # 3. Install Pi and copy the review policy from the trusted base commit.
+      #    The PR cannot replace the package, lockfile, or skill used here.
+      - name: 3. Prepare Pi runtime and trusted skill
         id: prepare
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -60,6 +64,8 @@ jobs:
           REVIEW_DIR_PATH="$RUNNER_TEMP/pi-pr-evidence"
           SKILL_PATH="$PI_RUNTIME_PATH/pr-evidence/SKILL.md"
 
+          # Make these paths available to later steps without putting files
+          # inside the PR checkout.
           echo "PI_RUNTIME=$PI_RUNTIME_PATH" >> "$GITHUB_ENV"
           echo "PI_CODING_AGENT_DIR=$PI_CONFIG_PATH" >> "$GITHUB_ENV"
           echo "REVIEW_DIR=$REVIEW_DIR_PATH" >> "$GITHUB_ENV"
@@ -68,26 +74,16 @@ jobs:
           rm -rf "$PI_RUNTIME_PATH" "$REVIEW_DIR_PATH"
           mkdir -p "$PI_RUNTIME_PATH/pr-evidence" "$PI_CONFIG_PATH" "$REVIEW_DIR_PATH"
 
-          if ! git cat-file -e "$BASE_SHA:videos/pi-pr-evidence/.pi/skills/pr-evidence/SKILL.md"; then
+          # These files must already exist in the base revision. If this is the
+          # first PR that introduces the demo, skip until the demo is merged.
+          if ! git cat-file -e "$BASE_SHA:videos/pi-pr-evidence/.pi/package.json" || \
+             ! git cat-file -e "$BASE_SHA:videos/pi-pr-evidence/.pi/package-lock.json" || \
+             ! git cat-file -e "$BASE_SHA:videos/pi-pr-evidence/.pi/skills/pr-evidence/SKILL.md"; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "reason=the base revision does not contain the pr-evidence skill; manual review is required" >> "$GITHUB_OUTPUT"
+            echo "reason=the base revision does not contain the trusted Pi runtime and skill; manual review is required" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          if ! git cat-file -e "$BASE_SHA:videos/pi-pr-evidence/.pi/package.json"; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "reason=the base revision does not contain the Pi package manifest; manual review is required" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if ! git cat-file -e "$BASE_SHA:videos/pi-pr-evidence/.pi/package-lock.json"; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "reason=the base revision does not contain the Pi lockfile; manual review is required" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # Policy and runtime inputs come from the trusted base revision, not
-          # from files that the Pull Request can change.
           git show "$BASE_SHA:videos/pi-pr-evidence/.pi/package.json" > "$PI_RUNTIME_PATH/package.json"
           git show "$BASE_SHA:videos/pi-pr-evidence/.pi/package-lock.json" > "$PI_RUNTIME_PATH/package-lock.json"
           git show "$BASE_SHA:videos/pi-pr-evidence/.pi/skills/pr-evidence/SKILL.md" > "$SKILL_PATH"
@@ -97,7 +93,9 @@ jobs:
           echo "ready=true" >> "$GITHUB_OUTPUT"
           echo "skill_path=$SKILL_PATH" >> "$GITHUB_OUTPUT"
 
-      - name: Validate Pi configuration
+      # 4. Check the variables and, when needed, register a custom endpoint.
+      #    This step does not write the API key to models.json.
+      - name: 4. Validate configuration
         id: config
         if: steps.prepare.outputs.ready == 'true'
         env:
@@ -133,38 +131,18 @@ jobs:
             exit 0
           fi
 
-          echo "provider=$provider" >> "$GITHUB_OUTPUT"
-          echo "model_id=$model_id" >> "$GITHUB_OUTPUT"
-          echo "configured=true" >> "$GITHUB_OUTPUT"
-
-      - name: Configure custom OpenAI-compatible provider
-        id: provider
-        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
-        env:
-          PI_PROVIDER: ${{ steps.config.outputs.provider }}
-          PI_MODEL_ID: ${{ steps.config.outputs.model_id }}
-        run: |
-          set -euo pipefail
-
-          # An empty PI_BASE_URL means that Pi should resolve the provider
-          # from its built-in catalog. Otherwise register the arbitrary
-          # OpenAI-compatible endpoint without putting the API key on disk.
-          if [[ -z "${PI_BASE_URL:-}" ]]; then
-            echo "mode=builtin" >> "$GITHUB_OUTPUT"
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          PI_MODEL="$PI_MODEL" \
-          PI_PROVIDER="$PI_PROVIDER" \
-          PI_MODEL_ID="$PI_MODEL_ID" \
-          PI_BASE_URL="$PI_BASE_URL" \
-          python3 - "$PI_CODING_AGENT_DIR/models.json" <<'PY'
+          # No URL means Pi uses one of its built-in providers. A URL means
+          # this workflow creates the temporary models.json that Pi can read.
+          if [[ -n "${PI_BASE_URL:-}" ]]; then
+            PI_MODEL="$PI_MODEL" \
+            PI_PROVIDER="$provider" \
+            PI_MODEL_ID="$model_id" \
+            PI_BASE_URL="$PI_BASE_URL" \
+            python3 - "$PI_CODING_AGENT_DIR/models.json" <<'PY'
           import json
           import os
           import sys
 
-          path = sys.argv[1]
           config = {
               "providers": {
                   os.environ["PI_PROVIDER"]: {
@@ -180,28 +158,32 @@ jobs:
                   }
               }
           }
-          with open(path, "w", encoding="utf-8") as stream:
+          with open(sys.argv[1], "w", encoding="utf-8") as stream:
               json.dump(config, stream, indent=2)
               stream.write("\n")
           PY
+          fi
 
-          echo "mode=openai-compatible" >> "$GITHUB_OUTPUT"
           echo "configured=true" >> "$GITHUB_OUTPUT"
 
-      - name: Capture Pull Request diff
-        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true' && steps.provider.outputs.configured == 'true'
+      # 5. Create the diff and make the one real Pi call.
+      - name: 5. Ask Pi to review the diff
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
+        env:
+          # The key exists only in this step and is never written to disk.
+          PI_API_KEY: ${{ secrets.PI_API_KEY }}
         run: |
+          set -euo pipefail
+
+          # Pi reads this file with its read tool; it does not need GitHub write access.
           git diff --no-ext-diff --unified=80 \
             "${{ github.event.pull_request.base.sha }}" \
             "${{ github.event.pull_request.head.sha }}" \
             -- . > "$REVIEW_DIR/pr.diff"
 
-      - name: Run Pi in read-only mode
-        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true' && steps.provider.outputs.configured == 'true'
-        env:
-          # Keep the provider credential out of checkout and bootstrap steps.
-          PI_API_KEY: ${{ secrets.PI_API_KEY }}
-        run: |
+          # --no-skills means: do not discover skills from the PR automatically.
+          # --skill means: load this one skill copied from the trusted base commit.
+          # The explicit skill is therefore allowed while automatic discovery is off.
           "$PI_RUNTIME/node_modules/.bin/pi" \
             --print \
             --no-session \
@@ -216,23 +198,17 @@ jobs:
             "Usa la skill pr-evidence. Revisa este Pull Request en modo read-only. El diff está en $REVIEW_DIR/pr.diff. Lee primero ese archivo y genera únicamente el reporte Markdown definido por la skill." \
             > "$PI_REVIEW_PATH"
 
-      - name: Publish or update the Pull Request comment
-        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true' && steps.provider.outputs.configured == 'true'
+      # 6. Pi only writes the report. This deterministic step writes the GitHub comment.
+      - name: 6. Publish or update the advisory comment
+        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require("fs");
             const marker = "<!-- pi-pr-evidence -->";
-            const reportPath = process.env.PI_REVIEW_PATH;
-            if (!reportPath) {
-              throw new Error("PI_REVIEW_PATH was not initialized");
-            }
+            let report = fs.readFileSync(process.env.PI_REVIEW_PATH, "utf8").trim();
 
-            let report = fs.readFileSync(reportPath, "utf8").trim();
-
-            // Keep the comment below GitHub's size limit if a model ignores the
-            // requested concise format.
             if (report.length > 60000) {
               report = `${report.slice(0, 59500)}\n\n_Report truncated by the workflow._`;
             }
@@ -277,28 +253,23 @@ jobs:
               });
             }
 
-      - name: Explain skipped configuration
-        if: steps.prepare.outputs.ready == 'true' && steps.config.outputs.configured != 'true'
+      # Missing configuration is advisory: explain it without making CI red.
+      - name: Explain skipped review
+        if: always() && (steps.prepare.outputs.ready != 'true' || steps.config.outputs.configured != 'true')
+        env:
+          PREPARE_REASON: ${{ steps.prepare.outputs.reason }}
+          CONFIG_REASON: ${{ steps.config.outputs.reason }}
         run: |
+          reason="${CONFIG_REASON:-$PREPARE_REASON}"
           {
             echo "## Pi PR evidence review"
             echo
             echo "Automated review skipped; manual review is required."
             echo
-            echo "**Reason:** ${{ steps.config.outputs.reason }}"
+            echo "**Reason:** $reason"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Explain skipped bootstrap review
-        if: steps.prepare.outputs.ready != 'true'
-        run: |
-          {
-            echo "## Pi PR evidence review"
-            echo
-            echo "Automated review skipped; manual review is required."
-            echo
-            echo "**Reason:** ${{ steps.prepare.outputs.reason }}"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Remove runtime files
+      # Delete the temporary runtime, configuration, diff, and report.
+      - name: Remove temporary files
         if: always()
         run: rm -rf "$RUNNER_TEMP/pi-pr-evidence" "$RUNNER_TEMP/pi-runtime"
