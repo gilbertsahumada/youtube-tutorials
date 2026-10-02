@@ -99,6 +99,19 @@ Así el token no queda persistido en el checkout que Pi puede leer. Esta opción
 
 El comentario lo publica `actions/github-script` mediante `GITHUB_TOKEN`.
 
+## Ejecución headless y GitHub Actions
+
+`Headless` significa que Pi se ejecuta sin una interfaz interactiva: recibe un prompt, trabaja con las herramientas permitidas y escribe el resultado en stdout. La opción `--print` es la que permite usar Pi de esta forma.
+
+Pi no necesita GitHub Actions para funcionar headless. También puede ejecutarse desde:
+
+- una terminal local;
+- otro CI como GitLab CI, Jenkins o CircleCI;
+- un contenedor Docker;
+- un servidor, una tarea programada o un script.
+
+Usamos GitHub Actions porque este tutorial revisa Pull Requests de GitHub. Actions ya puede reaccionar a `pull_request`, obtener el diff, leer secrets y usar `GITHUB_TOKEN` para publicar el comentario. El runner es temporal, así que no hace falta mantener un servidor encendido.
+
 ## Autenticación en GitHub Actions
 
 El runner es headless, por lo que esta demo utiliza una API key, no una suscripción OAuth interactiva.
@@ -153,6 +166,17 @@ Cuando `PI_BASE_URL` está definido, el workflow crea un `models.json` temporal 
 ```
 
 Esto permite cambiar el modelo y el provider mediante variables del repositorio, sin modificar el workflow ni el código de Pi. El endpoint debe soportar streaming y tool calling, no solo una solicitud de chat simple, porque Pi necesita llamar a `read`, `grep`, `find` y `ls` durante la revisión. Esta revisión usa texto; un modelo multimodal requeriría declarar también la capacidad de imágenes en su metadata.
+
+### ¿Es obligatorio crear `models.json`?
+
+No para todos los casos:
+
+- Si usas un provider nativo de Pi, `PI_BASE_URL` queda vacío y Pi usa su catálogo interno. No necesitamos crear `models.json`.
+- Si usas un endpoint personalizado, Pi necesita conocer su dirección, su formato y el modelo. En ese caso sí necesitamos registrar el provider en `models.json` o mediante otra configuración equivalente.
+
+`models.json` es un mecanismo de configuración que Pi ya entiende. Lo que hicimos nosotros es generarlo automáticamente durante el workflow cuando existe `PI_BASE_URL`. Se crea en `$RUNNER_TEMP`, se le indica a Pi mediante `PI_CODING_AGENT_DIR` y se elimina al terminar. `PI_BASE_URL` es una variable que definimos para este workflow; Pi no la interpreta automáticamente por sí sola.
+
+Si no generáramos ese archivo y usáramos, por ejemplo, `dashscope/deepseek-v4.1-flash`, Pi no sabría qué provider es `dashscope` ni a qué dirección enviar la solicitud, salvo que esa configuración ya existiera en otro `models.json` o en una extensión.
 
 ### Ejemplo de este tutorial: DashScope + DeepSeek
 
