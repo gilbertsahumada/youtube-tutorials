@@ -48,6 +48,59 @@ pi-pr-evidence/
             └── SKILL.md
 ```
 
+## Llevar la demo a otro repositorio
+
+Este ejemplo se puede copiar a otro repositorio. Los valores de DashScope y DeepSeek son solo los que usaré en este video; no son requisitos de Pi.
+
+Antes de copiarlo, busca los valores específicos del ejemplo:
+
+```bash
+rg -n "videos/pi-pr-evidence|branches: \[main\]|PI_MODEL|PI_BASE_URL|PI_API_KEY" \
+  .github/workflows/pi-pr-evidence.yml
+```
+
+### Valores que debes adaptar
+
+| En el workflow | Qué debes cambiar |
+|---|---|
+| `branches: [main]` | La rama destino de tus PRs, por ejemplo `develop`. |
+| `paths: videos/pi-pr-evidence/**` | La carpeta o los archivos que deben activar la revisión, por ejemplo `src/**`. También puedes quitar `paths` para ejecutarla en cualquier cambio. |
+| `working-directory: videos/pi-pr-evidence` | La carpeta desde la que se ejecutan los comandos. Si tu proyecto usa la raíz, elimina `working-directory`. |
+| `videos/pi-pr-evidence/.pi/package.json` | La ruta al `package.json` confiable de Pi en tu repositorio. |
+| `videos/pi-pr-evidence/.pi/package-lock.json` | La ruta al lockfile correspondiente. |
+| `videos/pi-pr-evidence/.pi/skills/pr-evidence/SKILL.md` | La ruta a la skill de revisión que debe existir en la rama base. |
+| `PI_MODEL` | Tu valor `provider/model-id`. |
+| `PI_BASE_URL` | El endpoint OpenAI-compatible de tu provider, si no es nativo de Pi. |
+| `PI_API_KEY` | El secret que contiene la API key del provider. |
+
+La cadena `videos/pi-pr-evidence` aparece en más de un lugar: en el disparador, el directorio de trabajo y las rutas que se copian desde `BASE_SHA`. Debes reemplazar todas las apariciones relevantes, no solo la primera.
+
+### Valores que no debes reemplazar
+
+GitHub calcula automáticamente estos valores para cada PR:
+
+- `${{ github.event.pull_request.base.sha }}`: commit de la rama destino.
+- `${{ github.event.pull_request.head.sha }}`: commit de la rama del PR.
+- `${{ github.repository }}`: repositorio actual.
+- `${{ secrets.GITHUB_TOKEN }}`: token temporal para publicar el comentario.
+- `$RUNNER_TEMP`: directorio temporal del runner.
+
+No necesitas escribir el nombre de tu repositorio ni el nombre de la rama del PR en esos lugares.
+
+### Recomendaciones de seguridad al copiarlo
+
+Conserva estas partes salvo que entiendas sus consecuencias:
+
+- `pull_request`, no `pull_request_target`.
+- La condición que evita ejecutar el workflow para PRs de forks.
+- `persist-credentials: false`.
+- `contents: read` y `pull-requests: write`.
+- La copia del runtime y de la skill desde `BASE_SHA`.
+- `--no-skills` junto con la carga explícita de la skill confiable.
+- `--tools read,grep,find,ls` para mantener Pi en modo read-only.
+
+Si cambias la ubicación de la skill, recuerda actualizar tanto la ruta de `git show` como el argumento `--skill` que recibe Pi.
+
 ## Qué revisa Pi
 
 El agente genera un reporte con:
