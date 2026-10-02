@@ -64,11 +64,38 @@ read, grep, find, ls
 La revisión:
 
 - No modifica archivos.
-- No instala dependencias en el checkout del PR.
 - No ejecuta `bash`.
 - No ejecuta tests.
 - No despliega.
 - No publica directamente en GitHub.
+
+El workflow sí prepara el runtime de Pi con `npm ci`, pero usa el manifiesto y el lockfile de la revisión base y lo instala en `$RUNNER_TEMP/pi-runtime`, fuera del checkout del Pull Request.
+
+### Opciones de ejecución restringida
+
+El paso que ejecuta Pi usa estas opciones para limitar el contexto y las capacidades disponibles:
+
+| Opción | Qué hace | Por qué se usa |
+|---|---|---|
+| `--print` | Ejecuta Pi sin una interfaz interactiva y escribe la respuesta final en stdout. | GitHub Actions es headless y necesita guardar el reporte en un archivo. |
+| `--no-session` | Usa una sesión efímera que no se guarda. | Evita persistir el transcript de Pi; los archivos temporales existen durante el job y se eliminan al final. |
+| `--no-extensions` | Desactiva el descubrimiento y la carga automática de extensiones. | Evita ejecutar extensiones del checkout del Pull Request. |
+| `--no-skills` | Desactiva el descubrimiento y la carga automática de skills. | Evita que una skill modificada por el Pull Request reemplace la política confiable. |
+| `--no-context-files` | Ignora `AGENTS.md` y `CLAUDE.md`. | Evita que esas instrucciones automáticas del repositorio alteren la revisión. |
+| `--skill <ruta>` | Carga explícitamente la skill copiada desde `BASE_SHA`. | La política de revisión proviene de la rama base confiable. `--no-skills` no bloquea esta carga explícita. |
+| `--tools read,grep,find,ls` | Reemplaza la lista de herramientas por una allowlist de lectura. | No habilita `bash`, `edit` ni `write`; Pi no puede ejecutar comandos ni modificar archivos. |
+
+Estas opciones limitan las capacidades del agente, pero no constituyen un sandbox completo. El runner y sus archivos deben tratarse como recursos sensibles, y el contenido del Pull Request continúa siendo información no confiable.
+
+### Credenciales del checkout
+
+`actions/checkout` puede guardar `GITHUB_TOKEN` en `.git/config` para que pasos posteriores hagan operaciones Git autenticadas. Este workflow solo necesita leer el historial local para generar el diff, por eso usa:
+
+```yaml
+persist-credentials: false
+```
+
+Así el token no queda persistido en el checkout que Pi puede leer. Esta opción no elimina `PI_API_KEY` del proceso de Pi, porque Pi necesita esa credencial para llamar al proveedor. Tampoco afecta al comentario final: `actions/github-script` recibe su `GITHUB_TOKEN` por separado mediante `github-token`.
 
 El comentario lo publica `actions/github-script` mediante `GITHUB_TOKEN`.
 
@@ -107,6 +134,8 @@ El workflow:
 - Usa `pull_request`, no `pull_request_target`.
 - Solo procesa PRs del mismo repositorio en esta primera versión.
 - No expone la API key a PRs provenientes de forks.
+- Inyecta `PI_API_KEY` únicamente en los pasos que validan y ejecutan Pi.
+- No persiste `GITHUB_TOKEN` en el checkout (`persist-credentials: false`).
 - Carga la skill y el runtime desde la revisión base confiable.
 - Guarda los archivos temporales bajo `$RUNNER_TEMP`.
 - Usa un lockfile y `npm ci`.
@@ -118,7 +147,7 @@ El workflow:
 
 Cuando se introduce esta demo por primera vez, la rama base todavía no contiene la skill ni el package de `pi-pr-evidence`. En ese caso el workflow omite la revisión automática y deja una explicación en el Step Summary.
 
-Después de fusionar la demo, los siguientes PRs que modifiquen `videos/pi-pr-evidence/**` podrán ejecutar el análisis real.
+Después de fusionar la demo, los siguientes PRs que modifiquen `videos/pi-pr-evidence/**` podrán ejecutar el análisis real. La condición de confianza para PRs del mismo repositorio sigue requiriendo protección de ramas, revisión de cambios en workflows y environments protegidos cuando la API key sea sensible.
 
 ## Probar el workflow
 

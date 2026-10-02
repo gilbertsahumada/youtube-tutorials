@@ -27,7 +27,6 @@ jobs:
     timeout-minutes: 10
     env:
       PI_MODEL: ${{ vars.PI_MODEL }}
-      PI_API_KEY: ${{ secrets.PI_API_KEY }}
     defaults:
       run:
         working-directory: videos/pi-pr-evidence
@@ -38,6 +37,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          # Pi only needs the local checkout; do not leave GITHUB_TOKEN in .git/config.
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -93,6 +94,8 @@ jobs:
 
       - name: Validate Pi configuration
         if: steps.prepare.outputs.ready == 'true'
+        env:
+          PI_API_KEY: ${{ secrets.PI_API_KEY }}
         run: |
           test -n "$PI_MODEL" || {
             echo "::error::Define the PI_MODEL repository variable as provider/model-id."
@@ -113,6 +116,9 @@ jobs:
 
       - name: Run Pi in read-only mode
         if: steps.prepare.outputs.ready == 'true'
+        env:
+          # Keep the provider credential out of checkout and bootstrap steps.
+          PI_API_KEY: ${{ secrets.PI_API_KEY }}
         run: |
           "$PI_RUNTIME/node_modules/.bin/pi" \
             --print \
