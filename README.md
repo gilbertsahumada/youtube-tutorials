@@ -68,10 +68,6 @@ Estoy preparando una formación en español de **IA aplicada para desarrolladore
 
 [Apúntate a la lista de espera](https://academia.gilbertsahumada.com/?utm_source=github&utm_medium=referral&utm_campaign=academia_lista_espera&utm_content=repositorio_tutoriales) para recibir los detalles de la primera edición.
 
-## La comunidad (por si quieres más)
-
-Estos recursos salen de **IA en Producción**. Por si quieres lives, casos reales y más prompts, la comunidad está acá: https://www.skool.com/ia-en-produccion-3264
-
 ## Licencia
 
 MIT
