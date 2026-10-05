@@ -2,6 +2,8 @@
 
 Prompts, skills y ejemplos que acompañan los videos del canal **IA en Producción** ([@gilbertsahumada](https://www.youtube.com/@gilbertsahumada)). La idea de fondo: construir con IA **con criterio de ingeniería**, no tirándole prompts a ciegas.
 
+Recursos en español para desarrolladores de software que quieren usar IA en su trabajo y construir aplicaciones con IA.
+
 ## Cómo está organizado
 
 **Una carpeta por video.** Cada una tiene su `README.md` (el compañero escrito del video) y, cuando aplica, sus `skills/` (comandos reutilizables) y `ejemplos/`.
@@ -59,6 +61,12 @@ Los números que verás publicados salen de ejecuciones registradas y están mar
 ## Una nota sobre el idioma
 
 Todo está en español para que lo entiendas rápido, pero los modelos suelen rendir mejor en inglés (están entrenados mayormente en inglés). Si quieres exprimir mejores resultados, traduce los prompts, los skills y tus specs a inglés. Funciona igual en español, así que es cosa de cada uno.
+
+## Formación en preparación
+
+Estoy preparando una formación en español de **IA aplicada para desarrolladores de software**, dirigida a personas que ya programan y quieren usar IA en su trabajo y construir aplicaciones con IA para llevarlas a producción.
+
+[Apúntate a la lista de espera](https://academia.gilbertsahumada.com/?utm_source=github&utm_medium=referral&utm_campaign=academia_lista_espera&utm_content=repositorio_tutoriales) para recibir los detalles de la primera edición.
 
 ## La comunidad (por si quieres más)
 
