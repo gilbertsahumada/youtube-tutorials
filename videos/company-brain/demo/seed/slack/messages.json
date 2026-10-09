@@ -1,0 +1,21 @@
+{
+  "simulated": true,
+  "messages": [
+    {
+      "id": "slack-demo-001",
+      "channel": "proyecto-portal",
+      "author": "Ana (producto)",
+      "date": "2026-01-15T10:00:00Z",
+      "project": "portal-cliente",
+      "text": "Podríamos agregar exportación a Excel en el futuro. Todavía no está aprobado ni forma parte de la entrega 1."
+    },
+    {
+      "id": "slack-demo-002",
+      "channel": "proyecto-portal",
+      "author": "Luis (ingeniería)",
+      "date": "2026-01-15T10:05:00Z",
+      "project": "portal-cliente",
+      "text": "El ticket actual pide CSV. Revisaremos cualquier cambio de alcance antes de implementarlo."
+    }
+  ]
+}
