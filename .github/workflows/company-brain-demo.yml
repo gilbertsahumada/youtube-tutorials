@@ -1,0 +1,30 @@
+name: Company Brain demo tests
+
+on:
+  pull_request:
+    paths:
+      - "videos/company-brain/demo/**"
+      - ".github/workflows/company-brain-demo.yml"
+  push:
+    branches: [main]
+    paths:
+      - "videos/company-brain/demo/**"
+      - ".github/workflows/company-brain-demo.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+        working-directory: videos/company-brain/demo
+      - run: npm run preview
+        working-directory: videos/company-brain/demo

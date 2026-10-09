@@ -1,0 +1,9 @@
+{
+  "approved": true,
+  "project": "portal-cliente",
+  "delivery": "entrega-1",
+  "requirement": "exportar-reportes",
+  "format": "PDF",
+  "evidence": "Para el proyecto portal-cliente, entrega-1, confirmamos PDF en lugar de CSV para exportar-reportes. El cambio queda aprobado por el cliente.",
+  "pending": ["Excel sigue como propuesta para una entrega futura."]
+}
