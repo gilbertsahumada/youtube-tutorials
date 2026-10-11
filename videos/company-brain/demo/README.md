@@ -2,6 +2,8 @@
 
 Demo local basada en eventos detectados por polling: **Gmail real + GitHub real + Slack simulado**.
 
+Para el video centrado únicamente en **código, datos que se actualizan y respuestas del LLM antes/después**, usa [`../../company-brain-code/`](../../company-brain-code/). Tiene un recorrido independiente, sin configurar Gmail ni GitHub. Este README conserva la demo de integración.
+
 Una cuenta de prueba recibe un correo que confirma PDF en lugar de CSV. El proceso consulta la memoria del proyecto y un issue en GitHub, identifica la desalineación y abre un PR. El acuerdo anterior se conserva. El issue recibe un aviso, pero su descripción no cambia. **Un humano revisa y fusiona el PR.**
 
 No hay un prompt manual por cada correo: una vez iniciado el watcher, el mensaje nuevo dispara el análisis. No se necesita RAG vectorial ni una base de grafos para este caso.

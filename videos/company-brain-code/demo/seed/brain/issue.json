@@ -1,0 +1,10 @@
+{
+  "id": "exportar-reportes",
+  "projectId": "portal-cliente",
+  "decisionId": "exportacion",
+  "state": "open",
+  "title": "Implementar exportación CSV",
+  "requiredFormat": "CSV",
+  "acceptance": "Generar un archivo CSV descargable con los datos del reporte.",
+  "source": "Issue ficticio: no está conectado a GitHub"
+}

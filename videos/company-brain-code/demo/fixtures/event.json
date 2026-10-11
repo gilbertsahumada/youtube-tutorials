@@ -1,0 +1,13 @@
+{
+  "id": "email-pdf",
+  "kind": "client-confirmation",
+  "projectId": "portal-cliente",
+  "delivery": "entrega-1",
+  "requirement": "exportar-reportes",
+  "from": "cliente@example.com",
+  "receivedAt": "2026-01-16T12:00:00Z",
+  "format": "PDF",
+  "body": "Para el proyecto portal-cliente, entrega-1, confirmamos PDF en lugar de CSV para exportar-reportes. Excel sigue como propuesta para una entrega futura.",
+  "evidence": "confirmamos PDF en lugar de CSV para exportar-reportes",
+  "source": "Correo ficticio y evento ya normalizado: no hay extracción automática de lenguaje natural"
+}

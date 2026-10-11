@@ -1,0 +1,4 @@
+.env
+workspace/
+output/
+node_modules/
