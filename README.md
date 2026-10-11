@@ -17,6 +17,7 @@ videos/
   harness-engineering/            → demo comparativa sin harness y con harness
   loop-engineering/               → un loop que arregla una feature y se detiene solo
   graph-engineering/              → un grafo de loops que se refutan entre sí, con ancla externa
+  company-brain-code/             → demo en terminal: memoria, actualización y respuestas del LLM
   pi/                             → introducción a Pi, skills, extensiones y repository onboarding
   pi-pr-evidence/                 → revisión read-only de Pull Requests con Pi y GitHub Actions
 ```
@@ -32,6 +33,7 @@ videos/
 | Harness engineering con Claude Code y Codex | [`videos/harness-engineering`](videos/harness-engineering) | Una demo reproducible de contexto, especificación, scripts y feedback ejecutable |
 | Loop Engineering: deja de escribir prompts | [`videos/loop-engineering`](videos/loop-engineering) | Un loop real con memoria en disco y condición de parada verificable |
 | Qué es Graph Engineering (y cuándo NO usarlo) | [`videos/graph-engineering`](videos/graph-engineering) | Un workflow real con lentes en paralelo, verificación adversarial y anclas externas |
+| Company Brain en código: la misma pregunta, otra memoria | [`videos/company-brain-code`](videos/company-brain-code) | Archivos con fuentes e historial, aprobación humana y consultas antes y después al LLM |
 | Pi: skills, extensiones y repository onboarding | [`videos/pi`](videos/pi) | La introducción básica a Pi y un onboarding local por rol |
 | Revisión de Pull Requests con Pi | [`videos/pi-pr-evidence`](videos/pi-pr-evidence) | Un reviewer read-only que publica comentarios desde GitHub Actions |
 
@@ -48,13 +50,14 @@ cd youtube-tutorials/videos/<carpeta-del-video>
 
 Las demos basadas en scripts requieren **Node.js 20 o superior** y **Bash** (macOS, Linux o WSL; los scripts no corren en Windows nativo). Cada video indica si necesita Claude Code, Codex o Pi.
 
-Las tres demos con recorrido ejecutable, y qué hace cada una:
+Demos con recorrido ejecutable, y qué hace cada una:
 
 | Demo | Qué corres | Qué obtienes |
 |---|---|---|
 | [`harness-engineering`](videos/harness-engineering) | el mismo mensaje dos veces, con y sin harness | un evaluador independiente puntúa las dos: sin harness el marcador no se mueve, con harness `6/6` |
 | [`loop-engineering`](videos/loop-engineering) | `node loop-fix.mjs` | un loop que arregla una feature vuelta a vuelta y se detiene solo |
 | [`graph-engineering`](videos/graph-engineering) | `node review-graph.mjs` | lentes en paralelo, verificación adversarial y ancla externa |
+| [`company-brain-code`](videos/company-brain-code) | `npm run ask`, `ingest` y `approve` desde `demo/` | la misma pregunta con memoria inicial, propuesta pendiente y acuerdo actualizado; fixtures disponibles sin credenciales |
 
 Los números que verás publicados salen de ejecuciones registradas y están marcados como tales. La generación es probabilística: **tu corrida dará algo distinto**, y esa es justamente la razón de que cada demo traiga su propio evaluador.
 
