@@ -1,0 +1,7 @@
+{
+  "id": "fixture-email-001",
+  "from": "client@example.com",
+  "subject": "Portal cliente — confirmación entrega 1",
+  "date": "2026-01-16T12:00:00Z",
+  "text": "Para el proyecto portal-cliente, entrega-1, confirmamos PDF en lugar de CSV para exportar-reportes. El cambio queda aprobado por el cliente. Excel sigue como propuesta para una entrega futura."
+}

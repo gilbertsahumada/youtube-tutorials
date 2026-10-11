@@ -1,0 +1,12 @@
+{
+  "id": "exportacion",
+  "project": "portal-cliente",
+  "delivery": "entrega-1",
+  "requirement": "exportar-reportes",
+  "current": {
+    "format": "CSV",
+    "status": "approved",
+    "source": "Acuerdo inicial de la entrega 1"
+  },
+  "history": []
+}
