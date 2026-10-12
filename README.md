@@ -17,6 +17,7 @@ videos/
   harness-engineering/            → demo comparativa sin harness y con harness
   loop-engineering/               → un loop que arregla una feature y se detiene solo
   graph-engineering/              → un grafo de loops que se refutan entre sí, con ancla externa
+  company-brain/                  → Company Brain y demo de integración Gmail/GitHub
   company-brain-code/             → demo en terminal: memoria, actualización y respuestas del LLM
   pi/                             → introducción a Pi, skills, extensiones y repository onboarding
   pi-pr-evidence/                 → revisión read-only de Pull Requests con Pi y GitHub Actions
@@ -24,20 +25,21 @@ videos/
 
 ## Videos
 
-| Video | Carpeta | Qué te llevas |
-|---|---|---|
-| La mejor arquitectura para vibecoding: 3 capas | [`videos/arquitectura-minima-3-capas`](videos/arquitectura-minima-3-capas) | El modelo de 3 capas y los prompts para ordenar una app vibecodeada |
-| Cómo uso OpenAI Codex de 0 a Pro | [`videos/codex-de-0-a-pro`](videos/codex-de-0-a-pro) | `config.toml`, permisos, `AGENTS.md` y los 4 prompts del workflow |
-| Spec-Driven Development sin ceremonia | [`videos/spec-driven-development`](videos/spec-driven-development) | Las 5 preguntas, la plantilla y los skills `scope · exec · prove · audit · ship` |
-| Cómo crear un Skill (que sí se activa) | [`videos/creando-skills`](videos/creando-skills) | La anatomía de un `SKILL.md`, las 4 preguntas antes de escribirlo, la plantilla y cómo probarlo |
-| Harness engineering con Claude Code y Codex | [`videos/harness-engineering`](videos/harness-engineering) | Una demo reproducible de contexto, especificación, scripts y feedback ejecutable |
-| Loop Engineering: deja de escribir prompts | [`videos/loop-engineering`](videos/loop-engineering) | Un loop real con memoria en disco y condición de parada verificable |
-| Qué es Graph Engineering (y cuándo NO usarlo) | [`videos/graph-engineering`](videos/graph-engineering) | Un workflow real con lentes en paralelo, verificación adversarial y anclas externas |
-| Company Brain en código: la misma pregunta, otra memoria | [`videos/company-brain-code`](videos/company-brain-code) | Archivos con fuentes e historial, aprobación humana y consultas antes y después al LLM |
-| Pi: skills, extensiones y repository onboarding | [`videos/pi`](videos/pi) | La introducción básica a Pi y un onboarding local por rol |
-| Revisión de Pull Requests con Pi | [`videos/pi-pr-evidence`](videos/pi-pr-evidence) | Un reviewer read-only que publica comentarios desde GitHub Actions |
+| N.º | Video | Carpeta | Qué te llevas | URL del video |
+|---|---|---|---|---|
+| 1 | La mejor arquitectura para vibecoding: 3 capas | [`videos/arquitectura-minima-3-capas`](videos/arquitectura-minima-3-capas) | El modelo de 3 capas y los prompts para ordenar una app vibecodeada | Por agregar |
+| 2 | Cómo uso OpenAI Codex de 0 a Pro | [`videos/codex-de-0-a-pro`](videos/codex-de-0-a-pro) | `config.toml`, permisos, `AGENTS.md` y los 4 prompts del workflow | Por agregar |
+| 3 | Spec-Driven Development sin ceremonia | [`videos/spec-driven-development`](videos/spec-driven-development) | Las 5 preguntas, la plantilla y los skills `scope · exec · prove · audit · ship` | Por agregar |
+| 4 | Cómo crear un Skill (que sí se activa) | [`videos/creando-skills`](videos/creando-skills) | La anatomía de un `SKILL.md`, las 4 preguntas antes de escribirlo, la plantilla y cómo probarlo | Por agregar |
+| 5 | Harness engineering con Claude Code y Codex | [`videos/harness-engineering`](videos/harness-engineering) | Una demo reproducible de contexto, especificación, scripts y feedback ejecutable | Por agregar |
+| 6 | Loop Engineering: deja de escribir prompts | [`videos/loop-engineering`](videos/loop-engineering) | Un loop real con memoria en disco y condición de parada verificable | Por agregar |
+| 7 | Qué es Graph Engineering (y cuándo NO usarlo) | [`videos/graph-engineering`](videos/graph-engineering) | Un workflow real con lentes en paralelo, verificación adversarial y anclas externas | Por agregar |
+| 8 | Qué es un Company Brain y cómo puedes construirlo | [`videos/company-brain`](videos/company-brain) | El concepto, sus nueve enfoques y cómo elegir por dónde empezar | [Ver video](https://youtu.be/uB21nWjsx50) |
+| 9 | Company Brain en código: la misma pregunta, otra memoria | [`videos/company-brain-code`](videos/company-brain-code) | Archivos con fuentes e historial, aprobación humana y consultas antes y después al LLM | Por agregar |
+| 10 | Pi: skills, extensiones y repository onboarding | [`videos/pi`](videos/pi) | La introducción básica a Pi y un onboarding local por rol | [Ver video](https://youtu.be/fvXWPim2RzM) |
+| 11 | Revisión de Pull Requests con Pi | [`videos/pi-pr-evidence`](videos/pi-pr-evidence) | Un reviewer read-only que publica comentarios desde GitHub Actions | Por agregar |
 
-> Los links a cada video de YouTube se agregan acá a medida que se publican.
+> La numeración sigue el orden del índice, no necesariamente el de publicación. Los enlaces pendientes se completarán después.
 
 ## Cómo reproducir una demo
 
