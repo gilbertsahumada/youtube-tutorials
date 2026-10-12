@@ -1,14 +1,14 @@
-name: Company Brain demo tests
+name: Company Brain mail-to-issue tests
 
 on:
   pull_request:
     paths:
-      - "videos/company-brain/demo/**"
+      - "videos/company-brain/**"
       - ".github/workflows/company-brain-demo.yml"
   push:
     branches: [main]
     paths:
-      - "videos/company-brain/demo/**"
+      - "videos/company-brain/**"
       - ".github/workflows/company-brain-demo.yml"
 
 permissions:

@@ -1,6 +1,7 @@
 {
   "number": 1,
-  "title": "portal-cliente: exportar-reportes para entrega-1",
-  "body": "Proyecto: portal-cliente\nEntrega: entrega-1\nRequisito: exportar-reportes\n\nImplementar exportación CSV.\n\nAceptación: generar un archivo CSV descargable con los datos del reporte.",
-  "state": "open"
+  "title": "Implementar exportación CSV",
+  "body": "Proyecto: portal-cliente\nEntrega: entrega-1\nRequisito: exportar-reportes\nFormato actual: CSV\n\nImplementar exportación CSV.\n\nAceptación: generar un archivo CSV descargable con los datos del reporte.",
+  "state": "open",
+  "html_url": "https://github.com/demo/sandbox/issues/1"
 }

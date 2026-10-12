@@ -1,7 +1,7 @@
 {
-  "id": "fixture-email-001",
+  "id": "request-pdf",
   "from": "client@example.com",
-  "subject": "Portal cliente — confirmación entrega 1",
+  "subject": "company-brain-demo — cambio de prioridad",
   "date": "2026-01-16T12:00:00Z",
-  "text": "Para el proyecto portal-cliente, entrega-1, confirmamos PDF en lugar de CSV para exportar-reportes. El cambio queda aprobado por el cliente. Excel sigue como propuesta para una entrega futura."
+  "text": "Para el proyecto portal-cliente, entrega-1, necesito que prioricemos PDF en lugar de CSV para exportar-reportes. Por favor planteen el cambio y su impacto antes de modificar el alcance."
 }
