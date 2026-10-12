@@ -18,11 +18,11 @@ test("entorno: informa todas las variables faltantes sin exponer valores", () =>
   }
   const status = environmentStatus(complete);
   assert.equal(status.ready, true);
-  assert.deepEqual(status.connections, { gmail: true, github: true, model: true });
+  assert.deepEqual(status.connections, { gmail: true, model: true });
   assert.ok(!JSON.stringify(status).includes("private-"));
 });
 
-test("entorno: rechaza destinos inválidos y URLs con credenciales sin mostrarlas", () => {
+test("entorno: valida el entorno global; los destinos y remitentes se guardan por proyecto", () => {
   const authenticatedUrl = new URL(complete.MODEL_BASE_URL);
   authenticatedUrl.username = complete.GOOGLE_CLIENT_SECRET;
   authenticatedUrl.password = complete.MODEL_API_KEY;
@@ -31,6 +31,6 @@ test("entorno: rechaza destinos inválidos y URLs con credenciales sin mostrarla
     MODEL_BASE_URL: authenticatedUrl.href,
   });
   assert.equal(status.ready, false);
-  assert.deepEqual(status.errors.map(error => error.field), ["GITHUB_REPO", "GITHUB_ISSUE_NUMBER", "GMAIL_AFTER", "ALLOWED_SENDER", "MODEL_BASE_URL"]);
+  assert.deepEqual(status.errors.map(error => error.field), ["GMAIL_AFTER", "MODEL_BASE_URL"]);
   assert.ok(!JSON.stringify(status).includes("private-"));
 });

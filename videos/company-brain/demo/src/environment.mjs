@@ -1,6 +1,6 @@
 export const requiredFields = [
-  "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GMAIL_LABEL", "ALLOWED_SENDER", "GMAIL_AFTER",
-  "GITHUB_REPO", "GITHUB_ISSUE_NUMBER", "MODEL_BASE_URL", "MODEL_ID", "MODEL_API_KEY",
+  "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GMAIL_LABEL", "GMAIL_AFTER",
+  "MODEL_BASE_URL", "MODEL_ID", "MODEL_API_KEY",
 ];
 
 // Only names and validation messages leave the server; credentials stay in env.
@@ -8,11 +8,7 @@ export function environmentStatus(env) {
   const missing = requiredFields.filter(key => typeof env[key] !== "string" || !env[key].trim());
   const errors = [];
   const invalid = (field, message) => errors.push({ field, message });
-  if (env.GITHUB_REPO && !/^[\w.-]+\/[\w.-]+$/.test(env.GITHUB_REPO)) invalid("GITHUB_REPO", "GITHUB_REPO debe ser owner/repo.");
-  if (env.GITHUB_ISSUE_NUMBER && (!/^\d+$/.test(env.GITHUB_ISSUE_NUMBER) || !Number.isSafeInteger(Number(env.GITHUB_ISSUE_NUMBER)) || Number(env.GITHUB_ISSUE_NUMBER) < 1)) invalid("GITHUB_ISSUE_NUMBER", "GITHUB_ISSUE_NUMBER debe ser un entero positivo.");
   if (env.GMAIL_AFTER && !Number.isFinite(Date.parse(env.GMAIL_AFTER))) invalid("GMAIL_AFTER", "GMAIL_AFTER debe ser una fecha ISO válida anterior al primer correo.");
-  if (env.ALLOWED_SENDER && !/^[^\s@,<>]+@[^\s@,<>]+\.[^\s@,<>]+$/.test(env.ALLOWED_SENDER)) invalid("ALLOWED_SENDER", "ALLOWED_SENDER debe ser una dirección de correo válida.");
-  if (env.GMAIL_INITIAL_MESSAGE_ID && !/^[A-Za-z0-9_-]{1,200}$/.test(env.GMAIL_INITIAL_MESSAGE_ID)) invalid("GMAIL_INITIAL_MESSAGE_ID", "GMAIL_INITIAL_MESSAGE_ID debe ser un ID de Gmail API válido.");
   if (env.MODEL_BASE_URL) {
     try {
       const url = new URL(env.MODEL_BASE_URL);
@@ -28,8 +24,7 @@ export function environmentStatus(env) {
     missing, errors,
     error: missing.length ? `Faltan variables de entorno: ${missing.join(", ")}.` : errors.length ? "Hay variables de entorno inválidas. Corrige el archivo .env y reinicia el servidor." : null,
     connections: {
-      gmail: valid(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GMAIL_LABEL", "ALLOWED_SENDER", "GMAIL_AFTER", "GMAIL_INITIAL_MESSAGE_ID"]),
-      github: valid(["GITHUB_REPO", "GITHUB_ISSUE_NUMBER"]),
+      gmail: valid(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GMAIL_LABEL", "GMAIL_AFTER"]),
       model: valid(["MODEL_BASE_URL", "MODEL_ID", "MODEL_API_KEY"]),
     },
   };

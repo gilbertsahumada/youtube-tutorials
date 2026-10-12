@@ -32,7 +32,7 @@ test("HTTP: entorno incompleto devuelve error sin datos de ejemplo ni acceso a s
   assert.match(await page.text(), /Company Brain/);
   assert.match(page.headers.get("content-security-policy"), /frame-ancestors 'none'/);
   for (const path of ["/app.js", "/i18n.js", "/style.css", "/favicon.svg"]) assert.equal((await fetch(base + path)).status, 200);
-  for (const path of ["/.env", "/.private/gmail-token.json", "/src/common.mjs", "/fixtures/email.json"]) assert.equal((await fetch(base + path)).status, 404);
+  for (const path of ["/.env", "/.private/gmail-token.json", "/.private/company-brain.sqlite", "/src/common.mjs", "/fixtures/email.json"]) assert.equal((await fetch(base + path)).status, 404);
   const bootstrapResponse = await fetch(base + "/api/bootstrap");
   assert.equal(bootstrapResponse.status, 503);
   const bootstrap = await bootstrapResponse.json();
@@ -93,7 +93,36 @@ test("HTTP: con entorno completo carga únicamente los datos de las integracione
   assert.equal(result.workspace.requestEmail.id, email.id);
   assert.equal(result.workspace.plan.toFormat, "PDF");
   assert.equal(analyzed, 2);
+  const restored = await (await fetch(base + "/api/bootstrap")).json();
+  assert.equal(restored.proposals.length, 1);
+  assert.equal(restored.workspace.plan.key, result.workspace.plan.key);
   assert.equal(published, 0);
   assert.ok(!JSON.stringify({ bootstrap, context, result }).includes("private-"));
   assert.equal(await readFile(join(root, ".env"), "utf8"), "NO_EDITAR=original\n");
+});
+
+test("HTTP: guarda y edita proyectos/filtros sin credenciales; no permite secretos ni acciones sin sesión", async t => {
+  const { base } = await serve(t, {});
+  const bootstrap = await (await fetch(base + "/api/bootstrap")).json();
+  assert.deepEqual(bootstrap.config.projects, []);
+  const headers = { "Content-Type": "application/json", "X-Company-Brain-Token": bootstrap.token };
+  const post = (path, body, authorized = true) => fetch(base + path, { method: "POST", headers: authorized ? headers : { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const project = { id: "ventas", name: "Ventas", repository: "org/ventas", issueNumber: 42, delivery: "entrega-1", requirement: "informe" };
+  assert.equal((await post("/api/projects", project, false)).status, 403);
+  assert.equal((await post("/api/projects", { ...project, secret: "not-allowed" })).status, 400);
+  assert.equal((await post("/api/projects", project)).status, 200);
+  const added = await post("/api/filters", { projectId: project.id, kind: "domain", value: "@Empresa.com" });
+  assert.equal(added.status, 200);
+  const filter = await added.json();
+  assert.equal(filter.value, "empresa.com");
+  const current = await (await fetch(base + "/api/bootstrap?projectId=ventas")).json();
+  assert.equal(current.config.project.id, "ventas");
+  assert.equal(current.config.filters.length, 1);
+  assert.equal(current.workspace, null);
+  assert.equal(current.config.environmentReady, false);
+  assert.equal((await post("/api/inbox", { projectId: "ventas" })).status, 503);
+  assert.equal((await post("/api/filters/remove", { id: filter.id, projectId: "ventas" })).status, 200);
+  const config = await (await fetch(base + "/api/config?projectId=ventas", { headers })).json();
+  assert.deepEqual(config.filters, []);
+  assert.equal((await fetch(base + "/.private/company-brain.sqlite")).status, 404);
 });

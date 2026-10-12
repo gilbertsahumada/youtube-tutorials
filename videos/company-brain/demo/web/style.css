@@ -2518,3 +2518,43 @@ dialog::backdrop {
   -webkit-box-orient:vertical;
   overflow:hidden;
 }
+
+/* Project setup follows the same quiet, lavender workspace palette. */
+.project-switch { display:flex; align-items:center; gap:9px; margin-left:auto; font-size:11px; color:#66758b; min-width:0; }
+.project-switch select { max-width:240px; min-width:0; }
+.project-panels { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:20px; align-items:start; }
+.project-panels .settings-section { margin:0 0 24px; min-width:0; }
+.project-form label,.filter-form label,.assignment-form label { display:flex; flex-direction:column; gap:7px; min-width:0; font-size:12px; color:#53637d; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:17px 15px; }
+.project-form input,.filter-form input,.filter-form select,.assignment-form select,.project-switch select { width:100%; border:1px solid #dce2ed; border-radius:7px; padding:11px 12px; background:white; font:inherit; color:#34415b; }
+.project-form input::placeholder,.filter-form input::placeholder { color:#8390a5; font-size:11px; }
+.project-form input[readonly] { background:#f5f7fa; color:#68758c; }
+.project-form input:focus-visible,.filter-form input:focus-visible,.filter-form select:focus-visible,.assignment-form select:focus-visible,.project-switch select:focus-visible { outline:2px solid #5962cc; outline-offset:3px; }
+.filter-form { display:flex; flex-direction:column; gap:17px; }
+.filter-form .button { align-self:flex-start; margin-top:3px; }
+.form-hint { font-size:11px; color:#68758c; line-height:1.75; margin-top:17px; }
+.form-actions { display:flex; flex-wrap:wrap; align-items:center; gap:15px; margin-top:19px; }
+.empty-inline { padding:22px 0 8px; color:#68758c; }
+.empty-inline h3 { font-size:15px; font-weight:550; margin-bottom:10px; color:#53637d; }
+.empty-inline p { font-size:12px; line-height:1.8; }
+.saved-project { border:1px solid #e3e7ef; border-radius:10px; padding:21px; margin-top:17px; }
+.selected-project { border-color:#c4c8ef; background:#fbfbff; }
+.saved-project-heading { display:flex; gap:12px; align-items:flex-start; justify-content:space-between; }
+.saved-project-heading h3 { font-size:16px; font-weight:550; overflow-wrap:anywhere; }
+.saved-project-heading p { font-size:12px; color:#68758c; margin-top:8px; overflow-wrap:anywhere; }
+.saved-filters { display:flex; gap:10px; flex-wrap:wrap; margin-top:17px; font-size:12px; }
+.filter-chip { display:flex; align-items:center; gap:8px; background:white; border:1px solid #e3e7ef; padding:6px 8px 6px 12px; border-radius:8px; max-width:100%; flex-wrap:wrap; }
+.filter-chip>span { color:#68758c; font-size:10px; }
+.filter-chip strong { font-size:12px; font-weight:500; overflow-wrap:anywhere; }
+.ambiguous-list { margin-top:23px; padding-top:21px; border-top:1px solid #e6eaf2; }
+.ambiguous-list>h3 { font-size:15px; font-weight:550; }
+.ambiguous-list>p { font-size:12px; line-height:1.8; color:#68758c; margin:9px 0 17px; }
+.assignment-form { display:flex; gap:18px; align-items:end; padding:17px; border:1px solid #e3e7ef; border-radius:8px; margin-top:12px; flex-wrap:wrap; }
+.assignment-form>div { flex:1; min-width:180px; }
+.assignment-form strong { display:block; font-size:13px; font-weight:550; line-height:1.7; overflow-wrap:anywhere; }
+.assignment-form>div>span { display:block; font-size:11px; color:#68758c; margin-top:6px; overflow-wrap:anywhere; }
+.assignment-form label { flex:1; min-width:150px; }
+.baseline-saved+.button { margin-top:18px; }
+@media(max-width:1180px) { .project-panels { grid-template-columns:1fr; } .project-panels .settings-section { margin-bottom:0; } .project-list { margin-top:22px; } }
+@media(max-width:740px) { .sidebar nav { flex-wrap:wrap; justify-content:flex-start; } .sidebar nav .nav-item { flex:1 1 42%; } .workspace-toolbar { flex-wrap:wrap; } .project-switch { order:3; flex-basis:100%; } .project-switch select { flex:1; max-width:none; } }
+@media(max-width:470px) { .form-grid { grid-template-columns:1fr; } .saved-project { padding:16px; } .saved-project-heading { flex-wrap:wrap; } }

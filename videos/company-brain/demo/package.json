@@ -2,7 +2,7 @@
   "name": "company-brain-demo",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": { "node": ">=22.13" },
   "scripts": {
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",

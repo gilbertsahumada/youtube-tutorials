@@ -1,6 +1,6 @@
 # Conectar tus cuentas
 
-Desde `demo/`, copia `.env.example` a `.env` si todavía no existe. Completa las variables y ejecuta `npm start`. La UI lee el estado del servidor; no permite introducir ni guardar credenciales.
+Desde `demo/`, copia `.env.example` a `.env` si todavía no existe. Completa las conexiones y ejecuta `npm start` con **Node.js ≥22.13**. La UI permite guardar proyectos y filtros, y muestra el estado de las conexiones. Las credenciales se configuran exclusivamente en el entorno.
 
 ## Variables necesarias
 
@@ -9,19 +9,14 @@ Desde `demo/`, copia `.env.example` a `.env` si todavía no existe. Completa las
 | `GOOGLE_CLIENT_ID` | ID del cliente OAuth de escritorio de Google |
 | `GOOGLE_CLIENT_SECRET` | Secreto de ese cliente OAuth |
 | `GMAIL_LABEL` | Nombre exacto de una etiqueta existente en el Gmail receptor |
-| `ALLOWED_SENDER` | Dirección del remitente cuyos correos se analizarán |
 | `GMAIL_AFTER` | Fecha ISO anterior al primer correo, por ejemplo `2026-10-01T00:00:00Z` |
-| `GITHUB_REPO` | Repositorio con formato `owner/repo` |
-| `GITHUB_ISSUE_NUMBER` | Número de un issue abierto en ese repositorio |
 | `MODEL_BASE_URL` | URL HTTPS de una API compatible con Chat Completions, sin `/chat/completions` |
 | `MODEL_ID` | Identificador de un modelo disponible en tu cuenta |
 | `MODEL_API_KEY` | Clave de API del proveedor indicado en la URL |
 
-Puedes declarar estas variables en el entorno del proceso en lugar de usar `.env`. Tras cambiar cualquier valor, reinicia el servidor. Una configuración incompleta o inválida muestra un error; nunca carga datos de ejemplo.
+Puedes declarar estas variables en el entorno del proceso en lugar de usar `.env`. Tras cambiarlas, reinicia el servidor. Una configuración incompleta o inválida muestra un error; nunca carga datos de ejemplo. Puedes crear proyectos y guardar filtros mientras completas las conexiones.
 
-`GMAIL_INITIAL_MESSAGE_ID` es opcional en la UI: el correo se selecciona en **Conexiones**. Si lo declaras, debe coincidir con el ID de Gmail API del correo seleccionado. Los [comandos por terminal](scripts.md) sí necesitan ese valor.
-
-## Gmail
+## Gmail y GitHub
 
 1. En [Google Cloud](https://console.cloud.google.com/), activa **Gmail API**.
 2. En Google Auth Platform, configura audiencia **External**, modo **Testing**, y añade la cuenta receptora como usuario de prueba.
@@ -30,45 +25,57 @@ Puedes declarar estas variables en el entorno del proceso en lugar de usar `.env
 5. Crea la etiqueta indicada en `GMAIL_LABEL` y aplícala a los correos que quieras procesar.
 6. Arranca el servidor. En **Conexiones → Conectar Gmail → Abrir autorización de Google**, autoriza la cuenta receptora y vuelve a la demo.
 
-El token OAuth se guarda localmente en `.private/gmail-token.json`. El programa filtra los mensajes por etiqueta, remitente y fecha; lee texto plano sin adjuntos.
+El token OAuth queda en `.private/gmail-token.json`. Solo se lee texto plano, sin adjuntos, dentro de la etiqueta y fecha configuradas y con los filtros de los proyectos.
 
-## GitHub y contexto del proyecto
-
-Inicia sesión una vez con [GitHub CLI](https://cli.github.com/):
+Inicia sesión con [GitHub CLI](https://cli.github.com/):
 
 ```bash
 gh auth login
 ```
 
-Configura el repositorio y el número del issue en `.env`. El issue debe estar abierto y contener una única línea de formato actual. Las referencias deben coincidir con `demo/config/project.json`; con su configuración inicial, las líneas son:
+En **Conexiones → Comprobar acceso**, verifica esa sesión. El proveedor de IA recibe los correos y la tarea para contrastar sus fuentes.
+
+## Proyectos y filtros
+
+En **Proyectos y filtros**, guarda el nombre, repositorio (`owner/repo`), número del issue y referencias del proyecto, entrega y requisito. Usa letras minúsculas, números y guiones para esas referencias. El issue debe estar abierto y contener las referencias del formulario y una única línea de formato actual, por ejemplo:
 
 ```text
-Proyecto: portal-cliente
+Proyecto: mi-proyecto
 Entrega: entrega-1
 Requisito: exportar-reportes
 Formato actual: CSV
 ```
 
-Estos valores definen el alcance del tutorial. Puedes ajustar el proyecto antes de la captura. Los correos reales deben identificar el mismo proyecto, entrega y requisito, y acordar o solicitar uno de los formatos admitidos: CSV o PDF.
+Los correos también deben identificar ese proyecto, entrega y requisito, y acordar o solicitar CSV o PDF. Cada proyecto tiene su propio issue y acuerdo inicial. Una vez capturado, su destino y referencias se conservan; para otro alcance, crea un proyecto.
 
-En **Conexiones → Comprobar acceso**, verifica la sesión de GitHub. El proveedor de IA recibe los correos y la tarea para contrastar sus fuentes.
+Añade los participantes con un **correo exacto** o un **dominio completo**, y selecciona a qué proyecto pertenece cada filtro:
+
+- Los correos exactos tienen prioridad sobre los dominios en todos los proyectos.
+- Un dominio coincide completo: `empresa.com` no incluye `sub.empresa.com` ni `empresa.com.otro.com`. Añade los subdominios por separado.
+- Si varios proyectos coinciden, **Conexiones → Cargar correos** muestra **Correos por asignar**. Elige su destino antes de capturarlos o analizarlos.
+
+Puedes añadir o eliminar filtros y cambiar el proyecto activo sin reiniciar.
 
 ## Capturar, analizar y revisar
 
-1. Pulsa **Cargar correos** y selecciona el acuerdo inicial. El modelo comprueba que el correo y el issue coincidan en el formato.
-2. Cuando llegue una nueva solicitud del remitente permitido con la etiqueta configurada, pulsa **Buscar solicitudes**.
-3. En **Revisar propuesta**, comprueba los extractos y el comentario. **Publicar comentario en GitHub** publica solo ese comentario y evita duplicarlo.
+1. Selecciona el proyecto. En **Conexiones**, pulsa **Cargar correos** y captura el acuerdo inicial. El modelo valida que correo e issue coincidan en el formato.
+2. Cuando llegue una solicitud de un participante, con la etiqueta configurada, pulsa **Buscar solicitudes**.
+3. En **Revisar propuesta**, comprueba los extractos y el comentario. **Publicar comentario en GitHub** escribe solo ese comentario y evita duplicarlo.
 
-**Observar Gmail** prepara propuestas cada 30 segundos mientras la página está abierta. Cada publicación requiere pulsar el botón de revisión. Para otro proyecto, issue o acuerdo inicial, usa otra copia de la demo: el acuerdo capturado se conserva.
+**Observar Gmail** prepara propuestas cada 30 segundos mientras la página está abierta. Cambiar el proyecto o navegar a otra vista detiene la observación. Cada publicación requiere su botón de revisión.
+
+SQLite guarda proyectos, filtros, asignaciones, acuerdos, propuestas y publicaciones en `.private/company-brain.sqlite`. Al reiniciar o recargar la página, las propuestas pendientes siguen disponibles. Para conservar los datos, respalda `.private/`; las credenciales de `.env` y la sesión de `gh` se mantienen por separado. La base y los diagnósticos de `output/<proyecto>/` no se sirven al navegador ni se incluyen en Git.
+
+Si ya utilizabas la CLI y tienes `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SENDER`, el primer inicio importa ese proyecto de `config/project.json` y sus archivos privados de acuerdo y estado, si existen. La importación es única y deja los JSON originales intactos. Después, los proyectos de la UI se gestionan en SQLite. [Ver compatibilidad con los scripts](scripts.md).
 
 ## Si algo no aparece
 
 | Problema | Qué revisar |
 |---|---|
-| Variables faltantes o inválidas | Completa los campos indicados en el entorno o `.env` y reinicia el servidor. |
-| Sin correos | Cuenta receptora autorizada, etiqueta aplicada, remitente exacto y fecha anterior al mensaje. |
+| Variables faltantes o inválidas | Completa los campos indicados en el entorno o `.env` y reinicia. |
+| Sin correos | Cuenta receptora, etiqueta aplicada, filtros del proyecto, fecha anterior al mensaje y correos pendientes de asignar. |
 | Google bloquea el acceso | Usuario de prueba, Gmail API activa y cliente OAuth de escritorio. |
 | GitHub falla | Sesión de `gh`, acceso al repositorio y número de un issue abierto. |
-| Evidencia rechazada | El extracto debe coincidir literalmente con el correo, mencionar el formato y tener al menos 20 caracteres. Consulta `output/initial-context.json` para la captura. |
+| Evidencia rechazada | El extracto debe coincidir literalmente con el correo, mencionar el formato y tener al menos 20 caracteres. Consulta `output/<proyecto>/initial-context.json`. |
 | El issue cambió | Busca solicitudes de nuevo antes de publicar. |
-| Otra instancia en curso | Detén el otro servidor o script; ambos comparten un lock local. |
+| Otra instancia en curso | Detén el otro servidor o script; ambos usan un lock local. |
