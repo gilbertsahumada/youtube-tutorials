@@ -141,19 +141,27 @@ async function real() {
     const issue = readIssue();
     const context = { project, initialEmail: email, issue, requestEmail: null };
     const analysis = await classify(context);
-    const baseline = createBaseline({
-      repo,
-      project,
-      email,
-      issue,
-      analysis,
-      sender: process.env.ALLOWED_SENDER,
-    });
-    await saveJson(privatePath("baseline.json"), baseline);
+    // Preserve the model result even when deterministic validation rejects it.
     await saveJson(resolve(ROOT, "output/initial-context.json"), {
       context,
       analysis,
     });
+    let baseline;
+    try {
+      baseline = createBaseline({
+        repo,
+        project,
+        email,
+        issue,
+        analysis,
+        sender: process.env.ALLOWED_SENDER,
+      });
+    } catch (error) {
+      throw Error(
+        `${error.message}. Revisa context.initialEmail.text y analysis.initialEvidence en output/initial-context.json. No se guardó la captura inicial ni se escribió en GitHub.`,
+      );
+    }
+    await saveJson(privatePath("baseline.json"), baseline);
     console.log(
       `Contexto inicial capturado: ${baseline.initialFormat}, issue #${number}. No se escribió en GitHub.`,
     );

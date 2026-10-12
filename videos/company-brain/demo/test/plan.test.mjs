@@ -146,6 +146,20 @@ for (const [name, mutate] of [
     mutate(data);
     assert.throws(() => buildPlan(data));
   });
+for (const [quote, reason] of [
+  [null, /cadena de texto/],
+  ["PDF", /3 caracteres; debe tener al menos 20/],
+  [
+    "Una solicitud PDF inventada que no está en el correo",
+    /no coincide literalmente/,
+  ],
+  ["Por favor planteen el cambio y su impacto", /mencionar el formato PDF/],
+])
+  test("diagnostica evidencia rechazada: " + reason, () => {
+    const data = input();
+    data.analysis.requestEvidence = quote;
+    assert.throws(() => buildPlan(data), reason);
+  });
 test("correos anteriores e inicial no se reproponen", () => {
   const data = input();
   data.email.date = initialEmail.date;
@@ -172,6 +186,8 @@ test("el prompt distingue solicitud de aprobación y no tiene herramientas", () 
     /no hace falta que sea un acuerdo aprobado/,
   );
   assert.match(messages[0].content, /No tienes tools/);
+  assert.match(messages[0].content, /al menos 20 caracteres/);
+  assert.match(messages[0].content, /no cambies espacios/);
 });
 test("adaptador real envía los dos correos sin secretos en el body; errores no usan fixture", async () => {
   const env = {
