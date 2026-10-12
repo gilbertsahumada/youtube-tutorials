@@ -26,5 +26,5 @@ jobs:
           node-version: 22
       - run: npm test
         working-directory: videos/company-brain/demo
-      - run: npm run preview
+      - run: npm run test:fixture
         working-directory: videos/company-brain/demo

@@ -32,29 +32,39 @@ async function setup(t) {
   return { root, studio, env, calls, json, initial, originalIssue, changeIssue: () => { issue = { ...issue, title: "Tarea modificada" }; }, badAnalysis: () => { badAnalysis = true; } };
 }
 
-test("UI: ejemplo usa validaciones reales y no consulta ni publica aunque PUBLISH=true", async t => {
-  const { studio, calls, root } = await setup(t);
-  assert.equal((await studio.fixture()).plan, null);
-  const result = await studio.run("fixture");
-  assert.equal(result.workspace.plan.toFormat, "PDF");
-  assert.match(result.workspace.plan.body, /Pendiente de revisión humana/);
+test("UI: sin entorno completo devuelve un error y no lee datos de ejemplo", async t => {
+  const { root, env, calls } = await setup(t);
+  delete env.MODEL_API_KEY;
+  await rm(join(root, "fixtures"), { recursive: true });
+  const deny = () => { throw Error("La integración no debe ejecutarse"); };
+  const studio = createStudio({ root, env, adapters: { emails: deny, issue: deny, analyze: deny, publish: deny, account: deny } });
+  const config = await studio.config();
+  assert.equal(config.ready, false);
+  assert.deepEqual(config.missing, ["MODEL_API_KEY"]);
+  assert.equal(studio.fixture, undefined);
+  assert.equal(studio.saveConfig, undefined);
+  await assert.rejects(studio.run(), /Faltan variables de entorno: MODEL_API_KEY/);
+  await assert.rejects(studio.workspace(), /Faltan variables/);
+  await assert.rejects(studio.run("fixture"), /solo admite datos reales/);
+  await assert.rejects(studio.inbox(), /Faltan variables/);
+  await assert.rejects(studio.capture("initial-csv"), /Faltan variables/);
+  await assert.rejects(studio.publish("key"), /Faltan variables/);
   assert.deepEqual(calls, { emails: 0, analyze: 0, publish: 0 });
   await assert.rejects(access(join(root, ".private/baseline.json")));
-  await assert.rejects(studio.publish(result.workspace.plan.key), /antes de publicar/);
 });
 
 test("UI real: captura → analiza → revisa → publica una vez; nunca publica al analizar", async t => {
   const { studio, calls, json, initial, originalIssue } = await setup(t);
   const saved = await studio.capture(initial.id);
   assert.equal(saved.initialFormat, "CSV");
-  assert.equal((await studio.config()).values.GMAIL_INITIAL_MESSAGE_ID, initial.id);
+  assert.equal((await studio.config()).baseline.initialEmail.id, initial.id);
   assert.equal(calls.publish, 0);
-  const result = await studio.run("live");
+  const result = await studio.run();
   assert.equal(result.proposals.length, 1);
   assert.equal(result.workspace.plan.action, "comment");
   assert.equal(calls.analyze, 2);
   assert.equal(calls.publish, 0);
-  await studio.run("live");
+  await studio.run();
   assert.equal(calls.analyze, 2, "la observación no reanaliza una solicitud pendiente");
   const comment = await studio.publish(result.workspace.plan.key);
   assert.equal(comment.id, 11);
@@ -63,7 +73,7 @@ test("UI real: captura → analiza → revisa → publica una vez; nunca publica
   assert.equal(calls.publish, 1);
   assert.equal((await json(".private/state.json")).processed["request-pdf"].id, 11);
   assert.deepEqual((await json(".private/baseline.json")).initialIssue, originalIssue);
-  const after = await studio.run("live");
+  const after = await studio.run();
   assert.equal(after.proposals.length, 0);
   assert.equal(after.workspace.published.id, 11);
 });
@@ -80,38 +90,52 @@ test("rechaza evidencia inválida y guarda el diagnóstico sin capturar ni publi
 test("bloquea un comentario si la tarea cambió y permite volver a analizar el contexto", async t => {
   const { studio, initial, calls, changeIssue, root } = await setup(t);
   await studio.capture(initial.id);
-  const result = await studio.run("live");
+  const result = await studio.run();
   changeIssue();
   await assert.rejects(studio.publish(result.workspace.plan.key), /issue cambió/);
   await assert.rejects(access(join(root, ".private/state.json")));
-  const updated = await studio.run("live");
+  const updated = await studio.run();
   assert.equal(updated.workspace.issue.title, "Tarea modificada");
   assert.equal(calls.analyze, 3);
 });
 
-test("configuración: conserva secretos, bloquea inyección y no cambia un destino capturado", async t => {
+test("entorno de solo lectura: no expone secretos ni escribe .env al capturar", async t => {
   const { studio, root, initial, env } = await setup(t);
-  await writeFile(join(root, ".env"), "# conservar\nGOOGLE_CLIENT_SECRET=google-secret-test\nMODEL_API_KEY=model-secret-test\nPUBLISH=false\n");
-  const config = await studio.saveConfig({ MODEL_ID: "updated-model", MODEL_API_KEY: "", GOOGLE_CLIENT_SECRET: "" });
-  const content = await readFile(join(root, ".env"), "utf8");
-  assert.match(content, /# conservar/);
-  assert.match(content, /MODEL_API_KEY=model-secret-test/);
-  assert.equal(env.MODEL_ID, "updated-model");
-  assert.equal(config.secrets.MODEL_API_KEY, true);
+  const originalEnv = { ...env };
+  const content = "# configurado manualmente\nMODEL_API_KEY=model-secret-test\n";
+  await writeFile(join(root, ".env"), content);
+  const config = await studio.config();
+  assert.equal(config.ready, true);
+  assert.equal(config.values, undefined);
+  assert.equal(config.secrets, undefined);
   assert.ok(!JSON.stringify(config).includes("model-secret-test"));
-  await assert.rejects(studio.saveConfig({ MODEL_ID: "x\nPUBLISH=true" }), /inválido/);
-  await assert.rejects(studio.saveConfig({ PUBLISH: "true" }), /inválido/);
+  assert.ok(!JSON.stringify(config).includes("google-secret-test"));
+  assert.equal(studio.errorMessage(Error("Bearer leaked model-secret-test google-secret-test")), "[credencial] [credencial] [credencial]");
   await assert.rejects(studio.capture("x'\nPUBLISH=true"), /ID de correo inválido/);
   await studio.capture(initial.id);
-  await assert.rejects(studio.saveConfig({ GITHUB_REPO: "other/repo" }), /otro destino|cambiar el destino/);
-  assert.equal(env.GITHUB_REPO, "demo/sandbox");
+  assert.equal(await readFile(join(root, ".env"), "utf8"), content);
+  assert.deepEqual(env, originalEnv);
+  const workspace = await studio.workspace();
+  assert.equal(workspace.initialEmail.id, initial.id);
+  assert.equal(workspace.requestEmail, null);
+  assert.equal(workspace.plan, null);
+});
+
+test("una captura guarda el destino y respeta el ID inicial declarado en el entorno", async t => {
+  const { studio, initial, env } = await setup(t);
+  env.GMAIL_INITIAL_MESSAGE_ID = "other-message";
+  await assert.rejects(studio.capture(initial.id), /no coincide con GMAIL_INITIAL_MESSAGE_ID/);
+  env.GMAIL_INITIAL_MESSAGE_ID = initial.id;
+  await studio.capture(initial.id);
+  env.GITHUB_REPO = "other/repo";
+  await assert.rejects(studio.workspace(), /otro repositorio o issue/);
 });
 
 test("el servidor y la CLI comparten el lock de las operaciones reales", async t => {
   const { studio, root, initial, calls } = await setup(t);
   await studio.capture(initial.id);
   await writeFile(join(root, ".private/watch.lock"), "");
-  await assert.rejects(studio.run("live"), /Otra instancia/);
+  await assert.rejects(studio.run(), /Otra instancia/);
   assert.equal(calls.analyze, 1);
   await access(join(root, ".private/watch.lock"));
 });

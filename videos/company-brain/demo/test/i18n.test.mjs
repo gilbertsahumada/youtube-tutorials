@@ -7,6 +7,9 @@ test('idioma: mensajes dinámicos conservan formatos, cuentas y campos de config
   assert.equal(translate('Proponer CSV en lugar de PDF', 'en'), 'Propose CSV instead of PDF');
   assert.equal(translate('GitHub conectado como user-name.', 'en'), 'GitHub connected as user-name.');
   assert.equal(translate('Completa la configuración: MODEL_ID, MODEL_API_KEY.', 'en'), 'Complete the settings: MODEL_ID, MODEL_API_KEY.');
+  assert.equal(translate('Faltan variables de entorno: MODEL_ID, MODEL_API_KEY.', 'en'), 'Missing environment variables: MODEL_ID, MODEL_API_KEY.');
+  assert.equal(translate('Faltan variables de entorno.', 'en'), 'Environment variables are missing.');
+  assert.equal(translate('La URL, el modelo y la clave se leen exclusivamente en el servidor.', 'en'), 'The URL, model and key are read exclusively on the server.');
   assert.equal(translate('Issue #42. El cambio sigue pendiente de decisión humana.', 'en'), 'Issue #42. The change still awaits a human decision.');
 });
 

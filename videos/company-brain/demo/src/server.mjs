@@ -29,11 +29,17 @@ export function createDemoServer({ studio = createStudio(), publicRoot = resolve
         const content = await readFile(resolve(publicRoot, asset[0]));
         res.writeHead(200, { "Content-Type": asset[1] + "; charset=utf-8" }); res.end(content); return;
       }
-      if (req.method === "GET" && url.pathname === "/api/bootstrap") return send(200, { token, workspace: await studio.fixture(), config: await studio.config() });
+      if (req.method === "GET" && url.pathname === "/api/bootstrap") {
+        const config = await studio.config();
+        if (!config.ready) return send(503, { token, workspace: null, config, error: config.error });
+        try { return send(200, { token, workspace: await studio.workspace(), config }); }
+        catch (error) { return send(400, { token, workspace: null, config, error: studio.errorMessage(error) }); }
+      }
       const supplied = Buffer.from(String(req.headers["x-company-brain-token"] || ""));
       const expected = Buffer.from(token);
       if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return send(403, { error: "Recarga la página para recuperar la sesión local." });
       if (req.method === "GET" && url.pathname === "/api/config") return send(200, await studio.config());
+      if (url.pathname === "/api/config") return send(405, { error: "La configuración se carga desde el entorno. Edita .env y reinicia el servidor." });
       if (req.method !== "POST" || req.headers["content-type"]?.split(";")[0] !== "application/json") return send(405, { error: "Solicitud no admitida." });
       let raw = "";
       req.setEncoding("utf8");
@@ -42,7 +48,6 @@ export function createDemoServer({ studio = createStudio(), publicRoot = resolve
       try { body = JSON.parse(raw || "{}"); } catch { return send(400, { error: "Solicitud inválida." }); }
       if (!body || typeof body !== "object" || Array.isArray(body)) return send(400, { error: "Solicitud inválida." });
       const routes = {
-        "/api/config": () => studio.saveConfig(body),
         "/api/inbox": () => studio.inbox(),
         "/api/baseline": () => studio.capture(body.id),
         "/api/run": () => studio.run(body.mode),
@@ -54,7 +59,7 @@ export function createDemoServer({ studio = createStudio(), publicRoot = resolve
       send(200, await routes[url.pathname]());
     } catch (error) {
       // Integration errors name the failing operation; credentials never enter responses.
-      send(400, { error: error.message.replace(/(?:Bearer\s+)[^\s]+/gi, "[credencial]") });
+      send(error.status || 400, { error: studio.errorMessage(error) });
     }
   });
   server.on("close", () => studio.close());
@@ -69,6 +74,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     console.error(error.code === "EADDRINUSE" ? `El puerto ${port} está ocupado. Usa PORT=4174 npm start.` : error.message);
     process.exitCode = 1;
   });
-  server.listen(port, "127.0.0.1", () => console.log(`Company Brain · http://127.0.0.1:${server.address().port}\nEjemplo listo. Conecta tus cuentas desde Configuración.`));
+  server.listen(port, "127.0.0.1", () => console.log(`Company Brain · http://127.0.0.1:${server.address().port}\nConfiguración desde el entorno. Solo datos reales.`));
   for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { server.closeAllConnections(); server.close(); });
 }

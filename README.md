@@ -58,7 +58,7 @@ Demos con recorrido ejecutable, y qué hace cada una:
 | [`harness-engineering`](videos/harness-engineering) | el mismo mensaje dos veces, con y sin harness | un evaluador independiente puntúa las dos: sin harness el marcador no se mueve, con harness `6/6` |
 | [`loop-engineering`](videos/loop-engineering) | `node loop-fix.mjs` | un loop que arregla una feature vuelta a vuelta y se detiene solo |
 | [`graph-engineering`](videos/graph-engineering) | `node review-graph.mjs` | lentes en paralelo, verificación adversarial y ancla externa |
-| [`company-brain`](videos/company-brain) | `npm start` desde `demo/` y el recorrido en la interfaz | conecta correos y una tarea en una demo visual; explora el ejemplo sin cuentas o revisa propuestas reales antes de publicar |
+| [`company-brain`](videos/company-brain) | `npm start` desde `demo/` y el recorrido en la interfaz | conecta Gmail y GitHub con credenciales en el entorno; revisa propuestas basadas en tus datos antes de publicar |
 
 Los números que verás publicados salen de ejecuciones registradas y están marcados como tales. La generación es probabilística: **tu corrida dará algo distinto**, y esa es justamente la razón de que cada demo traiga su propio evaluador.
 

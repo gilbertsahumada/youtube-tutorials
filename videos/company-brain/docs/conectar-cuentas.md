@@ -1,38 +1,46 @@
 # Conectar tus cuentas
 
-Arranca la demo con `npm start` desde `demo/` y abre **Mis cuentas → Configuración**. La interfaz guarda los valores en `.env`; no tienes que editarlo a mano.
+Desde `demo/`, copia `.env.example` a `.env` si todavía no existe. Completa las variables y ejecuta `npm start`. La UI lee el estado del servidor; no permite introducir ni guardar credenciales.
 
-Usa una cuenta Gmail de prueba, otro correo tuyo como remitente y un repositorio privado sandbox. En modo real, el modelo recibe el contenido de los correos y la tarea.
+## Variables necesarias
+
+| Variable | Qué debes configurar |
+|---|---|
+| `GOOGLE_CLIENT_ID` | ID del cliente OAuth de escritorio de Google |
+| `GOOGLE_CLIENT_SECRET` | Secreto de ese cliente OAuth |
+| `GMAIL_LABEL` | Nombre exacto de una etiqueta existente en el Gmail receptor |
+| `ALLOWED_SENDER` | Dirección del remitente cuyos correos se analizarán |
+| `GMAIL_AFTER` | Fecha ISO anterior al primer correo, por ejemplo `2026-10-01T00:00:00Z` |
+| `GITHUB_REPO` | Repositorio con formato `owner/repo` |
+| `GITHUB_ISSUE_NUMBER` | Número de un issue abierto en ese repositorio |
+| `MODEL_BASE_URL` | URL HTTPS de una API compatible con Chat Completions, sin `/chat/completions` |
+| `MODEL_ID` | Identificador de un modelo disponible en tu cuenta |
+| `MODEL_API_KEY` | Clave de API del proveedor indicado en la URL |
+
+Puedes declarar estas variables en el entorno del proceso en lugar de usar `.env`. Tras cambiar cualquier valor, reinicia el servidor. Una configuración incompleta o inválida muestra un error; nunca carga datos de ejemplo.
+
+`GMAIL_INITIAL_MESSAGE_ID` es opcional en la UI: el correo se selecciona en **Conexiones**. Si lo declaras, debe coincidir con el ID de Gmail API del correo seleccionado. Los [comandos por terminal](scripts.md) sí necesitan ese valor.
 
 ## Gmail
 
 1. En [Google Cloud](https://console.cloud.google.com/), activa **Gmail API**.
-2. En Google Auth Platform, configura una audiencia **External**, modo **Testing**, y añade la **cuenta receptora** como usuario de prueba.
+2. En Google Auth Platform, configura audiencia **External**, modo **Testing**, y añade la cuenta receptora como usuario de prueba.
 3. Incluye `https://www.googleapis.com/auth/gmail.readonly` en los permisos.
-4. Crea un cliente OAuth de tipo **Aplicación de escritorio**.
-5. Copia su **Client ID** y **Client secret** a la interfaz. Son credenciales de Google, no tu contraseña ni la clave del modelo.
-6. En el Gmail receptor crea la etiqueta `company-brain-demo`. Aplícala a cada correo, manualmente o con un filtro por remitente y asunto.
-7. En **Remitente permitido**, escribe la dirección del otro correo desde el que enviarás los mensajes.
-8. Conserva una fecha de lectura anterior al primer correo. La fecha inicial de la interfaz cubre las últimas 24 horas; si tu correo es más antiguo, elige un corte anterior.
-9. Pulsa **Guardar configuración → Conectar Gmail → Abrir autorización de Google**. Selecciona la cuenta receptora y vuelve a la demo.
+4. Crea un cliente OAuth de tipo **Aplicación de escritorio** y copia su Client ID y Client secret a `.env`.
+5. Crea la etiqueta indicada en `GMAIL_LABEL` y aplícala a los correos que quieras procesar.
+6. Arranca el servidor. En **Conexiones → Conectar Gmail → Abrir autorización de Google**, autoriza la cuenta receptora y vuelve a la demo.
 
-El permiso OAuth permite leer el buzón; etiqueta, remitente y fecha son filtros del programa. No se solicitan permisos de envío o modificación. El token se guarda en `.private/gmail-token.json`.
+El token OAuth se guarda localmente en `.private/gmail-token.json`. El programa filtra los mensajes por etiqueta, remitente y fecha; lee texto plano sin adjuntos.
 
-## GitHub
+## GitHub y contexto del proyecto
 
-La demo utiliza una sesión de [GitHub CLI](https://cli.github.com/). Si aún no tienes una, inicia sesión una vez:
+Inicia sesión una vez con [GitHub CLI](https://cli.github.com/):
 
 ```bash
 gh auth login
 ```
 
-1. Crea un repositorio privado de prueba desde GitHub.
-2. Introduce su nombre `tu-usuario/company-brain-sandbox` en Configuración y guarda.
-3. Pulsa **Preparar el issue → Crear issue en GitHub**. El enlace incluye el título y la descripción del caso.
-4. Guarda en la interfaz el número del issue que acabas de crear.
-5. Pulsa **Comprobar acceso** para comprobar la sesión.
-
-La tarea debe estar abierta, pedir CSV y conservar estas líneas en su descripción:
+Configura el repositorio y el número del issue en `.env`. El issue debe estar abierto y contener una única línea de formato actual. Las referencias deben coincidir con `demo/config/project.json`; con su configuración inicial, las líneas son:
 
 ```text
 Proyecto: portal-cliente
@@ -41,41 +49,26 @@ Requisito: exportar-reportes
 Formato actual: CSV
 ```
 
-## Modelo de IA
+Estos valores definen el alcance del tutorial. Puedes ajustar el proyecto antes de la captura. Los correos reales deben identificar el mismo proyecto, entrega y requisito, y acordar o solicitar uno de los formatos admitidos: CSV o PDF.
 
-Introduce los tres valores de un proveedor compatible con **Chat Completions**:
-
-| Campo | Valor |
-|---|---|
-| URL base | URL HTTPS de la API, sin `/chat/completions` |
-| ID del modelo | Identificador disponible en tu cuenta del proveedor |
-| API key | Clave válida para esa URL base |
-
-La demo añade `/chat/completions` y pide una respuesta JSON. Una suscripción a un chat web no sustituye la clave de API.
-
-Pulsa **Guardar configuración**. Las claves se guardan localmente; los campos vacíos conservan las claves existentes.
+En **Conexiones → Comprobar acceso**, verifica la sesión de GitHub. El proveedor de IA recibe los correos y la tarea para contrastar sus fuentes.
 
 ## Capturar, analizar y revisar
 
-1. Pulsa **Textos del ejemplo**, copia el primer correo y envíalo desde el remitente permitido al Gmail receptor. Aplica la etiqueta.
-2. En **Captura el acuerdo inicial**, pulsa **Cargar correos** y selecciona ese mensaje. El modelo comprueba que correo e issue coincidan en CSV.
-3. Envía el segundo correo con la solicitud de PDF y aplícale la misma etiqueta.
-4. Pulsa **Buscar solicitudes** para ver el contraste y la propuesta.
-5. En **Revisar propuesta**, comprueba los extractos y el comentario completo. **Publicar comentario en GitHub** escribe solo ese comentario y evita repetirlo.
+1. Pulsa **Cargar correos** y selecciona el acuerdo inicial. El modelo comprueba que el correo y el issue coincidan en el formato.
+2. Cuando llegue una nueva solicitud del remitente permitido con la etiqueta configurada, pulsa **Buscar solicitudes**.
+3. En **Revisar propuesta**, comprueba los extractos y el comentario. **Publicar comentario en GitHub** publica solo ese comentario y evita duplicarlo.
 
-Una publicación no cambia la tarea ni aprueba el nuevo alcance. La decisión posterior se toma manualmente en GitHub. El ejemplo usa un único proyecto y admite cambios entre CSV y PDF.
+**Observar Gmail** prepara propuestas cada 30 segundos mientras la página está abierta. Cada publicación requiere pulsar el botón de revisión. Para otro proyecto, issue o acuerdo inicial, usa otra copia de la demo: el acuerdo capturado se conserva.
 
 ## Si algo no aparece
 
 | Problema | Qué revisar |
 |---|---|
-| Sin correos | Cuenta receptora autorizada, etiqueta aplicada, remitente exacto y fecha anterior al mensaje. Se leen mensajes con texto plano, sin adjuntos. |
-| Google bloquea el acceso | Cuenta receptora añadida como usuario de prueba, Gmail API activa y cliente OAuth de escritorio. |
-| GitHub falla | Sesión de `gh`, acceso al sandbox y número de un issue abierto. |
-| Evidencia rechazada | El extracto debe coincidir literalmente con el correo, mencionar el formato y tener al menos 20 caracteres. El diagnóstico de la captura está en `output/initial-context.json`. |
-| El issue cambió | Busca solicitudes de nuevo; el comentario se valida contra el estado actual antes de publicarse. |
-| Otra instancia en curso | Detén el otro servidor o script. El flujo comparte un lock local; no borres un lock sin comprobar el proceso. |
-
-La dirección del remitente no verifica criptográficamente su identidad. La demo prepara propuestas, no sustituye un sistema empresarial de permisos o aprobación.
-
-Para otro proyecto, issue o correo inicial, usa otra copia de la demo: el acuerdo capturado se conserva. **Observar Gmail** funciona mientras esta página está abierta; prepara propuestas sin publicarlas automáticamente.
+| Variables faltantes o inválidas | Completa los campos indicados en el entorno o `.env` y reinicia el servidor. |
+| Sin correos | Cuenta receptora autorizada, etiqueta aplicada, remitente exacto y fecha anterior al mensaje. |
+| Google bloquea el acceso | Usuario de prueba, Gmail API activa y cliente OAuth de escritorio. |
+| GitHub falla | Sesión de `gh`, acceso al repositorio y número de un issue abierto. |
+| Evidencia rechazada | El extracto debe coincidir literalmente con el correo, mencionar el formato y tener al menos 20 caracteres. Consulta `output/initial-context.json` para la captura. |
+| El issue cambió | Busca solicitudes de nuevo antes de publicar. |
+| Otra instancia en curso | Detén el otro servidor o script; ambos comparten un lock local. |
