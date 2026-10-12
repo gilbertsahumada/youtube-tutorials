@@ -211,20 +211,40 @@ Usa esa salida **solo si el correo llegó en las últimas 24 horas**; para uno m
 
 ## 4. Enviar el correo inicial y obtener su ID
 
-**Objetivo:** comprobar que el programa puede leer el mensaje correcto, antes de involucrar al modelo.
+**Objetivo:** establecer por correo el acuerdo inicial de **CSV**, coherente con el issue, y comprobar que el programa puede leerlo. La petición de PDF se enviará después de capturar este contexto.
 
-Desde la **cuenta remitente configurada en `ALLOWED_SENDER`**, envía a la **cuenta receptora que autorizaste**:
+### 4.1. Redactar y enviar este correo
 
-**Asunto:** `company-brain-demo — acuerdo inicial`
+Abre la **cuenta remitente**, pulsa **Redactar** y prepara un correo nuevo con estos campos:
+
+| Campo | Qué poner |
+|---|---|
+| **De** | La dirección real que configuraste en `ALLOWED_SENDER` |
+| **Para** | La dirección real de la **cuenta Gmail receptora que autorizaste** con `gmail:login` |
+
+**Asunto — copia este texto:**
+
+```text
+company-brain-demo — acuerdo inicial
+```
+
+**Cuerpo — copia este texto:**
 
 ```text
 Para el proyecto portal-cliente, entrega-1, acordamos CSV para exportar-reportes.
+
 La primera entrega debe permitir descargar los reportes en CSV.
 ```
 
-Abre el mensaje en la cuenta receptora y comprueba que tiene la etiqueta `company-brain-demo`. Si no creaste el filtro, aplícala ahora manualmente.
+Conserva `portal-cliente`, `entrega-1` y `exportar-reportes` exactamente así: identifican el proyecto, la entrega y el requisito que el código relaciona con el issue. No necesitas adjuntos ni mencionar PDF en este primer mensaje.
 
-Lista los mensajes que cumplen los filtros:
+Pulsa **Enviar**. Este envío lo haces tú desde tu correo: el script solo tiene permisos de lectura y no envía mensajes. **No cambies `GMAIL_AFTER`** después de enviar: debe seguir siendo anterior a la recepción de este correo.
+
+### 4.2. Comprobar la recepción y listar el mensaje
+
+Abre el mensaje en la **cuenta receptora** y comprueba que tiene el asunto anterior, el cuerpo que copiaste y la etiqueta `company-brain-demo`. Si no creaste el filtro, aplícala ahora manualmente.
+
+Desde `videos/company-brain/demo/`, lista los mensajes que cumplen los filtros:
 
 ```bash
 npm run inbox
@@ -233,6 +253,8 @@ npm run inbox
 **Este comando no llama al modelo ni a GitHub.** Usa las cinco variables de Gmail del paso 3 y el token guardado al autorizar.
 
 Debe aparecer un objeto con `id`, `from`, `subject` y `date` del mensaje inicial. Si ves `[]`, no continúes: comprueba que autorizaste la cuenta receptora correcta, que el mensaje tiene la etiqueta, que `from` coincide con `ALLOWED_SENDER` y que llegó después de `GMAIL_AFTER`.
+
+### 4.3. Guardar el ID del correo inicial
 
 Copia el valor de `id` de ese mensaje, **sin las comillas del JSON**, a la línea `GMAIL_INITIAL_MESSAGE_ID=` de `.env` y guarda el archivo. Por ejemplo, si la salida contiene `"id": "18abcdef12345678"`, escribe:
 
