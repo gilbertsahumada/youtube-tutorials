@@ -17,7 +17,7 @@ async function setup(t) {
   let issue = originalIssue;
   let badAnalysis = false;
   const calls = { emails: 0, analyze: 0, publish: 0 };
-  const env = { GOOGLE_CLIENT_ID: "test-client", GOOGLE_CLIENT_SECRET: "google-secret-test", GMAIL_LABEL: "demo", ALLOWED_SENDER: "client@example.com", GMAIL_AFTER: "2026-01-01T00:00:00Z", GITHUB_REPO: "demo/sandbox", GITHUB_ISSUE_NUMBER: "1", MODEL_BASE_URL: "https://model.invalid/v1", MODEL_ID: "test-model", MODEL_API_KEY: "model-secret-test", PUBLISH: "true" };
+  const env = { GOOGLE_CLIENT_ID: "test-client", GOOGLE_CLIENT_SECRET: "google-secret-test", GMAIL_LABEL: "demo", ALLOWED_SENDER: "client@example.com", GMAIL_AFTER: "2026-01-01T00:00:00Z", GITHUB_REPO: "demo/sandbox", GITHUB_ISSUE_NUMBER: "1", MODEL_BASE_URL: "https://model.invalid/v1", MODEL_ID: "test-model", MODEL_API_KEY: "model-secret-test", PUBLISH: "true", IMPORT_LEGACY_PROJECT: "true" };
   const adapters = {
     emails: async () => { calls.emails++; return [initial, request]; },
     issue: () => issue,
@@ -132,7 +132,7 @@ test("una captura guarda el destino y respeta el ID inicial declarado en el ento
   await studio.capture(initial.id);
   env.GITHUB_REPO = "other/repo";
   assert.equal((await studio.config()).repository, "demo/sandbox", "el entorno no sustituye un proyecto guardado");
-  const { allowedFormats, captured, ...project } = (await studio.config()).projects[0];
+  const { allowedFormats, captured, imported, ...project } = (await studio.config()).projects[0];
   await assert.rejects(studio.saveProject({ ...project, repository: "other/repo" }), /alcance capturado/);
 });
 
@@ -188,9 +188,26 @@ test("proyectos vacíos y formularios funcionan sin credenciales ni datos precar
   await assert.rejects(studio.run(), /Faltan variables/);
 });
 
+test("el inicio normal ignora la configuración CLI y permite crear el proyecto desde la UI", async t => {
+  const { root, env, studio, calls } = await setup(t);
+  delete env.IMPORT_LEGACY_PROJECT;
+  await rm(join(root, "config"), { recursive: true });
+  const config = await studio.config();
+  assert.equal(config.environmentReady, true);
+  assert.equal(config.ready, false);
+  assert.deepEqual(config.projects, []);
+  assert.deepEqual(config.filters, []);
+  assert.equal(config.project, null);
+  assert.equal(config.baseline, null);
+  assert.deepEqual(calls, { emails: 0, analyze: 0, publish: 0 });
+  await studio.saveProject({ id: "ventas", name: "Ventas", repository: "org/ventas", issueNumber: 8, delivery: "entrega-2", requirement: "informe" });
+  assert.deepEqual(await studio.selectProject("ventas"), { projectId: "ventas" });
+  assert.equal((await studio.config()).projects[0].imported, false);
+});
+
 test("dos proyectos: prioridad por correo, asignación explícita y publicación en su destino", async t => {
   const { root, env, adapters, studio, initial, originalIssue, json } = await setup(t);
-  await studio.config(); // Import the explicitly configured original project once.
+  await studio.config(); // The test explicitly opts into importing the original project.
   await studio.close();
   const second = { id: "informes", name: "Informes", repository: "org/informes", issueNumber: 2, delivery: "entrega-1", requirement: "exportar-reportes" };
   const email = await json("fixtures/email.json");
@@ -258,8 +275,17 @@ test("migración única conserva el acuerdo y correos publicados de la CLI, sin 
   const migrated = createStudio({ root, env, adapters: { ...adapters, analyze: () => { classified++; throw Error("No reanalizar publicado"); } } });
   t.after(() => migrated.close());
   assert.deepEqual((await migrated.config()).baseline, saved);
+  assert.equal((await migrated.config()).projects[0].imported, true);
   assert.equal((await migrated.run()).proposals.length, 0);
   assert.equal(classified, 0);
   assert.equal(await readFile(join(root, ".private/baseline.json"), "utf8"), baselineText);
   assert.equal(await readFile(join(root, ".private/state.json"), "utf8"), stateText);
+  await migrated.close();
+  delete env.IMPORT_LEGACY_PROJECT;
+  const reopened = createStudio({ root, env, adapters });
+  t.after(() => reopened.close());
+  const restored = await reopened.config();
+  assert.equal(restored.projects.length, 1);
+  assert.equal(restored.projects[0].imported, true);
+  assert.deepEqual(restored.baseline, saved);
 });

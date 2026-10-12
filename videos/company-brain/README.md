@@ -56,29 +56,19 @@ Esto crea `.env` sin reemplazar una configuración existente. Si usas nvm, ejecu
 
 1. Crea o selecciona un proyecto en [Google Cloud](https://console.cloud.google.com/) y habilita **Gmail API**.
 2. En **Google Auth Platform**, configura los datos de la aplicación. Para probar con una cuenta personal, elige audiencia **External**, deja la aplicación en **Testing** y añade el correo receptor como usuario de prueba. [Configuración oficial del consentimiento](https://developers.google.com/workspace/guides/configure-oauth-consent).
-3. En **Data Access**, incluye `https://www.googleapis.com/auth/gmail.readonly`. Este permiso permite leer mensajes; la demo aplica después la etiqueta, fecha y filtros que configuras. [Permisos de Gmail](https://developers.google.com/workspace/gmail/api/auth/scopes).
+3. En **Data Access**, incluye `https://www.googleapis.com/auth/gmail.readonly`. Este permiso permite leer mensajes; la demo acota la búsqueda con los participantes, la fecha y la etiqueta opcional del proyecto. [Permisos de Gmail](https://developers.google.com/workspace/gmail/api/auth/scopes).
 4. En **Clients**, crea un cliente OAuth de tipo **Desktop app / Aplicación de escritorio**. Copia su **Client ID** y **Client secret** a `.env`. [Guía oficial para habilitar Gmail API y crear el cliente](https://developers.google.com/workspace/gmail/api/quickstart/nodejs).
-5. En el Gmail receptor, crea una etiqueta llamada `company-brain-demo`. Más adelante tendrás que aplicarla a los dos correos de la prueba; crearla por sí solo no etiqueta los mensajes.
-
-**Completa estas siete variables en `.env`:**
+**Completa estas cinco variables en `.env`:**
 
 | Variable | Qué poner |
 |---|---|
 | `GOOGLE_CLIENT_ID` | Client ID del cliente OAuth de escritorio que acabas de crear. |
 | `GOOGLE_CLIENT_SECRET` | Client secret de ese mismo cliente. |
-| `GMAIL_LABEL` | `company-brain-demo`, o el nombre exacto de tu etiqueta del Gmail receptor. |
-| `GMAIL_AFTER` | Una fecha ISO anterior al primer correo, con zona horaria, por ejemplo `2026-10-01T00:00:00Z`. |
 | `MODEL_BASE_URL` | URL base HTTPS de tu proveedor compatible con Chat Completions, sin `/chat/completions`. |
 | `MODEL_ID` | Identificador de un modelo disponible en ese proveedor y en tu cuenta. |
 | `MODEL_API_KEY` | Clave de API del mismo proveedor. |
 
-Para obtener una fecha válida **antes de enviar el primer correo**, ejecuta lo siguiente y copia el resultado a `GMAIL_AFTER`:
-
-```bash
-node -e 'console.log(new Date().toISOString())'
-```
-
-Si usarás correos que ya existen, elige una fecha anterior a ellos. Conserva ese corte temporal después de capturar el acuerdo: el correo inicial debe seguir dentro de la consulta.
+La fecha de inicio, la etiqueta opcional y los participantes se configuran por proyecto en la UI y se guardan en SQLite. No necesitas `GMAIL_LABEL` ni `GMAIL_AFTER` en `.env` para usar la interfaz.
 
 Obtén las tres variables del modelo en el panel o la documentación de tu proveedor. El servidor añade `/chat/completions` a la URL base. La URL, el modelo y la clave deben corresponder a la misma API. El modelo recibirá los textos de los correos y del issue para analizarlos.
 
@@ -129,12 +119,14 @@ Abre [http://127.0.0.1:4173](http://127.0.0.1:4173). En **Proyectos y filtros**,
 | Número del issue | El número del issue que acabas de crear. |
 | Referencia de la entrega | `entrega-1` |
 | Referencia del requisito | `exportar-reportes` |
+| Leer correos desde (UTC) | El día del acuerdo inicial o uno anterior. Por defecto aparece el día actual en UTC. |
+| Etiqueta de Gmail (opcional) | Déjala vacía para consultar por participantes. |
 
 Pulsa **Crear proyecto**. En **Correos y dominios**, selecciona ese proyecto, elige **Correo exacto**, introduce la dirección real desde la que enviarás los dos correos y pulsa **Guardar filtro**. El filtro corresponde al **remitente**, no a la cuenta receptora de Gmail.
 
 El nombre del proyecto es una etiqueta para la UI. Las tres referencias identifican el caso: deben aparecer iguales en el formulario, el issue y los correos. Usa minúsculas, números y guiones, como en el ejemplo. El issue necesita una única línea `Formato actual: CSV` o `Formato actual: PDF`.
 
-**Resultado esperado:** el proyecto aparece en **Tus proyectos**, con su issue y su filtro, en estado **Pendiente de captura**. Puedes crear proyectos y filtros incluso mientras completas el entorno; para consultar las cuentas necesitas las siete variables.
+**Resultado esperado:** el proyecto aparece en **Tus proyectos**, con su issue y su filtro, en estado **Pendiente de captura**. Puedes crear proyectos y filtros incluso mientras completas el entorno; para consultar las cuentas necesitas las cinco variables.
 
 ### 3. Conecta las cuentas desde la UI
 
@@ -160,7 +152,7 @@ Para el proyecto portal-cliente, entrega-1, acordamos CSV para exportar-reportes
 La primera entrega debe permitir descargar los reportes en CSV.
 ```
 
-En el Gmail receptor, aplica la etiqueta `company-brain-demo` a este mensaje. En la demo, abre **Conexiones → Cargar correos** y selecciona **Capturar acuerdo** junto al asunto que acabas de enviar.
+Si dejaste la etiqueta vacía, no tienes que etiquetar el mensaje. En la demo, abre **Conexiones → Cargar correos** y selecciona **Capturar acuerdo** junto al asunto que acabas de enviar.
 
 El servidor consulta el issue y el modelo identifica el acuerdo. Solo guarda el contexto inicial si las referencias y el formato coinciden y la evidencia aparece literalmente en el correo.
 
@@ -180,7 +172,7 @@ Para el proyecto portal-cliente, entrega-1, necesito que prioricemos PDF en luga
 Por favor planteen el cambio y su impacto antes de modificar el alcance.
 ```
 
-Aplica también la etiqueta `company-brain-demo` a este nuevo mensaje. Debe ser posterior al correo inicial.
+Este mensaje debe ser posterior al correo inicial. Solo aplica una etiqueta si elegiste una en el proyecto.
 
 En **Centro de decisiones**, pulsa **Buscar solicitudes**. Si ya tienes el contexto en pantalla, el botón puede aparecer como **Buscar nuevas solicitudes**. La vista reúne:
 
@@ -196,7 +188,7 @@ También puedes abrir **Fuentes de contexto** para leer los documentos completos
 
 ## Cómo funcionan los proyectos y filtros
 
-Cada proyecto guarda su destino de GitHub, sus referencias, participantes, acuerdo inicial y propuestas. Usa el selector **Proyecto** para cambiar de contexto. Un mismo issue solo puede estar asociado a un proyecto.
+Cada proyecto guarda su destino de GitHub, sus referencias, participantes, fecha de inicio, etiqueta opcional, acuerdo inicial y propuestas. Usa el selector **Proyecto** para cambiar de contexto. Un mismo issue solo puede estar asociado a un proyecto.
 
 En **Proyectos y filtros** puedes añadir o eliminar filtros sin reiniciar:
 
@@ -209,9 +201,13 @@ El correo exacto tiene prioridad sobre el dominio **entre todos los proyectos**.
 
 Si la misma dirección está en varios proyectos, o varios proyectos comparten un dominio sin una regla exacta que resuelva el destino, **Conexiones → Cargar correos** muestra **Correos por asignar**. Elige un proyecto y pulsa **Asignar correo** antes de capturarlo o analizarlo. La asignación se guarda para ese mensaje.
 
-Hay dos filtros distintos en este recorrido: **la etiqueta de Gmail** delimita qué mensajes se consultan; **los correos y dominios de la UI** determinan a qué proyecto pertenecen. Después, las referencias del texto se validan antes de generar la propuesta.
+Gmail busca directamente por los **correos y dominios del proyecto seleccionado** y su **fecha de inicio**. El servidor vuelve a comprobar el remitente y el dominio completo antes de utilizar los mensajes. Las referencias del texto se validan antes de generar la propuesta. [Búsquedas con Gmail API](https://developers.google.com/workspace/gmail/api/guides/filtering).
 
-Una vez capturado el acuerdo, el destino y las referencias del proyecto quedan fijos. Puedes editar su nombre y sus filtros. Para trabajar con otro issue o alcance, crea otro proyecto.
+**La etiqueta es opcional.** Si quieres acotar más la búsqueda, crea una etiqueta en el Gmail receptor, introduce su nombre exacto en **Editar proyecto → Etiqueta de Gmail** y aplícala a los mensajes, incluido el acuerdo inicial. Déjala vacía para buscar solo por participantes y fecha.
+
+La fecha incluye correos desde las **00:00 UTC** del día elegido. Para usar mensajes anteriores, cambia **Leer correos desde (UTC)**. El servidor impide guardar una fecha que deje fuera el acuerdo capturado. Estos cambios se guardan en SQLite y se aplican en la siguiente consulta, sin reiniciar.
+
+Una vez capturado el acuerdo, el destino y las referencias del proyecto quedan fijos. Puedes editar su nombre, filtros, fecha y etiqueta opcional. Para trabajar con otro issue o alcance, crea otro proyecto.
 
 ## Qué se guarda en SQLite
 
@@ -219,7 +215,7 @@ Los proyectos y sus filtros son configuración persistente. SQLite los conserva 
 
 | Ubicación, dentro de `demo/` | Contenido |
 |---|---|
-| `.private/company-brain.sqlite` | Proyectos, filtros, asignaciones de mensajes, contexto inicial, análisis, propuestas, publicaciones y actividad. |
+| `.private/company-brain.sqlite` | Proyectos, fechas de inicio, etiquetas opcionales, filtros, asignaciones de mensajes, contexto inicial, análisis, propuestas, publicaciones y actividad. |
 | `.private/gmail-token.json` | Autorización OAuth para volver a consultar Gmail. |
 | `output/<referencia-del-proyecto>/` | Diagnósticos de los análisis y comentarios preparados. |
 | `.env` | Configuración de conexiones, si eliges usar este archivo. |
@@ -228,16 +224,18 @@ La base guarda el contexto utilizado por la demo; no replica todo el buzón. Las
 
 Para respaldar el estado, detén la demo y copia `.private/`. Conserva `.env` por separado si necesitas restaurar las conexiones; la sesión de GitHub CLI se gestiona con `gh`. `.env`, `.private/` y `output/` están excluidos de Git, y los archivos privados y diagnósticos no se sirven como archivos web.
 
-Si ya usabas los scripts y configuraste `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SENDER`, el primer inicio puede importar ese proyecto y su estado local. Es una importación única: los cambios posteriores de la UI y la CLI se gestionan por separado. [Detalles de compatibilidad](docs/scripts.md).
+Al actualizar una base de una versión anterior, la demo copia una sola vez `GMAIL_LABEL` y `GMAIL_AFTER` a los proyectos existentes. Si falta una fecha válida, usa el día actual o una fecha que incluya el acuerdo ya guardado. Conserva los proyectos, filtros, acuerdos y publicaciones. Después, puedes eliminar esas dos variables del entorno de la UI; sus cambios se hacen en **Editar proyecto**.
+
+El inicio normal no crea proyectos a partir de las variables de los scripts. Para importar una configuración anterior, activa `IMPORT_LEGACY_PROJECT=true` antes del primer inicio con una base vacía y configura `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SENDER`. La importación es única y conserva los archivos originales. Los proyectos que ya se importaron siguen guardados y muestran **Importado de la configuración anterior**. Después, la UI y la CLI gestionan sus cambios por separado. [Detalles de compatibilidad](docs/scripts.md).
 
 ## Si algo no funciona
 
 | Lo que ves | Qué revisar |
 |---|---|
-| Error de entorno | Completa las siete variables indicadas y reinicia el servidor. La UI usa datos reales y muestra el error cuando faltan conexiones. |
+| Error de entorno | Completa las cinco variables indicadas y reinicia el servidor. La UI usa datos reales y muestra el error cuando faltan conexiones. |
 | Error relacionado con `node:sqlite` | Ejecuta la demo con Node.js ≥22.13; con nvm, usa `nvm use` en `demo/`. |
 | Google bloquea la autorización | Gmail API activa, cliente OAuth de escritorio y Gmail receptor añadido como usuario de prueba. Si falla la renovación del token, vuelve a conectar Gmail. |
-| No aparecen correos | Autoriza la cuenta receptora correcta, aplica la etiqueta a cada mensaje, revisa el filtro del remitente y usa una fecha anterior al acuerdo inicial. Revisa también **Correos por asignar**. |
+| No aparecen correos | Autoriza la cuenta receptora correcta y revisa los participantes y la fecha en **Editar proyecto**. Si elegiste una etiqueta, aplícala a cada mensaje o deja ese campo vacío. Revisa también **Correos por asignar**. |
 | GitHub devuelve un error | Sesión de `gh`, permisos sobre el repositorio, formato `owner/repo` y número real de un issue abierto. |
 | No se puede capturar el acuerdo | Las tres referencias deben coincidir; el correo inicial y la línea `Formato actual:` del issue deben acordar el mismo formato. |
 | El modelo falla o la evidencia se rechaza | Revisa URL base, modelo y clave. Las citas deben ser literales, tener al menos 20 caracteres y mencionar el formato. Consulta los diagnósticos en `output/<proyecto>/`; un diagnóstico no implica que se haya guardado el acuerdo. |
@@ -247,7 +245,7 @@ Si ya usabas los scripts y configuraste `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `
 
 **Observar Gmail** consulta nuevas solicitudes cada 30 segundos mientras la página está abierta. Cambiar de proyecto o navegar a otra vista detiene la observación. Las propuestas se publican con su botón de revisión.
 
-Para esta demo se lee texto plano, sin adjuntos, con un máximo de 20.000 caracteres por mensaje y 500 correos por consulta. Si necesitas procesar más, acota la etiqueta y la fecha. [Más detalles de las conexiones](docs/conectar-cuentas.md).
+Para esta demo se lee texto plano, sin adjuntos, con un máximo de 20.000 caracteres por mensaje y 500 correos por consulta. Si necesitas procesar más, acota los participantes, la fecha o la etiqueta opcional del proyecto. [Más detalles de las conexiones](docs/conectar-cuentas.md).
 
 ## Explorar el código y comprobarlo
 

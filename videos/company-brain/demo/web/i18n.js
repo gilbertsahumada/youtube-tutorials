@@ -3,6 +3,9 @@ export const languageKey = 'company-brain-language';
 
 // UI copy only. Source material, evidence and comments remain verbatim.
 export const english = {
+  'Importado de la configuración anterior.': 'Imported from the previous configuration.',
+  'El servidor devolvió una respuesta vacía o inválida. Reinicia la demo y recarga la página.': 'The server returned an empty or invalid response. Restart the demo and reload the page.',
+  'Revisa las conexiones y la tarea del proyecto seleccionado.': 'Check the connections and the selected project’s task.',
   'Cambios guardados.': 'Changes saved.',
   "Proyectos y filtros": "Projects and filters",
   "Proyecto": "Project",
@@ -337,6 +340,18 @@ export const english = {
   'La variable no puede contener saltos de línea.': 'The variable must not contain line breaks.',
   'El correo seleccionado no coincide con GMAIL_INITIAL_MESSAGE_ID. Actualiza el entorno y reinicia el servidor.': 'The selected email does not match GMAIL_INITIAL_MESSAGE_ID. Update the environment and restart the server.',
   'Selecciona el correo inicial y captura el acuerdo desde Conexiones.': 'Select the initial email and capture the agreement from Connections.',
+  'Leer correos desde (UTC)': 'Read emails from (UTC)',
+  'Etiqueta de Gmail': 'Gmail label',
+  'Etiqueta de Gmail (opcional)': 'Gmail label (optional)',
+  'Sin etiqueta: buscar por participantes': 'No label: search by participants',
+  'La fecha incluye correos desde las 00:00 UTC de ese día. Elige una fecha que incluya el acuerdo inicial.': 'The date includes emails from 00:00 UTC that day. Choose a date that includes the initial agreement.',
+  'Sin etiqueta se buscan los correos de los participantes. Si eliges una, debe existir en Gmail y estar aplicada a los mensajes.': 'Without a label, emails are searched by participant. If you choose one, it must exist in Gmail and be applied to the messages.',
+  'La fecha de inicio debe ser una fecha válida.': 'The start date must be a valid date.',
+  'La fecha de inicio debe incluir el correo del acuerdo inicial.': 'The start date must include the initial agreement email.',
+  'La etiqueta de Gmail debe ser un nombre válido de hasta 200 caracteres.': 'The Gmail label must be a valid name of up to 200 characters.',
+  'La etiqueta del proyecto no existe en Gmail. Créala o deja la etiqueta vacía en Proyectos y filtros.': 'The project label does not exist in Gmail. Create it or leave the label empty in Projects and filters.',
+  'Más de 500 correos: acota los participantes, la fecha o la etiqueta del proyecto.': 'More than 500 emails: narrow the project’s participants, start date or label.',
+
 };
 
 const patterns = [

@@ -9,7 +9,7 @@ export function normalizeDomain(value) {
   return domain;
 }
 export function normalizeEmail(value) {
-  if (typeof value !== "string" || value.length > 254 || /[\x00-\x1f\x7f]/.test(value) || !/^[^\s@,<>]+@[^\s@,<>]+$/.test(value.trim())) throw Error("Correo inválido.");
+  if (typeof value !== "string" || value.length > 254 || /[\x00-\x1f\x7f"\\]/.test(value) || !/^[^\s@,<>]+@[^\s@,<>]+$/.test(value.trim())) throw Error("Correo inválido.");
   const [local, domain] = value.trim().toLowerCase().split("@");
   return `${local}@${normalizeDomain(domain)}`;
 }

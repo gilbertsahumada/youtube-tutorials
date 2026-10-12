@@ -82,7 +82,6 @@ async function real() {
   for (const key of [
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
-    "GMAIL_LABEL",
     "GMAIL_AFTER",
     "ALLOWED_SENDER",
   ])

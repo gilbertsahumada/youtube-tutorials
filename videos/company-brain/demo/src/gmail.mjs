@@ -1,5 +1,6 @@
 import { privatePath, readJson } from "./common.mjs";
-import { matchesSender } from "./filters.mjs";
+import { matchesSender, normalizeFilter } from "./filters.mjs";
+import { normalizeAfter, normalizeLabel } from "./mail-settings.mjs";
 
 export function mailbox(header) {
   if (header.includes(",") || (header.match(/</g) || []).length > 1)
@@ -52,21 +53,28 @@ export async function gmailClient(env = process.env) {
     return res.json();
   };
 }
-export async function getEmails({ env = process.env, api, filters = env.ALLOWED_SENDER } = {}) {
+export async function getEmails({ env = process.env, api, filters = env.ALLOWED_SENDER, after = env.GMAIL_AFTER, label = env.GMAIL_LABEL || "" } = {}) {
+  const rules = typeof filters === "string" ? [normalizeFilter("email", filters)] : (filters || []).map(rule => normalizeFilter(rule.kind, rule.value));
+  if (!rules.length) throw Error("Añade al menos un correo o dominio a este proyecto.");
+  // Quoted values cannot inject Gmail search operators. Quoted local parts are unsupported.
+  if (rules.some(rule => /["\\]/.test(rule.value))) throw Error("Correo inválido.");
+  const since = Date.parse(normalizeAfter(after));
+  const labelName = normalizeLabel(label);
+  const senders = [...new Set(rules.map(rule => `from:"${rule.kind === "domain" ? "@" : ""}${rule.value}"`))];
+  const query = `after:${Math.floor(since / 1000) - 1} {${senders.join(" ")}}`;
   api ||= await gmailClient(env);
-  const labels = await api("labels");
-  const label = labels.labels?.find((x) => x.name === env.GMAIL_LABEL);
-  if (!label)
-    throw Error("No existe GMAIL_LABEL. Créala manualmente en Gmail.");
-  const after = Date.parse(env.GMAIL_AFTER);
-  if (!Number.isFinite(after))
-    throw Error("Define GMAIL_AFTER como fecha ISO válida");
+  let labelId;
+  if (labelName) {
+    const labels = await api("labels");
+    labelId = labels.labels?.find(item => item.name === labelName)?.id;
+    if (!labelId) throw Error("La etiqueta del proyecto no existe en Gmail. Créala o deja la etiqueta vacía en Proyectos y filtros.");
+  }
   const ids = [];
   let pageToken = "";
   do {
     const page = await api("messages", {
-      labelIds: label.id,
-      q: `after:${Math.floor(after / 1000)}`,
+      ...(labelId ? { labelIds: labelId } : {}),
+      q: query,
       maxResults: "100",
       ...(pageToken ? { pageToken } : {}),
     });
@@ -74,7 +82,7 @@ export async function getEmails({ env = process.env, api, filters = env.ALLOWED_
     pageToken = page.nextPageToken || "";
     if (ids.length > 500)
       throw Error(
-        "Más de 500 correos: usa una etiqueta y ventana temporal más acotadas",
+        "Más de 500 correos: acota los participantes, la fecha o la etiqueta del proyecto.",
       );
   } while (pageToken);
   const emails = [];
@@ -91,9 +99,9 @@ export async function getEmails({ env = process.env, api, filters = env.ALLOWED_
     } catch {
       continue;
     }
-    if (!matchesSender(from, filters)) continue;
+    if (!matchesSender(from, rules)) continue;
     const text = plainText(mail.payload);
-    if (!text || text.length > 20000 || Number(mail.internalDate) <= after)
+    if (!text || text.length > 20000 || !Number.isFinite(Number(mail.internalDate)) || Number(mail.internalDate) < since)
       continue;
     emails.push({
       id,

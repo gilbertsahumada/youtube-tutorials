@@ -4,8 +4,9 @@ import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createStore, validateProject } from "../src/store.mjs";
+import { DatabaseSync } from "node:sqlite";
 
-const project = { id: "uno", name: "Mi proyecto", repository: "org/repo", issueNumber: 1, delivery: "entrega-1", requirement: "informe" };
+const project = { id: "uno", name: "Mi proyecto", repository: "org/repo", issueNumber: 1, delivery: "entrega-1", requirement: "informe", gmailAfter: "2026-01-01", gmailLabel: "" };
 async function storage(t) {
   const root = await mkdtemp(join(tmpdir(), "brain-sqlite-"));
   const store = await createStore(root);
@@ -37,6 +38,74 @@ test("SQLite: persiste proyectos, filtros y selección; no almacena credenciales
     assert.equal(reopened.filters().length, 1);
     assert.equal((await stat(join(root, ".private/company-brain.sqlite"))).mode & 0o777, 0o600);
   } finally { reopened.close(); }
+});
+
+test("SQLite: configura fecha y etiqueta por proyecto, persiste cambios y protege el acuerdo", async t => {
+  const { root, store } = await storage(t);
+  store.saveProject({ ...project, gmailLabel: " primera " });
+  store.saveProject({ ...project, id: "dos", repository: "org/dos", gmailAfter: "2026-02-01", gmailLabel: "segunda" });
+  store.saveBaseline("uno", { initialEmail: { id: "initial", date: "2026-01-10T00:00:00Z" } });
+  assert.throws(() => store.saveProject({ ...project, gmailAfter: "2026-01-11" }), /incluir el correo/);
+  assert.equal(store.project("uno").gmailLabel, "primera", "el cambio rechazado no modifica la etiqueta");
+  for (const fields of [{ gmailAfter: "" }, { gmailAfter: "2026-02-30" }, { gmailLabel: "x\ny" }, { gmailLabel: "x".repeat(201) }]) assert.throws(() => store.saveProject({ ...project, ...fields }));
+  store.saveProject({ ...project, gmailAfter: "2026-01-10T00:00:00Z", gmailLabel: "" });
+  store.saveProject({ id: project.id, name: project.name, repository: project.repository, issueNumber: 1, delivery: project.delivery, requirement: project.requirement });
+  store.close();
+  const reopened = await createStore(root, { GMAIL_AFTER: "2099-01-01", GMAIL_LABEL: "ignored" });
+  try {
+    assert.equal(reopened.project("uno").gmailAfter, "2026-01-10T00:00:00.000Z");
+    assert.equal(reopened.project("uno").gmailLabel, "");
+    assert.equal(reopened.project("dos").gmailAfter, "2026-02-01T00:00:00.000Z");
+    assert.equal(reopened.project("dos").gmailLabel, "segunda");
+  } finally { reopened.close(); }
+});
+
+test("SQLite v1 → v2: migra una vez sin perder filtros, asignaciones, acuerdos, publicaciones ni actividad", async t => {
+  const { root, store } = await storage(t);
+  store.saveProject(project);
+  store.saveProject({ ...project, id: "dos", repository: "org/dos" });
+  store.addFilter({ projectId: "uno", kind: "domain", value: "example.com" });
+  const saved = { initialEmail: { id: "initial", date: "2026-01-10T10:00:00Z" }, initialFormat: "CSV" };
+  store.saveBaseline("uno", saved);
+  store.saveRecord("uno", "request", { requestEmail: { id: "request" }, plan: { action: "comment" } });
+  store.publish("uno", "request", { id: 42 });
+  store.assign("request", "uno");
+  store.event("uno", "Publicado", "Comentario guardado");
+  store.select("dos");
+  store.close();
+  const old = new DatabaseSync(join(root, ".private/company-brain.sqlite"));
+  old.exec("ALTER TABLE projects DROP COLUMN gmail_after; ALTER TABLE projects DROP COLUMN gmail_label; PRAGMA user_version = 1;");
+  old.close();
+  const upgraded = await createStore(root, { GMAIL_AFTER: "2026-01-12T10:00:00Z", GMAIL_LABEL: "anterior" });
+  try {
+    assert.equal(upgraded.project("uno").gmailAfter, "2026-01-10T00:00:00.000Z", "la migración incluye el acuerdo aunque la fecha antigua lo excluyera");
+    assert.equal(upgraded.project("dos").gmailAfter, "2026-01-12T00:00:00.000Z");
+    assert.equal(upgraded.project("uno").gmailLabel, "anterior");
+    assert.deepEqual(upgraded.baseline("uno"), saved);
+    assert.equal(upgraded.filters().length, 1);
+    assert.equal(upgraded.assignment("request"), "uno");
+    assert.equal(upgraded.records("uno")[0].published.id, 42);
+    assert.equal(upgraded.events("uno").length, 1);
+    assert.equal(upgraded.selected(), "dos");
+  } finally { upgraded.close(); }
+  const restarted = await createStore(root, { GMAIL_AFTER: "2000-01-01", GMAIL_LABEL: "otra" });
+  try { assert.equal(restarted.project("uno").gmailLabel, "anterior"); }
+  finally { restarted.close(); }
+});
+
+test("SQLite v1: migra sin variables de Gmail y mantiene el correo del acuerdo dentro de la consulta", async t => {
+  const { root, store } = await storage(t);
+  store.saveProject(project);
+  store.saveBaseline("uno", { initialEmail: { id: "initial", date: "2026-01-10T10:00:00Z" } });
+  store.close();
+  const old = new DatabaseSync(join(root, ".private/company-brain.sqlite"));
+  old.exec("ALTER TABLE projects DROP COLUMN gmail_after; ALTER TABLE projects DROP COLUMN gmail_label; PRAGMA user_version = 1;");
+  old.close();
+  const upgraded = await createStore(root);
+  try {
+    assert.ok(Date.parse(upgraded.project("uno").gmailAfter) <= Date.parse(upgraded.baseline("uno").initialEmail.date));
+    assert.equal(upgraded.project("uno").gmailLabel, "");
+  } finally { upgraded.close(); }
 });
 
 test("SQLite: alcance inmutable al capturar, issue único y transacciones sin escrituras parciales", async t => {
