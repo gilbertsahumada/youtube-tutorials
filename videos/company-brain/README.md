@@ -228,7 +228,7 @@ La base guarda el contexto utilizado por la demo; no replica todo el buzón. Las
 
 Para respaldar el estado, detén la demo y copia `.private/`. Conserva `.env` por separado si necesitas restaurar las conexiones; la sesión de GitHub CLI se gestiona con `gh`. `.env`, `.private/` y `output/` están excluidos de Git, y los archivos privados y diagnósticos no se sirven como archivos web.
 
-Si ya usabas los scripts y configuraste `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SENDER`, el primer inicio puede importar ese proyecto y su estado local. Es una importación única: los cambios posteriores de la UI y la CLI se gestionan por separado. [Detalles de compatibilidad](docs/scripts.md).
+El inicio normal no crea proyectos a partir de las variables de los scripts. Para importar una configuración anterior, activa `IMPORT_LEGACY_PROJECT=true` antes del primer inicio con una base vacía y configura `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SENDER`. La importación es única y conserva los archivos originales. Los proyectos que ya se importaron siguen guardados y muestran **Importado de la configuración anterior**. Después, la UI y la CLI gestionan sus cambios por separado. [Detalles de compatibilidad](docs/scripts.md).
 
 ## Si algo no funciona
 

@@ -3,6 +3,8 @@ export const languageKey = 'company-brain-language';
 
 // UI copy only. Source material, evidence and comments remain verbatim.
 export const english = {
+  'Importado de la configuración anterior.': 'Imported from the previous configuration.',
+  'El servidor devolvió una respuesta vacía o inválida. Reinicia la demo y recarga la página.': 'The server returned an empty or invalid response. Restart the demo and reload the page.',
   'Cambios guardados.': 'Changes saved.',
   "Proyectos y filtros": "Projects and filters",
   "Proyecto": "Project",

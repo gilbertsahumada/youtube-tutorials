@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import { ROOT, loadEnv } from "./common.mjs";
 import { createStudio } from "./studio.mjs";
 
-const assets = { "/": ["index.html", "text/html"], "/app.js": ["app.js", "text/javascript"], "/i18n.js": ["i18n.js", "text/javascript"], "/style.css": ["style.css", "text/css"], "/favicon.svg": ["favicon.svg", "image/svg+xml"] };
+const assets = { "/": ["index.html", "text/html"], "/app.js": ["app.js", "text/javascript"], "/http.js": ["http.js", "text/javascript"], "/i18n.js": ["i18n.js", "text/javascript"], "/style.css": ["style.css", "text/css"], "/favicon.svg": ["favicon.svg", "image/svg+xml"] };
 
 export function createDemoServer({ studio = createStudio(), publicRoot = resolve(ROOT, "web") } = {}) {
   const token = randomBytes(32).toString("hex");
@@ -15,7 +15,7 @@ export function createDemoServer({ studio = createStudio(), publicRoot = resolve
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "no-referrer");
     res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
-    const send = (status, value) => { res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" }); res.end(JSON.stringify(value)); };
+    const send = (status, value) => { const body = JSON.stringify(value ?? null); res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" }); res.end(body); };
     try {
       const host = req.headers.host;
       const port = server.address().port;

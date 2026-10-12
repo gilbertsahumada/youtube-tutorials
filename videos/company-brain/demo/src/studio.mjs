@@ -30,10 +30,10 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
   async function database() {
     if (!initializing) initializing = (async () => {
       store = await createStore(root);
-      // Import only an explicitly configured legacy destination. Never seed a demo project.
+      // Legacy variables alone must not create a project during a normal UI startup.
       if (!store.metadata("legacy_imported")) {
         if (store.projects().length) store.setMetadata("legacy_imported", "true");
-        else if (env.GITHUB_REPO && env.GITHUB_ISSUE_NUMBER && env.ALLOWED_SENDER) {
+        else if (env.IMPORT_LEGACY_PROJECT === "true" && env.GITHUB_REPO && env.GITHUB_ISSUE_NUMBER && env.ALLOWED_SENDER) {
           const context = await readJson(local("config/project.json"));
           const project = validateProject({ id: context.id, name: context.name, delivery: context.delivery, requirement: context.requirement, repository: env.GITHUB_REPO, issueNumber: env.GITHUB_ISSUE_NUMBER });
           const filter = normalizeFilter("email", env.ALLOWED_SENDER);
@@ -126,7 +126,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
     return {
       ...status, ready, environmentReady: status.ready,
       error: status.error || (!project ? "Crea o selecciona un proyecto para continuar." : !rulesFor(project.id).length ? "Añade al menos un correo o dominio a este proyecto." : null),
-      project: project && projectContext(project), projects: store.projects().map(item => ({ ...item, captured: Boolean(store.baseline(item.id)) })), filters,
+      project: project && projectContext(project), projects: store.projects().map(item => ({ ...item, captured: Boolean(store.baseline(item.id)), imported: store.metadata("legacy_project") === item.id })), filters,
       repository: project?.repository || "", issueNumber: project?.issueNumber || null,
       connections: { ...status.connections, github: Boolean(project) },
       gmailConnected: Boolean(token?.refresh_token), baseline: project && baseline(project),
@@ -224,7 +224,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
   }
   async function saveFilter(input) { return locked(() => store.addFilter(input)); }
   async function removeFilter(id, projectId) { return locked(() => store.removeFilter(id, projectId)); }
-  async function selectProject(id) { return locked(() => store.select(id)); }
+  async function selectProject(id) { return locked(() => { store.select(id); return { projectId: id }; }); }
   async function assign(id, projectId) {
     requireEnvironment();
     const project = await requireProject(projectId);

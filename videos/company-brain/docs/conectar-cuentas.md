@@ -66,7 +66,7 @@ Puedes añadir o eliminar filtros y cambiar el proyecto activo sin reiniciar.
 
 SQLite guarda proyectos, filtros, asignaciones, acuerdos, propuestas y publicaciones en `.private/company-brain.sqlite`. Al reiniciar o recargar la página, las propuestas pendientes siguen disponibles. Para conservar los datos, respalda `.private/`; las credenciales de `.env` y la sesión de `gh` se mantienen por separado. La base y los diagnósticos de `output/<proyecto>/` no se sirven al navegador ni se incluyen en Git.
 
-Si ya utilizabas la CLI y tienes `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SENDER`, el primer inicio importa ese proyecto de `config/project.json` y sus archivos privados de acuerdo y estado, si existen. La importación es única y deja los JSON originales intactos. Después, los proyectos de la UI se gestionan en SQLite. [Ver compatibilidad con los scripts](scripts.md).
+El inicio normal deja los proyectos vacíos hasta que los creas en el formulario. Para importar el proyecto de la CLI y su estado, activa `IMPORT_LEGACY_PROJECT=true` antes de iniciar con una base vacía y configura `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SENDER`. La importación es única y deja los JSON originales intactos. Si el proyecto ya se importó con una versión anterior, sigue guardado y la UI indica su procedencia. Después, los proyectos de la UI se gestionan en SQLite. [Ver compatibilidad con los scripts](scripts.md).
 
 ## Si algo no aparece
 

@@ -21,6 +21,8 @@ Para estos scripts, configura `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SE
 
 Empieza con `PUBLISH=false`: `once` prepara el comentario en `output/`. Tras revisarlo, `PUBLISH=true` permite al comando publicarlo y guardar el resultado en `.private/state.json`.
 
-**La UI publica al pulsar su botón de revisión**, independientemente de `PUBLISH`. El watcher de la UI prepara propuestas; el watcher por terminal publica comentarios. Ambos comparten un lock para evitar operaciones concurrentes. La UI guarda sus proyectos y su estado en SQLite; la CLI conserva su recorrido de un solo proyecto con `config/project.json`, `.private/baseline.json` y `.private/state.json`. El primer inicio de la UI puede importar una configuración existente de la CLI, pero los cambios posteriores no se sincronizan entre ambos recorridos. La UI nunca modifica `.env`.
+**La UI publica al pulsar su botón de revisión**, independientemente de `PUBLISH`. El watcher de la UI prepara propuestas; el watcher por terminal publica comentarios. Ambos comparten un lock para evitar operaciones concurrentes. La UI guarda sus proyectos y su estado en SQLite; la CLI conserva su recorrido de un solo proyecto con `config/project.json`, `.private/baseline.json` y `.private/state.json`.
+
+Para importar ese proyecto y sus archivos privados en el primer inicio con una base vacía, establece `IMPORT_LEGACY_PROJECT=true` en el entorno o `.env`, además del repo, issue y remitente de la CLI. La opción viene desactivada: configurar esas tres variables por sí solo no crea proyectos. Los proyectos ya importados se conservan y la UI indica su origen. Los cambios posteriores no se sincronizan entre ambos recorridos. La UI nunca modifica `.env`.
 
 No hay comando de aprobación ni cambios automáticos en la tarea. Para otro destino en la CLI, usa otra copia de la demo. En la UI, crea otro proyecto con el formulario.

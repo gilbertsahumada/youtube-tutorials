@@ -95,7 +95,8 @@ export async function createStore(root) {
     projects: () => db.prepare("SELECT * FROM projects ORDER BY rowid").all().map(decode),
     removeFilter(id, projectId) {
       if (!Number.isSafeInteger(id) || !project(projectId)) throw Error("Filtro inválido.");
-      db.prepare("DELETE FROM sender_filters WHERE id = ? AND project_id = ?").run(id, projectId);
+      const result = db.prepare("DELETE FROM sender_filters WHERE id = ? AND project_id = ?").run(id, projectId);
+      return { removed: result.changes > 0 };
     },
     saveBaseline: (id, data) => db.prepare("INSERT INTO baselines VALUES(?,?)").run(id, JSON.stringify(data)),
     records: id => db.prepare("SELECT entry,published FROM mail_records WHERE project_id = ? ORDER BY rowid").all(id).map(row => ({ ...JSON.parse(row.entry), ...(row.published ? { published: JSON.parse(row.published) } : {}) })),

@@ -31,7 +31,7 @@ test("HTTP: entorno incompleto devuelve error sin datos de ejemplo ni acceso a s
   assert.equal(page.status, 200);
   assert.match(await page.text(), /Company Brain/);
   assert.match(page.headers.get("content-security-policy"), /frame-ancestors 'none'/);
-  for (const path of ["/app.js", "/i18n.js", "/style.css", "/favicon.svg"]) assert.equal((await fetch(base + path)).status, 200);
+  for (const path of ["/app.js", "/http.js", "/i18n.js", "/style.css", "/favicon.svg"]) assert.equal((await fetch(base + path)).status, 200);
   for (const path of ["/.env", "/.private/gmail-token.json", "/.private/company-brain.sqlite", "/src/common.mjs", "/fixtures/email.json"]) assert.equal((await fetch(base + path)).status, 404);
   const bootstrapResponse = await fetch(base + "/api/bootstrap");
   assert.equal(bootstrapResponse.status, 503);
@@ -64,6 +64,7 @@ test("HTTP: con entorno completo carga únicamente los datos de las integracione
     GOOGLE_CLIENT_ID: "test-client", GOOGLE_CLIENT_SECRET: "private-google",
     GMAIL_LABEL: "test-label", ALLOWED_SENDER: initial.from, GMAIL_AFTER: "2025-01-01T00:00:00Z",
     GITHUB_REPO: "example/company-brain-sandbox", GITHUB_ISSUE_NUMBER: String(issue.number),
+    IMPORT_LEGACY_PROJECT: "true",
     MODEL_BASE_URL: "https://model.invalid/v1", MODEL_ID: "test-model", MODEL_API_KEY: "private-model",
   };
   let analyzed = 0;
@@ -101,8 +102,8 @@ test("HTTP: con entorno completo carga únicamente los datos de las integracione
   assert.equal(await readFile(join(root, ".env"), "utf8"), "NO_EDITAR=original\n");
 });
 
-test("HTTP: guarda y edita proyectos/filtros sin credenciales; no permite secretos ni acciones sin sesión", async t => {
-  const { base } = await serve(t, {});
+test("HTTP: variables CLI no crean proyectos; selección y eliminación de filtros devuelven JSON", async t => {
+  const { base } = await serve(t, { GITHUB_REPO: "org/anterior", GITHUB_ISSUE_NUMBER: "1", ALLOWED_SENDER: "persona@empresa.com" });
   const bootstrap = await (await fetch(base + "/api/bootstrap")).json();
   assert.deepEqual(bootstrap.config.projects, []);
   const headers = { "Content-Type": "application/json", "X-Company-Brain-Token": bootstrap.token };
@@ -111,17 +112,27 @@ test("HTTP: guarda y edita proyectos/filtros sin credenciales; no permite secret
   assert.equal((await post("/api/projects", project, false)).status, 403);
   assert.equal((await post("/api/projects", { ...project, secret: "not-allowed" })).status, 400);
   assert.equal((await post("/api/projects", project)).status, 200);
+  const selected = await post("/api/projects/select", { projectId: project.id });
+  assert.equal(selected.status, 200);
+  assert.match(selected.headers.get("content-type"), /application\/json/);
+  assert.deepEqual(await selected.json(), { projectId: project.id });
+  const notFound = await post("/api/projects/select", { projectId: "no-existe" });
+  assert.equal(notFound.status, 400);
+  assert.equal((await notFound.json()).error, "Proyecto no encontrado.");
   const added = await post("/api/filters", { projectId: project.id, kind: "domain", value: "@Empresa.com" });
   assert.equal(added.status, 200);
   const filter = await added.json();
   assert.equal(filter.value, "empresa.com");
   const current = await (await fetch(base + "/api/bootstrap?projectId=ventas")).json();
   assert.equal(current.config.project.id, "ventas");
+  assert.equal(current.config.projects[0].imported, false);
   assert.equal(current.config.filters.length, 1);
   assert.equal(current.workspace, null);
   assert.equal(current.config.environmentReady, false);
   assert.equal((await post("/api/inbox", { projectId: "ventas" })).status, 503);
-  assert.equal((await post("/api/filters/remove", { id: filter.id, projectId: "ventas" })).status, 200);
+  const removed = await post("/api/filters/remove", { id: filter.id, projectId: "ventas" });
+  assert.equal(removed.status, 200);
+  assert.deepEqual(await removed.json(), { removed: true });
   const config = await (await fetch(base + "/api/config?projectId=ventas", { headers })).json();
   assert.deepEqual(config.filters, []);
   assert.equal((await fetch(base + "/.private/company-brain.sqlite")).status, 404);
