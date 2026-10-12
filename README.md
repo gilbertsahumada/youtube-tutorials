@@ -6,7 +6,7 @@ Recursos en español para desarrolladores de software que quieren usar IA en su 
 
 ## Cómo está organizado
 
-**Una carpeta por video.** Cada una tiene su `README.md` (el compañero escrito del video) y, cuando aplica, sus `skills/` (comandos reutilizables) y `ejemplos/`.
+**Una carpeta por tema.** Cada una tiene su `README.md` (el compañero escrito del video) y, cuando aplica, sus `skills/` (comandos reutilizables) y `ejemplos/`. El video conceptual y la demo práctica de Company Brain comparten una sola carpeta y guía.
 
 ```
 videos/
@@ -17,8 +17,7 @@ videos/
   harness-engineering/            → demo comparativa sin harness y con harness
   loop-engineering/               → un loop que arregla una feature y se detiene solo
   graph-engineering/              → un grafo de loops que se refutan entre sí, con ancla externa
-  company-brain/                  → Company Brain y demo de integración Gmail/GitHub
-  company-brain-code/             → demo en terminal: memoria, actualización y respuestas del LLM
+  company-brain/                  → correo inicial + issue + solicitud nueva → propuesta comentada
   pi/                             → introducción a Pi, skills, extensiones y repository onboarding
   pi-pr-evidence/                 → revisión read-only de Pull Requests con Pi y GitHub Actions
 ```
@@ -35,7 +34,7 @@ videos/
 | 6 | Loop Engineering: deja de escribir prompts | [`videos/loop-engineering`](videos/loop-engineering) | Un loop real con memoria en disco y condición de parada verificable | Por agregar |
 | 7 | Qué es Graph Engineering (y cuándo NO usarlo) | [`videos/graph-engineering`](videos/graph-engineering) | Un workflow real con lentes en paralelo, verificación adversarial y anclas externas | Por agregar |
 | 8 | Qué es un Company Brain y cómo puedes construirlo | [`videos/company-brain`](videos/company-brain) | El concepto, sus nueve enfoques y cómo elegir por dónde empezar | [Ver video](https://youtu.be/uB21nWjsx50) |
-| 9 | Company Brain en código: la misma pregunta, otra memoria | [`videos/company-brain-code`](videos/company-brain-code) | Archivos con fuentes e historial, aprobación humana y consultas antes y después al LLM | Por agregar |
+| 9 | Company Brain: de un correo a una propuesta en un issue | [`videos/company-brain`](videos/company-brain) | Gmail y GitHub reales, evidencia de ambos correos y comentario pendiente de revisión humana | Por agregar |
 | 10 | Pi: skills, extensiones y repository onboarding | [`videos/pi`](videos/pi) | La introducción básica a Pi y un onboarding local por rol | [Ver video](https://youtu.be/fvXWPim2RzM) |
 | 11 | Revisión de Pull Requests con Pi | [`videos/pi-pr-evidence`](videos/pi-pr-evidence) | Un reviewer read-only que publica comentarios desde GitHub Actions | Por agregar |
 
@@ -50,7 +49,7 @@ git clone https://github.com/gilbertsahumada/youtube-tutorials.git
 cd youtube-tutorials/videos/<carpeta-del-video>
 ```
 
-Las demos basadas en scripts requieren **Node.js 20 o superior** y **Bash** (macOS, Linux o WSL; los scripts no corren en Windows nativo). Cada video indica si necesita Claude Code, Codex o Pi.
+Las demos basadas en scripts requieren **Node.js 20 o superior** y **Bash** (macOS, Linux o WSL; los scripts no corren en Windows nativo). Cada video indica si necesita Claude Code, Codex o Pi. Company Brain requiere Node.js 22 o superior.
 
 Demos con recorrido ejecutable, y qué hace cada una:
 
@@ -59,7 +58,7 @@ Demos con recorrido ejecutable, y qué hace cada una:
 | [`harness-engineering`](videos/harness-engineering) | el mismo mensaje dos veces, con y sin harness | un evaluador independiente puntúa las dos: sin harness el marcador no se mueve, con harness `6/6` |
 | [`loop-engineering`](videos/loop-engineering) | `node loop-fix.mjs` | un loop que arregla una feature vuelta a vuelta y se detiene solo |
 | [`graph-engineering`](videos/graph-engineering) | `node review-graph.mjs` | lentes en paralelo, verificación adversarial y ancla externa |
-| [`company-brain-code`](videos/company-brain-code) | `npm run ask`, `ingest` y `approve` desde `demo/` | la misma pregunta con memoria inicial, propuesta pendiente y acuerdo actualizado; fixtures disponibles sin credenciales |
+| [`company-brain`](videos/company-brain) | `npm run baseline`, `once` y `watch` desde `demo/` | relaciona dos correos y un issue; publica solo una propuesta con evidencia. `preview` permite ensayar sin cuentas |
 
 Los números que verás publicados salen de ejecuciones registradas y están marcados como tales. La generación es probabilística: **tu corrida dará algo distinto**, y esa es justamente la razón de que cada demo traiga su propio evaluador.
 

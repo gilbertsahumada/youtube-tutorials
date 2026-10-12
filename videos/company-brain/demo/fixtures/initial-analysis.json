@@ -1,0 +1,11 @@
+{
+  "project": "portal-cliente",
+  "delivery": "entrega-1",
+  "requirement": "exportar-reportes",
+  "initialFormat": "CSV",
+  "initialEvidence": "acordamos CSV para exportar-reportes",
+  "changeRequested": false,
+  "requestedFormat": null,
+  "requestEvidence": null,
+  "rationale": "El correo inicial y el issue describen la exportación CSV."
+}

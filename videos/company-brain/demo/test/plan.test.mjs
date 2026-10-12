@@ -1,88 +1,211 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { buildPlan, messageKey } from '../src/plan.mjs';
-import { mailbox, plainText } from '../src/gmail.mjs';
-const read = async path => JSON.parse(await readFile(new URL('../'+path, import.meta.url), 'utf8'));
-const initial = {
-  email:await read('fixtures/email.json'), analysis:await read('fixtures/analysis.json'),
-  project:await read('seed/brain/projects/portal-cliente.json'), decision:await read('seed/brain/decisions/exportacion.json'),
-  issue:await read('fixtures/issue.json'), approvedSender:'client@example.com'
-};
-const input = () => structuredClone(initial);
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import {
+  createBaseline,
+  buildPlan,
+  buildMessages,
+  classify,
+  messageKey,
+  safeText,
+} from "../src/plan.mjs";
+const read = async (path) =>
+  JSON.parse(await readFile(new URL("../" + path, import.meta.url), "utf8"));
+const project = await read("config/project.json"),
+  initialEmail = await read("fixtures/initial-email.json"),
+  email = await read("fixtures/email.json"),
+  issue = await read("fixtures/issue.json"),
+  initialAnalysis = await read("fixtures/initial-analysis.json"),
+  analysis = await read("fixtures/analysis.json");
+const baseline = createBaseline({
+  repo: "demo/sandbox",
+  project,
+  email: initialEmail,
+  issue,
+  analysis: initialAnalysis,
+  sender: "client@example.com",
+});
+const input = () =>
+  structuredClone({
+    baseline,
+    email,
+    issue,
+    analysis,
+    sender: "client@example.com",
+  });
 
-test('propone PDF, conserva CSV y no cambia el issue', () => {
-  const data = input(); const before = structuredClone(data);
-  const plan = buildPlan(data);
-  assert.equal(plan.action, 'propose'); assert.equal(plan.toFormat, 'PDF');
-  assert.equal(plan.files.length, 2);
-  const decision = JSON.parse(plan.files[0].content);
-  assert.equal(decision.current.format, 'PDF');
-  assert.equal(decision.history[0].format, 'CSV');
-  assert.equal(decision.history[0].status, 'superseded');
-  assert.match(plan.files[1].content, /Excel sigue como propuesta/);
+test("captura el correo inicial real como contexto sin proponer ni cambiar el issue", () => {
+  assert.equal(baseline.initialFormat, "CSV");
+  assert.deepEqual(baseline.initialEmail, initialEmail);
+  assert.deepEqual(baseline.initialIssue, issue);
+  assert.throws(
+    () =>
+      createBaseline({
+        repo: "x/y",
+        project,
+        email: initialEmail,
+        issue,
+        analysis: { ...initialAnalysis, initialFormat: "PDF" },
+        sender: initialEmail.from,
+      }),
+    /no coinciden/,
+  );
+});
+test("una solicitud de priorizar PDF basta; no se exige aprobación previa", () => {
+  const data = input(),
+    before = structuredClone(data),
+    plan = buildPlan(data);
+  assert.equal(plan.action, "comment");
+  assert.equal(plan.toFormat, "PDF");
+  assert.equal(plan.fromFormat, "CSV");
+  assert.ok(!("files" in plan) && !("branch" in plan));
+  assert.match(plan.body, /Pendiente de revisión humana/);
+  assert.match(plan.body, /No se creó un PR/);
+  assert.ok(
+    plan.body.includes(analysis.initialEvidence) &&
+      plan.body.includes(analysis.requestEvidence),
+  );
   assert.deepEqual(data, before);
 });
-test('no eleva una propuesta a decisión', () => {
-  const data = input(); data.analysis.approved = false;
-  assert.equal(buildPlan(data).action, 'skip');
+test("también permite PDF → CSV cuando el contexto y la tarea coinciden", () => {
+  const data = input();
+  data.baseline.initialFormat = "PDF";
+  data.baseline.initialEmail.text = initialEmail.text.replaceAll("CSV", "PDF");
+  data.analysis.initialFormat = "PDF";
+  data.analysis.initialEvidence = initialAnalysis.initialEvidence.replaceAll(
+    "CSV",
+    "PDF",
+  );
+  data.issue.body = data.issue.body.replaceAll("CSV", "PDF");
+  data.issue.title = "Exportar PDF";
+  data.email.text = email.text
+    .replaceAll("PDF", "TEMP")
+    .replaceAll("CSV", "PDF")
+    .replaceAll("TEMP", "CSV");
+  data.analysis.requestedFormat = "CSV";
+  data.analysis.requestEvidence = analysis.requestEvidence
+    .replaceAll("PDF", "TEMP")
+    .replaceAll("CSV", "PDF")
+    .replaceAll("TEMP", "CSV");
+  assert.equal(buildPlan(data).toFormat, "CSV");
 });
-test('remitente distinto no puede proponer cambios', () => {
-  const data = input(); data.email.from = 'attacker@example.com';
-  assert.throws(() => buildPlan(data), /Remitente/);
+test("ambigüedad y formato ya pedido no publican propuestas", () => {
+  let data = input();
+  data.analysis.changeRequested = false;
+  assert.equal(buildPlan(data).action, "skip");
+  data = input();
+  data.issue.body = data.issue.body.replaceAll("CSV", "PDF");
+  assert.equal(buildPlan(data).action, "skip");
 });
-test('no acepta evidencia inventada', () => {
-  const data = input(); data.analysis.evidence = 'El cliente aprobó XLSX en otro documento.';
-  assert.throws(() => buildPlan(data), /extracto literal/);
+for (const [name, mutate] of [
+  ["otro remitente", (d) => (d.email.from = "other@example.com")],
+  ["otro proyecto", (d) => (d.analysis.project = "otro")],
+  ["otra entrega", (d) => (d.analysis.delivery = "entrega-2")],
+  [
+    "texto de otro proyecto",
+    (d) => (d.email.text = d.email.text.replace("portal-cliente", "otro")),
+  ],
+  [
+    "evidencia inventada",
+    (d) =>
+      (d.analysis.requestEvidence =
+        "Una petición de PDF inexistente en el correo"),
+  ],
+  [
+    "contexto inicial inventado",
+    (d) =>
+      (d.analysis.initialEvidence =
+        "Un acuerdo CSV inexistente en el correo original"),
+  ],
+  [
+    "formato/ruta arbitraria",
+    (d) => (d.analysis.requestedFormat = "../../workflow"),
+  ],
+  ["issue cerrado", (d) => (d.issue.state = "closed")],
+  [
+    "issue ajeno",
+    (d) =>
+      (d.issue.body = d.issue.body.replace(
+        "Proyecto: portal-cliente",
+        "Proyecto: otro",
+      )),
+  ],
+  ["formato inicial contradictorio", (d) => (d.analysis.initialFormat = "PDF")],
+  ["booleano inválido", (d) => (d.analysis.changeRequested = "true")],
+  [
+    "sin formato actual",
+    (d) =>
+      (d.issue.body = d.issue.body.replace(
+        "Formato actual: CSV",
+        "Formato: CSV",
+      )),
+  ],
+])
+  test(`rechaza ${name}`, () => {
+    const data = input();
+    mutate(data);
+    assert.throws(() => buildPlan(data));
+  });
+test("correos anteriores e inicial no se reproponen", () => {
+  const data = input();
+  data.email.date = initialEmail.date;
+  assert.equal(buildPlan(data).action, "skip");
+  data.email.id = initialEmail.id;
+  assert.equal(buildPlan(data).action, "skip");
 });
-test('no acepta pendientes inventados', () => {
-  const data = input(); data.analysis.pending = ['PDF y Excel aprobados'];
-  assert.throws(() => buildPlan(data), /Pendientes|pendientes/);
+test("evidencia no puede inyectar HTML, menciones ni títulos markdown", () => {
+  assert.equal(
+    safeText("@all <script> **hello**"),
+    "&#64;all &lt;script&gt; \\*\\*hello\\*\\*",
+  );
+  assert.match(messageKey("../evil"), /^[a-f0-9]{20}$/);
 });
-test('no acepta rutas ni formatos arbitrarios del modelo', () => {
-  const data = input(); data.analysis.format = '../../.github/workflows/attack';
-  assert.throws(() => buildPlan(data), /Formato/);
+test("el prompt distingue solicitud de aprobación y no tiene herramientas", () => {
+  const messages = buildMessages({
+    initialEmail,
+    requestEmail: email,
+    issue,
+    project,
+  });
+  assert.match(
+    messages[0].content,
+    /no hace falta que sea un acuerdo aprobado/,
+  );
+  assert.match(messages[0].content, /No tienes tools/);
 });
-test('rechaza otro proyecto, entrega o requisito', () => {
-  for (const key of ['project','delivery','requirement']) {
-    const data = input(); data.analysis[key] = 'otro';
-    assert.throws(() => buildPlan(data), /Contexto/);
-  }
-});
-test('rechaza un issue sin la relación explícita', () => {
-  const data = input(); data.issue.title = 'Otro'; data.issue.body = 'Exportar CSV';
-  assert.throws(() => buildPlan(data), /Issue no relacionado/);
-});
-test('rechaza issues cerrados', () => {
-  const data = input(); data.issue.state = 'closed';
-  assert.throws(() => buildPlan(data), /abierto/);
-});
-test('no reemplaza decisiones recientes con correos antiguos', () => {
-  const data = input(); data.decision.current.receivedAt = '2026-01-17T00:00:00Z';
-  assert.equal(buildPlan(data).action, 'skip');
-});
-test('una decisión ya vigente no genera otro cambio', () => {
-  const data = input(); data.decision.current.format = 'PDF';
-  assert.equal(buildPlan(data).action, 'skip');
-});
-test('IDs son estables y no pueden escapar de rutas', () => {
-  assert.equal(messageKey('../evil'), messageKey('../evil'));
-  assert.match(messageKey('../evil'), /^[a-f0-9]{20}$/);
-});
-test('correo sin confirmación literal requiere revisión', () => {
-  const data = input(); data.email.text = 'Quizás podríamos entregar PDF para este proyecto.';
-  data.analysis.evidence = data.email.text; data.analysis.pending = [];
-  assert.throws(() => buildPlan(data), /confirmación/);
-});
-test('parsea dirección de correo sin aceptar varios remitentes', () => {
-  assert.equal(mailbox('Cliente <CLIENT@example.com>'), 'client@example.com');
-  assert.throws(() => mailbox('a@example.com,b@example.com'), /ambiguo/);
-});
-test('lee texto plano multipart; ignora HTML y adjuntos', () => {
-  const encode = text => Buffer.from(text).toString('base64url');
-  assert.equal(plainText({mimeType:'multipart/mixed',parts:[
-    {mimeType:'text/html',body:{data:encode('<b>No</b>')}},
-    {mimeType:'text/plain',body:{data:encode('Confirmado PDF')}},
-    {mimeType:'text/plain',filename:'attachment.txt',body:{data:encode('Ignorar')}}
-  ]}), 'Confirmado PDF');
+test("adaptador real envía los dos correos sin secretos en el body; errores no usan fixture", async () => {
+  const env = {
+    MODEL_BASE_URL: "https://example.com/v1",
+    MODEL_ID: "test",
+    MODEL_API_KEY: "secret",
+  };
+  const result = await classify(
+    { initialEmail, requestEmail: email, issue, project },
+    env,
+    async (url, options) => {
+      assert.equal(url, "https://example.com/v1/chat/completions");
+      const body = JSON.parse(options.body);
+      assert.ok(!("tools" in body));
+      assert.ok(!options.body.includes("secret"));
+      assert.equal(
+        JSON.parse(body.messages[1].content).initialEmail.id,
+        initialEmail.id,
+      );
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: JSON.stringify(analysis) } }],
+        }),
+      };
+    },
+  );
+  assert.equal(result.requestedFormat, "PDF");
+  await assert.rejects(
+    classify({}, env, async () => ({ ok: false, status: 401 })),
+    /401/,
+  );
+  await assert.rejects(
+    classify({}, { ...env, MODEL_BASE_URL: "http://localhost" }),
+    /HTTPS/,
+  );
 });

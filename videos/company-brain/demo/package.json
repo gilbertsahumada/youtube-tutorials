@@ -8,6 +8,8 @@
     "preview": "node src/main.mjs --fixture",
     "once": "node src/main.mjs --once",
     "watch": "node src/main.mjs --watch",
+    "inbox": "node src/main.mjs --inbox",
+    "baseline": "node src/main.mjs --baseline",
     "gmail:login": "node src/gmail-login.mjs"
   }
 }

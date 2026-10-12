@@ -3,5 +3,5 @@
   "name": "Portal del cliente",
   "delivery": "entrega-1",
   "requirement": "exportar-reportes",
-  "allowedFormats": ["CSV", "PDF", "XLSX"]
+  "allowedFormats": ["CSV", "PDF"]
 }

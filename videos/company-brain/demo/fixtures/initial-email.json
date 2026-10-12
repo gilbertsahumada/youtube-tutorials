@@ -1,0 +1,7 @@
+{
+  "id": "initial-csv",
+  "from": "client@example.com",
+  "subject": "company-brain-demo — acuerdo inicial",
+  "date": "2026-01-10T10:00:00Z",
+  "text": "Para el proyecto portal-cliente, entrega-1, acordamos CSV para exportar-reportes. La primera entrega debe permitir descargar los reportes en CSV."
+}
