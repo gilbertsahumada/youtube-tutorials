@@ -1,4 +1,5 @@
 import { buildPlan, validateIssue } from "./plan.mjs";
+import { matchesSender } from "./filters.mjs";
 
 export function assertBaseline(baseline, repo, issueNumber) {
   if (baseline?.schemaVersion !== 2)
@@ -28,7 +29,7 @@ export async function processEmails({
       state.processed[email.id]
     )
       continue;
-    if (email.from.toLowerCase() !== sender.toLowerCase()) continue;
+    if (!matchesSender(email.from, sender)) continue;
     const issue = await readIssue();
     validateIssue(issue, baseline.project);
     const context = {

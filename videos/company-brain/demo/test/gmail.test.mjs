@@ -72,3 +72,17 @@ test("lista solo correos etiquetados, del remitente y ventana; ordena inicial an
     ["initial", "new"],
   );
 });
+
+test("Gmail aplica todos los filtros guardados sin depender de ALLOWED_SENDER", async () => {
+  const addresses = { exact: "client@uno.com", domain: "team@dos.com", subdomain: "team@sub.dos.com", spoof: "team@dos.com.evil.com", excluded: "other@uno.com" };
+  const emails = await getEmails({ env: { GMAIL_LABEL: "proyectos", GMAIL_AFTER: "2026-01-01T00:00:00Z" },
+    filters: [{ kind: "email", value: "client@uno.com" }, { kind: "domain", value: "dos.com" }],
+    api: async path => {
+      if (path === "labels") return { labels: [{ id: "label", name: "proyectos" }] };
+      if (path === "messages") return { messages: Object.keys(addresses).map(id => ({ id })) };
+      const id = path.split("/")[1];
+      return { id, internalDate: Date.parse("2026-01-10T10:00:00Z"), payload: { mimeType: "text/plain", headers: [{ name: "From", value: addresses[id] }, { name: "Subject", value: id }], body: { data: Buffer.from("Texto del correo").toString("base64url") } } };
+    },
+  });
+  assert.deepEqual(emails.map(item => item.id), ["exact", "domain"]);
+});

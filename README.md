@@ -34,7 +34,7 @@ videos/
 | 6 | Loop Engineering: deja de escribir prompts | [`videos/loop-engineering`](videos/loop-engineering) | Un loop real con memoria en disco y condición de parada verificable | Por agregar |
 | 7 | Qué es Graph Engineering (y cuándo NO usarlo) | [`videos/graph-engineering`](videos/graph-engineering) | Un workflow real con lentes en paralelo, verificación adversarial y anclas externas | Por agregar |
 | 8 | Qué es un Company Brain y cómo puedes construirlo | [`videos/company-brain`](videos/company-brain) | El concepto, sus nueve enfoques y cómo elegir por dónde empezar | [Ver video](https://youtu.be/uB21nWjsx50) |
-| 9 | Company Brain: del correo a una decisión | [`videos/company-brain`](videos/company-brain) | Demo visual, Gmail y GitHub reales, propuestas con evidencia y revisión humana | Por agregar |
+| 9 | Company Brain: del correo a una decisión | [`videos/company-brain`](videos/company-brain) | Proyectos y filtros locales, Gmail y GitHub reales, propuestas con revisión humana | Por agregar |
 | 10 | Pi: skills, extensiones y repository onboarding | [`videos/pi`](videos/pi) | La introducción básica a Pi y un onboarding local por rol | [Ver video](https://youtu.be/fvXWPim2RzM) |
 | 11 | Revisión de Pull Requests con Pi | [`videos/pi-pr-evidence`](videos/pi-pr-evidence) | Un reviewer read-only que publica comentarios desde GitHub Actions | Por agregar |
 
@@ -49,7 +49,7 @@ git clone https://github.com/gilbertsahumada/youtube-tutorials.git
 cd youtube-tutorials/videos/<carpeta-del-video>
 ```
 
-Las demos basadas en scripts requieren **Node.js 20 o superior** y **Bash** (macOS, Linux o WSL; los scripts no corren en Windows nativo). Cada video indica si necesita Claude Code, Codex o Pi. Company Brain requiere Node.js 22 o superior.
+Las demos basadas en scripts requieren **Node.js 20 o superior** y **Bash** (macOS, Linux o WSL; los scripts no corren en Windows nativo). Cada video indica si necesita Claude Code, Codex o Pi. Company Brain requiere Node.js 22.13 o superior.
 
 Demos con recorrido ejecutable, y qué hace cada una:
 
@@ -58,7 +58,7 @@ Demos con recorrido ejecutable, y qué hace cada una:
 | [`harness-engineering`](videos/harness-engineering) | el mismo mensaje dos veces, con y sin harness | un evaluador independiente puntúa las dos: sin harness el marcador no se mueve, con harness `6/6` |
 | [`loop-engineering`](videos/loop-engineering) | `node loop-fix.mjs` | un loop que arregla una feature vuelta a vuelta y se detiene solo |
 | [`graph-engineering`](videos/graph-engineering) | `node review-graph.mjs` | lentes en paralelo, verificación adversarial y ancla externa |
-| [`company-brain`](videos/company-brain) | `npm start` desde `demo/` y el recorrido en la interfaz | conecta correos y una tarea en una demo visual; explora el ejemplo sin cuentas o revisa propuestas reales antes de publicar |
+| [`company-brain`](videos/company-brain) | `npm start` desde `demo/` y el recorrido en la interfaz | crea proyectos y filtros por correo o dominio; conecta tus cuentas desde el entorno y revisa propuestas antes de publicar |
 
 Los números que verás publicados salen de ejecuciones registradas y están marcados como tales. La generación es probabilística: **tu corrida dará algo distinto**, y esa es justamente la razón de que cada demo traiga su propio evaluador.
 

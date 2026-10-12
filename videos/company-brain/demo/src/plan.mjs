@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { matchesSender } from "./filters.mjs";
 
 export const messageKey = (id) =>
   createHash("sha256").update(id).digest("hex").slice(0, 20);
@@ -44,7 +45,7 @@ function evidence(text, quote, format) {
     throw Error(`La evidencia debe mencionar el formato ${format}`);
 }
 function scope(analysis, project, email, sender) {
-  if (email.from.toLowerCase() !== sender.toLowerCase())
+  if (!matchesSender(email.from, sender))
     throw Error("Remitente fuera de la allowlist");
   if (!Number.isFinite(Date.parse(email.date)))
     throw Error("Fecha de correo inválida");

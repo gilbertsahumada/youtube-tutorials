@@ -1,4 +1,5 @@
 import { privatePath, readJson } from "./common.mjs";
+import { matchesSender } from "./filters.mjs";
 
 export function mailbox(header) {
   if (header.includes(",") || (header.match(/</g) || []).length > 1)
@@ -51,7 +52,7 @@ export async function gmailClient(env = process.env) {
     return res.json();
   };
 }
-export async function getEmails({ env = process.env, api } = {}) {
+export async function getEmails({ env = process.env, api, filters = env.ALLOWED_SENDER } = {}) {
   api ||= await gmailClient(env);
   const labels = await api("labels");
   const label = labels.labels?.find((x) => x.name === env.GMAIL_LABEL);
@@ -90,7 +91,7 @@ export async function getEmails({ env = process.env, api } = {}) {
     } catch {
       continue;
     }
-    if (from !== env.ALLOWED_SENDER.toLowerCase()) continue;
+    if (!matchesSender(from, filters)) continue;
     const text = plainText(mail.payload);
     if (!text || text.length > 20000 || Number(mail.internalDate) <= after)
       continue;
