@@ -2,6 +2,8 @@
 
 La guía única, desde la configuración hasta el comentario real, está en **[../README.md](../README.md)**. Ejecuta estos comandos desde esta carpeta con Node.js ≥22.
 
+Configura `.env` **por etapas**, siguiendo los pasos 3 a 5 de la guía. `gmail:login` solo requiere las dos credenciales de Google; GitHub y el modelo se configuran antes de `baseline`. Deja `GMAIL_INITIAL_MESSAGE_ID` vacío hasta obtenerlo con `inbox` y conserva `GMAIL_AFTER` durante toda la demo.
+
 | Comando | Resultado |
 |---|---|
 | `npm test` | Pruebas locales con APIs simuladas, sin credenciales |
