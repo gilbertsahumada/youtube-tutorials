@@ -5,6 +5,7 @@ export const languageKey = 'company-brain-language';
 export const english = {
   'Importado de la configuración anterior.': 'Imported from the previous configuration.',
   'El servidor devolvió una respuesta vacía o inválida. Reinicia la demo y recarga la página.': 'The server returned an empty or invalid response. Restart the demo and reload the page.',
+  'Revisa las conexiones y la tarea del proyecto seleccionado.': 'Check the connections and the selected project’s task.',
   'Cambios guardados.': 'Changes saved.',
   "Proyectos y filtros": "Projects and filters",
   "Proyecto": "Project",

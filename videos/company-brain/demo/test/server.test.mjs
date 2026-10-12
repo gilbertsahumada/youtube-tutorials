@@ -69,8 +69,9 @@ test("HTTP: con entorno completo carga únicamente los datos de las integracione
   };
   let analyzed = 0;
   let published = 0;
+  let issueAccessible = true;
   const { root, base } = await serve(t, env, {
-    emails: async () => [initial, email], issue: async () => issue,
+    emails: async () => [initial, email], issue: async () => { if (!issueAccessible) throw Error("GitHub GET issue: Not Found (HTTP 404)"); return issue; },
     analyze: async context => { analyzed++; return context.requestEmail ? analysis : initialAnalysis; },
     publish: async () => { published++; throw Error("Publicar requiere una acción explícita"); },
   });
@@ -100,6 +101,15 @@ test("HTTP: con entorno completo carga únicamente los datos de las integracione
   assert.equal(published, 0);
   assert.ok(!JSON.stringify({ bootstrap, context, result }).includes("private-"));
   assert.equal(await readFile(join(root, ".env"), "utf8"), "NO_EDITAR=original\n");
+  issueAccessible = false;
+  const inaccessibleResponse = await fetch(base + "/api/bootstrap");
+  assert.equal(inaccessibleResponse.status, 400);
+  const inaccessible = await inaccessibleResponse.json();
+  assert.match(inaccessible.error, /GitHub.*404/);
+  assert.equal(inaccessible.config.project.id, bootstrap.config.project.id);
+  assert.equal(inaccessible.config.environmentReady, true);
+  assert.equal(inaccessible.workspace, null);
+  assert.equal(analyzed, 2, "un error al cargar la tarea no llama al modelo");
 });
 
 test("HTTP: variables CLI no crean proyectos; selección y eliminación de filtros devuelven JSON", async t => {

@@ -90,8 +90,10 @@ function configurationError() {
   if (state.config?.environmentReady && !state.config?.ready) return `<section class="setup-empty">${brainDrawing()}<h1>${project() ? 'Define quién participa en este proyecto.' : 'Crea tu primer proyecto.'}</h1><p>${project() ? 'Añade correos o dominios para encontrar sus acuerdos y solicitudes.' : 'Vincula una tarea de GitHub y elige los correos que forman parte de su contexto.'}</p><button class="button primary" data-page="projects">${icon('plus')}Proyectos y filtros</button></section>`;
   const missing = state.config?.missing || [];
   const errors = state.config?.errors || [];
+  const environmentProblem = missing.length > 0 || errors.length > 0;
+  const help = environmentProblem ? 'Completa las variables en el entorno o en <code>demo/.env</code> y reinicia el servidor.' : 'Revisa las conexiones y la tarea del proyecto seleccionado.';
   const title = missing.length ? 'Faltan variables de entorno.' : errors.length ? 'Revisa las variables de entorno.' : 'No se pudo cargar tu contexto.';
-  return `<section class="environment-error" role="alert"><span class="error-symbol">${icon('settings')}</span><span class="error-kicker">Configuración requerida</span><h1>${title}</h1><p>Completa las variables en el entorno o en <code>demo/.env</code> y reinicia el servidor.</p>${missing.length ? `<div class="missing-variables" aria-label="Variables faltantes">${missing.map(key => `<code>${escape(key)}</code>`).join('')}</div>` : ''}${errors.length ? `<ul class="environment-validation">${errors.map(error => `<li><code>${escape(error.field)}</code><span>${escape(error.message)}</span></li>`).join('')}</ul>` : ''}${state.bootError && !missing.length && !errors.length ? `<p class="negative">${escape(state.bootError)}</p>` : ''}<div class="error-actions"><button class="button primary" data-action="reload">${icon('reset')}Reintentar</button>${state.page !== 'settings' ? '<button class="button secondary" data-page="settings">Ver conexiones</button>' : ''}</div><span class="small-note">Las credenciales se leen en el servidor.</span></section>`;
+  return `<section class="environment-error" role="alert"><span class="error-symbol">${icon('settings')}</span><span class="error-kicker">Configuración requerida</span><h1>${title}</h1><p>${help}</p>${missing.length ? `<div class="missing-variables" aria-label="Variables faltantes">${missing.map(key => `<code>${escape(key)}</code>`).join('')}</div>` : ''}${errors.length ? `<ul class="environment-validation">${errors.map(error => `<li><code>${escape(error.field)}</code><span>${escape(error.message)}</span></li>`).join('')}</ul>` : ''}${state.bootError && !missing.length && !errors.length ? `<p class="negative">${escape(state.bootError)}</p>` : ''}<div class="error-actions"><button class="button primary" data-action="reload">${icon('reset')}Reintentar</button>${!environmentProblem ? '<button class="button secondary" data-page="projects">Proyectos y filtros</button>' : ''}${state.page !== 'settings' ? '<button class="button secondary" data-page="settings">Ver conexiones</button>' : ''}</div><span class="small-note">Las credenciales se leen en el servidor.</span></section>`;
 }
 function highlight(text, quote) {
   if (!quote || !text?.includes(quote)) return escape(text);
@@ -307,7 +309,7 @@ async function selectProject(id, open = false) {
     await request('/api/projects/select', { projectId: id });
     state.filterDraft.projectId = id;
     await refresh(id); state.mailbox = []; state.ambiguous = [];
-    if (open) state.page = state.config.ready && state.config.baseline ? 'decisions' : 'settings';
+    if (open) state.page = state.config.ready && state.config.baseline && !state.bootError ? 'decisions' : 'settings';
   });
 }
 document.addEventListener('click', async event => {
