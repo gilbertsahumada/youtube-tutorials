@@ -1,21 +1,21 @@
-# Scripts de la demo Company Brain
+# Demo visual de Company Brain
 
-La guía única, desde la configuración hasta el comentario real, está en **[../README.md](../README.md)**. Ejecuta estos comandos desde esta carpeta con Node.js ≥22.
+Con **Node.js ≥22**, desde esta carpeta:
 
-Configura `.env` **por etapas**, siguiendo los pasos 3 a 5 de la guía. `gmail:login` solo requiere las dos credenciales de Google; GitHub y el modelo se configuran antes de `baseline`. Deja `GMAIL_INITIAL_MESSAGE_ID` vacío hasta obtenerlo con `inbox` y conserva `GMAIL_AFTER` durante toda la demo.
+```bash
+npm start
+```
 
-| Comando | Resultado |
-|---|---|
-| `npm test` | Pruebas locales con APIs simuladas, sin credenciales |
-| `npm run preview` | Fixture explícita: `output/fixture.json` y `fixture-comment.md`; ninguna API ni publicación |
-| `npm run gmail:login` | OAuth Gmail read-only; guarda el refresh token local |
-| `npm run inbox` | Lista IDs, remitentes, asuntos y fechas de mensajes filtrados |
-| `npm run baseline` | LLM real: valida correo e issue iniciales y guarda `.private/baseline.json`; no publica |
-| `npm run once` | Una iteración con Gmail/GitHub/LLM reales; publica únicamente si `PUBLISH=true` |
-| `npm run watch` | Polling con `PUBLISH=true`; comentarios pendientes de revisión humana |
+Abre **http://127.0.0.1:4173** y pulsa **Analizar solicitud**. El ejemplo funciona sin cuentas ni instalación de dependencias.
 
-Con `PUBLISH=false`, `once` prepara el comentario en `output/` sin escribir en GitHub ni marcar procesado. Con `PUBLISH=true`, guarda el resultado en `.private/state.json` y evita repetirlo.
+Usa **EN / ES** en la barra superior para cambiar entre español e inglés. La preferencia se guarda en el navegador; los textos de las fuentes y los comentarios se conservan tal como fueron recibidos o preparados.
 
-No hay comando `approve`: las decisiones y ediciones posteriores se hacen manualmente en GitHub. No se crean PRs ni se actualiza un supuesto acuerdo automáticamente. El remitente permitido es un filtro, no prueba criptográfica de identidad.
+- **Ejemplo:** explora el acuerdo CSV, la solicitud PDF y la propuesta con evidencia. Usa un análisis preparado; no consulta servicios externos.
+- **Mis cuentas:** conecta Gmail, GitHub y tu modelo desde Configuración. Captura el acuerdo, busca nuevas solicitudes y revisa antes de publicar el comentario.
+- **Fuentes de contexto / Actividad:** inspecciona los datos utilizados y sigue el recorrido de la sesión.
 
-`.env`, `.private/` y `output/` contienen información privada y se ignoran en Git. Los estados del flujo anterior con PRs no son compatibles. Para otro destino usa otra copia de la demo.
+[Guía del tutorial](../README.md) · [Conectar cuentas](../docs/conectar-cuentas.md) · [Comandos originales](../docs/scripts.md)
+
+`npm test` verifica las integraciones con APIs simuladas. `npm run dev` reinicia el servidor al cambiar su código; recarga el navegador para ver los cambios visuales. Si el puerto está ocupado, usa `PORT=4174 npm start`.
+
+`.env`, `.private/` y `output/` son privados y se ignoran en Git. Para otro proyecto, issue o acuerdo inicial usa otra copia de la demo.

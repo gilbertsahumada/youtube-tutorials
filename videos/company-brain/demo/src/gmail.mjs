@@ -21,14 +21,14 @@ export function plainText(payload) {
     .filter(Boolean)
     .join("\n");
 }
-export async function gmailClient() {
+export async function gmailClient(env = process.env) {
   const token = await readJson(privatePath("gmail-token.json"));
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     signal: AbortSignal.timeout(30000),
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID || "",
-      client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
+      client_id: env.GOOGLE_CLIENT_ID || "",
+      client_secret: env.GOOGLE_CLIENT_SECRET || "",
       refresh_token: token.refresh_token,
       grant_type: "refresh_token",
     }),
@@ -52,7 +52,7 @@ export async function gmailClient() {
   };
 }
 export async function getEmails({ env = process.env, api } = {}) {
-  api ||= await gmailClient();
+  api ||= await gmailClient(env);
   const labels = await api("labels");
   const label = labels.labels?.find((x) => x.name === env.GMAIL_LABEL);
   if (!label)
