@@ -336,7 +336,7 @@ Este es el **primer comando del recorrido real que llama al LLM**. Lee el correo
 **Resultado esperado en la terminal:** `Contexto inicial capturado: CSV` y el número de tu issue. Guarda:
 
 - `.private/baseline.json`: correo inicial, evidencia, proyecto y snapshot inicial del issue.
-- `output/initial-context.json`: datos enviados al modelo y su análisis.
+- `output/initial-context.json`: datos enviados al modelo y su análisis. También se guarda si el análisis no pasa la validación; su existencia por sí sola no significa que la captura haya sido aceptada.
 
 Comprueba en `.private/baseline.json` que `initialFormat` sea `"CSV"`, que `initialEmail.id` sea el ID que seleccionaste y que el proyecto, entrega y requisito sean correctos. No compartas esos archivos: contienen información del correo.
 
@@ -430,6 +430,7 @@ Detén el proceso con `Ctrl+C`. No hay aprobaciones automáticas ni un PR pendie
 - **Correo no visible:** sigue la comprobación del paso 4: cuenta receptora autorizada, etiqueta aplicada al mensaje, remitente único, texto plano y fecha posterior a `GMAIL_AFTER`. Crear una etiqueta no la aplica por sí solo a los mensajes. No actualices la fecha de corte después de recibir el correo inicial. Se ignoran HTML, adjuntos y cuerpos de más de 20 000 caracteres. La ventana admite hasta 500 mensajes.
 - **Issue no relacionado:** conserva las líneas de identificación y un único `Formato actual: CSV` o `PDF`. Un PR o un issue cerrado no son destinos válidos.
 - **Cambio durante el análisis:** antes de publicar se comprueba de nuevo el texto y estado del issue. Si cambió, reintenta con contexto actualizado. No es una transacción: sigue siendo una propuesta advisory.
+- **Evidencia rechazada en `baseline`:** la cita del modelo debe tener al menos 20 caracteres, mencionar el formato y ser un extracto exacto del correo, incluidos espacios y saltos de línea. El error indica qué condición falló. Revisa `context.initialEmail.text` y `analysis.initialEvidence` en `output/initial-context.json`; el diagnóstico se guarda antes de validar, pero la captura solo se guarda si pasa los controles. No edites el diagnóstico para intentar aprobarlo ni cambies el acuerdo a mano. No compartas el archivo completo si contiene información privada.
 - **Error OAuth/401:** revisa cuentas, claves y scopes; reautoriza si expiró el token. El modelo necesita credenciales de API, no solo una suscripción a un chat web.
 - **Allowlist:** la dirección `From` no autentica criptográficamente a una persona. La demo no es un sistema de aprobación empresarial ni elimina prompt injection.
 - **Permisos GitHub:** `gh` usa tu sesión; el límite del programa no restringe el token. Usa un sandbox y, cuando sea posible, un token con acceso solo a ese repo e Issues de escritura. No se necesitan escrituras de contenidos para ejecutar el flujo, aunque crear el sandbox requiere permisos adicionales.

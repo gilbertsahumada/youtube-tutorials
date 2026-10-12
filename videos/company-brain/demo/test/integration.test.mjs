@@ -108,6 +108,35 @@ test("CLI completa: inbox → baseline → preview real simulado → comentario 
       return result.stdout;
     };
     assert.match(run("--inbox"), /initial-csv/);
+    const goodAnalysis = await json("fixtures/initial-analysis.json");
+    const badAnalysis = { ...goodAnalysis, initialEvidence: "CSV" };
+    await writeFile(
+      join(root, "fixtures/initial-analysis.json"),
+      JSON.stringify(badAnalysis),
+    );
+    const rejected = spawnSync(
+      process.execPath,
+      [
+        "--import",
+        join(root, "mock-fetch.mjs"),
+        join(root, "src/main.mjs"),
+        "--baseline",
+      ],
+      { encoding: "utf8", env },
+    );
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stderr, /3 caracteres; debe tener al menos 20/);
+    assert.match(rejected.stderr, /output\/initial-context.json/);
+    assert.deepEqual(
+      (await json("output/initial-context.json")).analysis,
+      badAnalysis,
+    );
+    await assert.rejects(access(join(root, ".private/baseline.json")));
+    assert.equal((await json("mock-state.json")).comments.length, 0);
+    await writeFile(
+      join(root, "fixtures/initial-analysis.json"),
+      JSON.stringify(goodAnalysis),
+    );
     assert.match(run("--baseline"), /Contexto inicial capturado: CSV/);
     const before = await json(".private/baseline.json");
     let remote = await json("mock-state.json");
