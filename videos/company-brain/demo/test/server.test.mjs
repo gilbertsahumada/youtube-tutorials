@@ -147,3 +147,46 @@ test("HTTP: variables CLI no crean proyectos; selección y eliminación de filtr
   assert.deepEqual(config.filters, []);
   assert.equal((await fetch(base + "/.private/company-brain.sqlite")).status, 404);
 });
+
+test("HTTP → SQLite → Gmail: solo cinco variables, configuración independiente por proyecto y etiqueta opcional", async t => {
+  const env = { GOOGLE_CLIENT_ID: "client", GOOGLE_CLIENT_SECRET: "secret-google", MODEL_BASE_URL: "https://model.invalid/v1", MODEL_ID: "model", MODEL_API_KEY: "secret-model" };
+  const queries = [];
+  const { root, base } = await serve(t, env, { gmail: async (path, params) => {
+    if (path === "labels") return { labels: [{ id: "label-dos", name: "segundo" }] };
+    if (path === "messages") { queries.push(params); return { messages: [{ id: "included" }, { id: "excluded" }] }; }
+    const id = path.split("/")[1];
+    return { internalDate: Date.parse("2026-02-02T00:00:00Z"), payload: { mimeType: "text/plain", headers: [{ name: "From", value: id === "included" ? "persona@example.com" : "persona@example.com.evil.com" }], body: { data: Buffer.from("Mensaje de participante").toString("base64url") } } };
+  } });
+  await writeFile(join(root, ".env"), "NO_EDITAR=original\n");
+  const initial = await (await fetch(base + "/api/bootstrap")).json();
+  assert.equal(initial.config.environmentReady, true);
+  assert.deepEqual(initial.config.missing, []);
+  assert.deepEqual(initial.config.projects, []);
+  const headers = { "Content-Type": "application/json", "X-Company-Brain-Token": initial.token };
+  const post = async (path, body) => {
+    const response = await fetch(base + path, { method: "POST", headers, body: JSON.stringify(body) });
+    const value = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(value));
+    return value;
+  };
+  const project = { id: "uno", name: "Uno", repository: "org/uno", issueNumber: 1, delivery: "entrega-1", requirement: "informe", gmailAfter: "2026-01-01", gmailLabel: "" };
+  await post("/api/projects", project);
+  await post("/api/projects", { ...project, id: "dos", name: "Dos", repository: "org/dos", gmailAfter: "2026-02-01", gmailLabel: "segundo" });
+  await post("/api/filters", { projectId: "uno", kind: "domain", value: "example.com" });
+  await post("/api/filters", { projectId: "dos", kind: "domain", value: "example.com" });
+  const inbox = await post("/api/inbox", { projectId: "uno" });
+  assert.deepEqual(inbox.ambiguous.map(item => item.id), ["included"], "el dominio completo excluye dominios suplantados");
+  assert.equal(queries[0].labelIds, undefined);
+  assert.equal(queries[0].q, `after:${Date.parse("2026-01-01") / 1000 - 1} {from:"@example.com"}`);
+  await post("/api/inbox", { projectId: "dos" });
+  assert.equal(queries[1].labelIds, "label-dos");
+  assert.match(queries[1].q, new RegExp(`after:${Date.parse("2026-02-01") / 1000 - 1} `));
+  await post("/api/projects", { ...project, gmailAfter: "2026-01-15" });
+  const config = (await (await fetch(base + "/api/bootstrap?projectId=uno")).json()).config;
+  assert.equal(config.ready, true);
+  assert.equal(config.projects[0].gmailAfter, "2026-01-15T00:00:00.000Z");
+  assert.equal(config.projects[0].gmailLabel, "");
+  assert.equal(config.projects[1].gmailLabel, "segundo");
+  assert.equal(await readFile(join(root, ".env"), "utf8"), "NO_EDITAR=original\n");
+  assert.ok(!JSON.stringify(config).includes("secret-"));
+});

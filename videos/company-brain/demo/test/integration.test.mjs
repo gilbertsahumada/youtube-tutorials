@@ -108,6 +108,7 @@ test("CLI completa: inbox → baseline → preview real simulado → comentario 
       return result.stdout;
     };
     assert.match(run("--inbox"), /initial-csv/);
+    assert.match(run("--inbox", { GMAIL_LABEL: "" }), /initial-csv/, "la CLI también permite omitir la etiqueta");
     const goodAnalysis = await json("fixtures/initial-analysis.json");
     const badAnalysis = { ...goodAnalysis, initialEvidence: "CSV" };
     await writeFile(

@@ -9,6 +9,7 @@ import { assertBaseline, processEmails } from "./pipeline.mjs";
 import { environmentStatus } from "./environment.mjs";
 import { createStore, projectContext, validateProject } from "./store.mjs";
 import { normalizeFilter, senderProjects } from "./filters.mjs";
+import { legacyMailSettings } from "./mail-settings.mjs";
 
 const optional = async path => {
   try { return await readJson(path); }
@@ -21,7 +22,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
   let store, initializing, busy = false, loginProcess;
   let oauth = { status: "idle" };
   const api = {
-    emails: () => getEmails({ env, filters: store.filters() }),
+    emails: project => getEmails({ env, api: adapters.gmail, filters: rulesFor(project.id), after: project.gmailAfter, label: project.gmailLabel }),
     issue: project => readIssue(destination(project)),
     analyze: context => classify(context, env),
     publish: (plan, project) => publishComment(plan, destination(project)),
@@ -29,15 +30,15 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
   };
   async function database() {
     if (!initializing) initializing = (async () => {
-      store = await createStore(root);
+      store = await createStore(root, { GMAIL_AFTER: env.GMAIL_AFTER, GMAIL_LABEL: env.GMAIL_LABEL });
       // Legacy variables alone must not create a project during a normal UI startup.
       if (!store.metadata("legacy_imported")) {
         if (store.projects().length) store.setMetadata("legacy_imported", "true");
         else if (env.IMPORT_LEGACY_PROJECT === "true" && env.GITHUB_REPO && env.GITHUB_ISSUE_NUMBER && env.ALLOWED_SENDER) {
           const context = await readJson(local("config/project.json"));
-          const project = validateProject({ id: context.id, name: context.name, delivery: context.delivery, requirement: context.requirement, repository: env.GITHUB_REPO, issueNumber: env.GITHUB_ISSUE_NUMBER });
           const filter = normalizeFilter("email", env.ALLOWED_SENDER);
           const saved = await optional(local(".private/baseline.json"));
+          const project = validateProject({ id: context.id, name: context.name, delivery: context.delivery, requirement: context.requirement, repository: env.GITHUB_REPO, issueNumber: env.GITHUB_ISSUE_NUMBER, ...legacyMailSettings(env, saved?.initialEmail) });
           const state = await optional(local(".private/state.json"));
           if (saved) {
             assertBaseline(saved, project.repository, project.issueNumber);
@@ -61,7 +62,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
     })();
     return initializing;
   }
-  const projectFields = ({ id, name, repository, issueNumber, delivery, requirement }) => ({ id, name, repository, issueNumber, delivery, requirement });
+  const projectFields = ({ id, name, repository, issueNumber, delivery, requirement, gmailAfter, gmailLabel }) => ({ id, name, repository, issueNumber, delivery, requirement, gmailAfter, gmailLabel });
   const requireEnvironment = () => {
     const status = environmentStatus(env);
     if (!status.ready) throw Object.assign(Error(status.error), { status: 503 });
@@ -153,7 +154,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
   async function inbox(projectId) {
     requireEnvironment();
     const project = await requireProject(projectId); requireRules(project);
-    return locked(async () => partition(await api.emails(), project.id));
+    return locked(async () => partition(await api.emails(project), project.id));
   }
   async function capture(id, projectId) {
     requireEnvironment();
@@ -163,7 +164,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
       if (store.metadata("legacy_project") === project.id && env.GMAIL_INITIAL_MESSAGE_ID && env.GMAIL_INITIAL_MESSAGE_ID !== id) throw Error("El correo seleccionado no coincide con GMAIL_INITIAL_MESSAGE_ID. Actualiza el entorno y reinicia el servidor.");
       const previous = baseline(project);
       if (previous) { if (id !== previous.initialEmail.id) throw Error("Ya existe un contexto inicial. No se puede reemplazar desde esta sesión."); return previous; }
-      const email = partition(await api.emails(), project.id).emails.find(item => item.id === id);
+      const email = partition(await api.emails(project), project.id).emails.find(item => item.id === id);
       if (!email) throw Error("Ese correo no está asignado a este proyecto. Revisa los filtros o su asignación.");
       const issue = await api.issue(project);
       const context = { project: projectContext(project), initialEmail: email, issue, requestEmail: null };
@@ -182,7 +183,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
     return locked(async () => {
       const saved = baseline(project);
       if (!saved) throw Error("Selecciona el correo inicial y captura el acuerdo desde Conexiones.");
-      const mailbox = partition(await api.emails(), project.id);
+      const mailbox = partition(await api.emails(project), project.id);
       if (!mailbox.emails.some(email => email.id === saved.initialEmail.id)) throw Error("El acuerdo inicial no aparece entre los correos asignados a este proyecto. Revisa filtros, etiqueta y fecha.");
       const issue = await api.issue(project);
       const current = entries(project, issue);
@@ -230,7 +231,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
     const project = await requireProject(projectId);
     return locked(async () => {
       if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(id)) throw Error("ID de correo inválido.");
-      const email = (await api.emails()).find(item => item.id === id);
+      const email = (await api.emails(project)).find(item => item.id === id);
       if (!email || !senderProjects(email.from, store.filters()).includes(project.id)) throw Error("Ese correo no coincide con los filtros de este proyecto.");
       store.assign(id, project.id);
       return { projectId: project.id };

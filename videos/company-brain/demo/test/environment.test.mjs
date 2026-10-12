@@ -31,6 +31,13 @@ test("entorno: valida el entorno global; los destinos y remitentes se guardan po
     MODEL_BASE_URL: authenticatedUrl.href,
   });
   assert.equal(status.ready, false);
-  assert.deepEqual(status.errors.map(error => error.field), ["GMAIL_AFTER", "MODEL_BASE_URL"]);
+  assert.deepEqual(status.errors.map(error => error.field), ["MODEL_BASE_URL"]);
   assert.ok(!JSON.stringify(status).includes("private-"));
+});
+
+test("entorno: Gmail solo necesita las credenciales; etiqueta y fecha antiguas no bloquean la UI", () => {
+  const credentials = { GOOGLE_CLIENT_ID: "client", GOOGLE_CLIENT_SECRET: "secret", MODEL_BASE_URL: "https://model.invalid/v1", MODEL_ID: "model", MODEL_API_KEY: "key" };
+  assert.equal(environmentStatus(credentials).ready, true);
+  assert.equal(environmentStatus({ ...credentials, GMAIL_LABEL: "\n", GMAIL_AFTER: "invalid" }).ready, true);
+  assert.equal(requiredFields.length, 5);
 });

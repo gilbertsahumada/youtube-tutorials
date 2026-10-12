@@ -11,6 +11,9 @@ test('idioma: mensajes dinámicos conservan formatos, cuentas y campos de config
   assert.equal(translate('Faltan variables de entorno.', 'en'), 'Environment variables are missing.');
   assert.equal(translate('La URL, el modelo y la clave se leen exclusivamente en el servidor.', 'en'), 'The URL, model and key are read exclusively on the server.');
   assert.equal(translate('Issue #42. El cambio sigue pendiente de decisión humana.', 'en'), 'Issue #42. The change still awaits a human decision.');
+  assert.equal(translate('Etiqueta de Gmail (opcional)', 'en'), 'Gmail label (optional)');
+  assert.equal(translate('Leer correos desde (UTC)', 'en'), 'Read emails from (UTC)');
+  assert.equal(translate('La fecha de inicio debe incluir el correo del acuerdo inicial.', 'en'), 'The start date must include the initial agreement email.');
 });
 
 test('idioma: texto desconocido y fuentes originales nunca se traducen por aproximación', () => {
