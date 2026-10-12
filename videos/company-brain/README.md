@@ -61,8 +61,19 @@ Comprueba que el comentario cite el acuerdo CSV, la petición PDF y diga **pendi
 
 ## 2. Crear el issue inicial en GitHub
 
+**Objetivo:** tener una tarea de prueba que pida CSV, sin tocar un proyecto real.
+
+Comprueba la sesión de GitHub:
+
 ```bash
 gh auth status
+```
+
+Si no estás autenticado, ejecuta `gh auth login` y completa el inicio de sesión antes de seguir. La cuenta que uses debe poder crear el sandbox y comentar en sus issues.
+
+Crea el repositorio y la tarea. Si ya hiciste este paso, no los crees de nuevo: conserva su nombre y número para el paso 5.
+
+```bash
 # Sustituye TU_USUARIO. El repositorio no debe existir todavía.
 gh repo create TU_USUARIO/company-brain-sandbox --private
 
@@ -71,64 +82,138 @@ gh issue create --repo TU_USUARIO/company-brain-sandbox \
   --body $'Proyecto: portal-cliente\nEntrega: entrega-1\nRequisito: exportar-reportes\nFormato actual: CSV\n\nImplementar exportación CSV.\n\nAceptación: generar un archivo CSV descargable con los datos del reporte.'
 ```
 
-Guarda el número que aparece en la URL del issue. No hay que subir un repositorio de memoria ni crear un commit inicial: para este caso el contexto es el correo inicial y la tarea.
+**Resultado:** GitHub imprime la URL de un issue abierto titulado «Implementar exportación CSV». Ábrelo y comprueba su descripción. Guarda el número que aparece al final de la URL para el paso 5. No hay que subir un repositorio de memoria ni crear un commit inicial: para este caso el contexto es el correo inicial y la tarea.
 
 Las líneas `Proyecto`, `Entrega`, `Requisito` y `Formato actual` son parte del contrato de la demo. El código las valida contra `config/project.json` para no comentar sobre otra tarea. No cambies esos identificadores a mitad del recorrido.
 
-## 3. Configurar Gmail de solo lectura y el modelo
+## 3. Conectar Gmail y preparar la lectura de correos
+
+**Objetivo:** autorizar la cuenta que recibirá los mensajes y definir cuáles debe leer el programa. En este paso todavía no necesitas configurar el modelo ni las variables de GitHub.
+
+### 3.1. Elegir las dos cuentas y crear `.env`
+
+Distingue estos dos papeles:
+
+| Cuenta | Qué harás con ella |
+|---|---|
+| **Receptora: Gmail de prueba** | Recibirá los dos mensajes. Aquí crearás la etiqueta y esta es la cuenta que autorizarás para que el programa lea su buzón. |
+| **Remitente: otro correo tuyo** | Enviará los dos mensajes. Su dirección irá en `ALLOWED_SENDER`. No tienes que autorizar esta cuenta al programa. |
+
+Usa cuentas que controles y contenido ficticio. En `ALLOWED_SENDER` escribirás la dirección de correo del remitente, no su nombre de contacto ni un nombre de usuario.
+
+Desde `videos/company-brain/demo/`, crea `.env` **solo si aún no existe**:
 
 ```bash
-cp .env.example .env
+[ -f .env ] || cp .env.example .env
 ```
 
-En Google Cloud:
+Abre `.env` en tu editor. No vuelvas a copiar la plantilla encima de un archivo que ya completaste: perderías sus valores. Los bloques siguientes indican qué líneas editar; no son comandos de terminal.
 
-1. Activa **Gmail API** en un proyecto de prueba.
-2. Configura la pantalla OAuth. En modo testing, añade la cuenta receptora como test user.
-3. Crea un cliente OAuth de tipo **Desktop app**.
-4. Copia el client ID y secret a `.env`.
+**No hay que completar todo de golpe.** Por ahora deja `GMAIL_INITIAL_MESSAGE_ID=` vacío, conserva `POLL_SECONDS=30` y `PUBLISH=false`, y no uses todavía los placeholders de GitHub o del modelo.
 
-En Gmail crea la etiqueta `company-brain-demo` y un filtro para aplicarla al remitente de prueba cuando el asunto contenga `company-brain-demo`. También puedes aplicar la etiqueta manualmente a ambos mensajes.
+### 3.2. Obtener las dos credenciales de Google
 
-Completa `.env`:
+En [Google Cloud Console](https://console.cloud.google.com/), selecciona o crea un proyecto de prueba:
+
+1. En **APIs y servicios → Biblioteca**, busca **Gmail API** y actívala.
+2. Configura la pantalla de consentimiento OAuth (puede aparecer como **Google Auth Platform**). Para una cuenta personal, usa audiencia **External**, en modo **Testing**, y añade la dirección de la **cuenta receptora** como test user.
+3. En los permisos/scopes de acceso a datos, incluye `https://www.googleapis.com/auth/gmail.readonly`.
+4. En **Credenciales / Clients**, crea un cliente OAuth de tipo **Desktop app / Aplicación de escritorio**.
+5. Copia su **Client ID** y **Client secret** a estas dos líneas de `.env`:
 
 ```dotenv
-GOOGLE_CLIENT_ID=TU_CLIENT_ID
-GOOGLE_CLIENT_SECRET=TU_CLIENT_SECRET
-GMAIL_LABEL=company-brain-demo
-ALLOWED_SENDER=correo-del-remitente-de-prueba@example.com
-GMAIL_AFTER=FECHA_ISO_ANTES_DEL_PRIMER_CORREO
-GMAIL_INITIAL_MESSAGE_ID=
-GITHUB_REPO=TU_USUARIO/company-brain-sandbox
-GITHUB_ISSUE_NUMBER=1
-POLL_SECONDS=30
-PUBLISH=false
-MODEL_BASE_URL=https://maas.qwencloudapi.com/compatible-mode/v1
-MODEL_ID=deepseek-v4.1-flash
-MODEL_API_KEY=TU_CLAVE
+GOOGLE_CLIENT_ID=PEGA_AQUI_EL_CLIENT_ID_REAL
+GOOGLE_CLIENT_SECRET=PEGA_AQUI_EL_CLIENT_SECRET_REAL
 ```
 
-Usa el número real del issue. Para obtener una fecha ISO:
+Sustituye los textos de ejemplo por los valores de Google. **No son tu dirección ni tu contraseña de Gmail, ni una API key del modelo.** No compartas el secret ni el archivo `.env`.
 
-```bash
-node -e 'console.log(new Date().toISOString())'
-```
+### 3.3. Autorizar la cuenta receptora
 
-Guárdala en `GMAIL_AFTER` **antes de enviar el correo inicial**. No pegues literalmente los placeholders. El endpoint y modelo son un ejemplo: puedes usar otro servicio compatible. `MODEL_ID` es el ID del modelo, sin prefijo de provider. La URL base debe usar HTTPS; el código añade `/chat/completions`.
-
-Autoriza Gmail:
+Con esas dos variables ya completadas, ejecuta:
 
 ```bash
 npm run gmail:login
 ```
 
-Abre la URL que imprime y autoriza la cuenta receptora de prueba. El callback local es temporal, con state y PKCE; no es una interfaz de la demo. El refresh token queda en `.private/gmail-token.json`, ignorado por Git.
+**Este comando solo requiere `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`.** No necesita todavía `GMAIL_AFTER`, el ID del correo, GitHub ni el modelo.
 
-**El scope `gmail.readonly` puede leer el buzón completo.** La etiqueta, el remitente y la fecha son filtros del programa, no restricciones OAuth. Usa una cuenta dedicada. No se solicitan permisos para enviar, borrar ni modificar mensajes.
+1. Abre la URL que imprime la terminal.
+2. Selecciona la **cuenta receptora de prueba**, no la remitente.
+3. Revisa el permiso de lectura y autoriza tu aplicación de prueba.
+4. Vuelve a la terminal: debe confirmar que guardó el refresh token. Si aparece un bloqueo de OAuth, revisa que la cuenta receptora esté añadida como test user; no continúes hasta resolverlo.
 
-## 4. Enviar y capturar el correo inicial
+**Resultado:** existe `.private/gmail-token.json`. Ese archivo permite renovar el acceso sin iniciar sesión en cada consulta. No tienes que copiar su contenido a `.env` ni publicarlo.
 
-Desde el remitente configurado, envía este mensaje a la cuenta receptora:
+El callback local es temporal, con state y PKCE; no es una interfaz de la demo. **El scope `gmail.readonly` permite leer el buzón completo.** La etiqueta, el remitente y la fecha son filtros del código, no restricciones OAuth. No se solicitan permisos para enviar, borrar ni modificar mensajes.
+
+### 3.4. Crear la etiqueta y elegir el remitente permitido
+
+En Gmail web, dentro de la **cuenta receptora**:
+
+1. En el menú izquierdo, junto a **Etiquetas**, pulsa **+** (o **Más → Crear etiqueta nueva**).
+2. Crea una etiqueta llamada exactamente `company-brain-demo`.
+3. En la barra de búsqueda, abre **Mostrar opciones de búsqueda**.
+4. En **De / From**, escribe la dirección de tu cuenta remitente.
+5. En **Asunto / Subject**, escribe `company-brain-demo`.
+6. Pulsa **Crear filtro**, marca **Aplicar la etiqueta**, elige `company-brain-demo` y confirma **Crear filtro**.
+
+Así se etiquetarán automáticamente los dos correos cuando lleguen. Si prefieres no crear el filtro, aplica la etiqueta manualmente a **cada uno** antes de ejecutar los scripts; crear solo la etiqueta no etiqueta ningún mensaje.
+
+Edita estas líneas de `.env`:
+
+```dotenv
+GMAIL_LABEL=company-brain-demo
+ALLOWED_SENDER=LA_DIRECCION_REAL_DESDE_LA_QUE_ENVIARAS_LOS_CORREOS
+```
+
+Reemplaza el segundo valor por la dirección real de tu cuenta remitente. No uses `cliente@example.com`: es una dirección ficticia de los ejemplos. No pongas la dirección de la cuenta receptora. Conserva el nombre de etiqueta tal como lo creaste.
+
+### 3.5. Definir desde qué momento leer mensajes (`GMAIL_AFTER`)
+
+`GMAIL_AFTER` significa **«ignora los correos recibidos antes de este momento»**. Sirve para no procesar mensajes antiguos de la misma etiqueta. No es una credencial.
+
+**Si todavía no enviaste el correo inicial**, ejecuta ahora:
+
+```bash
+node -e 'console.log(new Date().toISOString())'
+```
+
+El comando imprime la fecha y hora actuales en formato ISO, que el programa puede interpretar. Por ejemplo:
+
+```text
+2026-01-16T12:34:56.789Z
+```
+
+`T` separa la fecha de la hora; `Z` indica hora UTC. No tienes que convertirla a tu zona horaria ni escribirla a mano.
+
+1. Copia **la salida real del comando**, no el comando ni la fecha del ejemplo.
+2. Pégala después de `GMAIL_AFTER=` en `.env`, sin espacios. Si el comando hubiera impreso la fecha anterior, la línea quedaría así:
+
+   ```dotenv
+   GMAIL_AFTER=2026-01-16T12:34:56.789Z
+   ```
+
+3. Guarda `.env`.
+4. **Envía el primer correo después de guardar este valor**, en el paso 4.
+
+Conserva ese mismo valor durante todo el recorrido. Si vuelves a generar la fecha después de recibir el primer correo, lo excluirás de la lectura.
+
+**Si ya enviaste el correo inicial:** no uses la hora actual como corte. Pon una fecha anterior a su recepción. Para obtener, por ejemplo, la fecha de hace 24 horas:
+
+```bash
+node -e 'console.log(new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())'
+```
+
+Usa esa salida **solo si el correo llegó en las últimas 24 horas**; para uno más antiguo, elige un corte anterior a su llegada. Si necesitas aplicar la etiqueta a un correo ya recibido, hazlo manualmente o selecciona «aplicar también a las conversaciones coincidentes» al crear el filtro.
+
+**Antes de continuar:** debes tener `.private/gmail-token.json`, la etiqueta creada y estas cinco variables completas: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GMAIL_LABEL`, `ALLOWED_SENDER` y `GMAIL_AFTER`. El ID del correo sigue vacío. `PUBLISH` sigue en `false`.
+
+## 4. Enviar el correo inicial y obtener su ID
+
+**Objetivo:** comprobar que el programa puede leer el mensaje correcto, antes de involucrar al modelo.
+
+Desde la **cuenta remitente configurada en `ALLOWED_SENDER`**, envía a la **cuenta receptora que autorizaste**:
 
 **Asunto:** `company-brain-demo — acuerdo inicial`
 
@@ -137,30 +222,105 @@ Para el proyecto portal-cliente, entrega-1, acordamos CSV para exportar-reportes
 La primera entrega debe permitir descargar los reportes en CSV.
 ```
 
-Comprueba que tiene la etiqueta. Lista los correos disponibles:
+Abre el mensaje en la cuenta receptora y comprueba que tiene la etiqueta `company-brain-demo`. Si no creaste el filtro, aplícala ahora manualmente.
+
+Lista los mensajes que cumplen los filtros:
 
 ```bash
 npm run inbox
 ```
 
-La salida contiene `id`, remitente, asunto y fecha. Copia el `id` del correo inicial a `GMAIL_INITIAL_MESSAGE_ID` en `.env`. Es el **ID de Gmail API**, no el identificador RFC Message-ID ni un fragmento de la URL del navegador.
+**Este comando no llama al modelo ni a GitHub.** Usa las cinco variables de Gmail del paso 3 y el token guardado al autorizar.
 
-Captura el contexto:
+Debe aparecer un objeto con `id`, `from`, `subject` y `date` del mensaje inicial. Si ves `[]`, no continúes: comprueba que autorizaste la cuenta receptora correcta, que el mensaje tiene la etiqueta, que `from` coincide con `ALLOWED_SENDER` y que llegó después de `GMAIL_AFTER`.
+
+Copia el valor de `id` de ese mensaje, **sin las comillas del JSON**, a la línea `GMAIL_INITIAL_MESSAGE_ID=` de `.env` y guarda el archivo. Por ejemplo, si la salida contiene `"id": "18abcdef12345678"`, escribe:
+
+```dotenv
+GMAIL_INITIAL_MESSAGE_ID=18abcdef12345678
+```
+
+Usa tu ID real, no el ejemplo. Es el **ID de Gmail API**, no el identificador RFC Message-ID ni un fragmento de la URL del navegador. No lo conocías antes porque el mensaje todavía no existía.
+
+**Resultado:** `inbox` muestra el correo inicial y `.env` ya contiene su ID. Aún no se ha capturado el contexto ni se ha escrito en GitHub.
+
+## 5. Configurar GitHub y el modelo, y capturar el contexto inicial
+
+### 5.1. Indicar dónde está el issue
+
+Edita estas dos líneas de `.env` usando el repositorio y el issue que creaste en el paso 2:
+
+```dotenv
+GITHUB_REPO=TU_USUARIO/company-brain-sandbox
+GITHUB_ISSUE_NUMBER=NUMERO_REAL_DEL_ISSUE
+```
+
+`GITHUB_REPO` es `owner/repo`, **sin** `https://github.com/`. Si la URL del issue termina en `/issues/3`, pon `GITHUB_ISSUE_NUMBER=3`, no `1`.
+
+GitHub se autentica mediante la sesión de `gh`, no mediante las credenciales de Google. Comprueba que puedes leer el destino, sustituyendo los argumentos por tus valores reales:
+
+```bash
+gh auth status
+gh issue view NUMERO_REAL_DEL_ISSUE --repo TU_USUARIO/company-brain-sandbox
+```
+
+**Resultado:** ves el issue abierto que pide CSV y sus líneas de proyecto, entrega, requisito y formato. Si no puedes leerlo, corrige la cuenta o los permisos antes de continuar.
+
+### 5.2. Configurar el proveedor del modelo
+
+Ahora sí, completa las tres variables del modelo. Este bloque es un ejemplo para un endpoint compatible de DashScope:
+
+```dotenv
+MODEL_BASE_URL=https://maas.qwencloudapi.com/compatible-mode/v1
+MODEL_ID=deepseek-v4.1-flash
+MODEL_API_KEY=PEGA_AQUI_TU_API_KEY_REAL_DE_ESE_SERVICIO
+```
+
+- `MODEL_BASE_URL`: URL base HTTPS de la API de tu proveedor, no de su página de chat. El código añade `/chat/completions`; no lo añadas tú a la URL base.
+- `MODEL_ID`: ID de un modelo disponible para tu cuenta, sin prefijo de provider. No uses `dashscope/deepseek-v4.1-flash` aquí.
+- `MODEL_API_KEY`: clave de API válida para **ese endpoint**. No es el client secret de Google ni un token de GitHub. Una suscripción a un chat web no garantiza acceso a la API.
+
+Puedes usar otro proveedor compatible con Chat Completions, pero cambia los tres valores como un conjunto. No dejes el endpoint del ejemplo si tu clave pertenece a otro servicio. No pegues tu clave en el README, en un issue ni en mensajes.
+
+Conserva:
+
+```dotenv
+POLL_SECONDS=30
+PUBLISH=false
+```
+
+`POLL_SECONDS` es el intervalo entre consultas cuando uses `watch`. `PUBLISH=false` impide escribir comentarios al ejecutar `once`. No lo cambies todavía.
+
+### 5.3. Comprobar qué está configurado y capturar el contexto
+
+En este punto **todas las variables de `.env` deben tener valores reales o los valores fijos indicados**. Ya no debe quedar vacío `GMAIL_INITIAL_MESSAGE_ID`, porque lo obtuviste en el paso 4.
+
+| Comando | Configuración necesaria |
+|---|---|
+| `gmail:login` | Solo las dos credenciales OAuth de Google |
+| `inbox` | Las cinco variables de Gmail del paso 3 y el token OAuth guardado |
+| `baseline` | Todo lo anterior, ID del correo inicial, repo/issue, sesión `gh` y las tres variables del modelo |
+| `once` | La misma configuración que `baseline` y la captura inicial guardada; `PUBLISH=false` para revisar sin publicar |
+| `watch` | Lo mismo, pero con `PUBLISH=true` para publicar y `POLL_SECONDS` de al menos 10 |
+
+Ejecuta:
 
 ```bash
 npm run baseline
 ```
 
-Este comando consulta el correo y el issue, pide al LLM identificar el formato y comprueba que ambos coincidan en CSV. Guarda:
+Este es el **primer comando del recorrido real que llama al LLM**. Lee el correo seleccionado y el issue, pide al modelo identificar el formato inicial y comprueba que ambos coincidan en CSV. No escribe en GitHub.
+
+**Resultado esperado en la terminal:** `Contexto inicial capturado: CSV` y el número de tu issue. Guarda:
 
 - `.private/baseline.json`: correo inicial, evidencia, proyecto y snapshot inicial del issue.
 - `output/initial-context.json`: datos enviados al modelo y su análisis.
 
-No escribe en GitHub. Comprueba `initialFormat: "CSV"` y que los IDs del proyecto, entrega y requisito sean correctos. Esta captura permite comparar la nueva petición con una fuente concreta, no con un supuesto acuerdo inventado.
+Comprueba en `.private/baseline.json` que `initialFormat` sea `"CSV"`, que `initialEmail.id` sea el ID que seleccionaste y que el proyecto, entrega y requisito sean correctos. No compartas esos archivos: contienen información del correo.
 
-La captura no se sobrescribe automáticamente. Si cambias cuenta, configuración, repo, issue o correo inicial, usa otra copia de la demo con su propio `.env` y estado.
+Esta captura permite comparar la nueva petición con una fuente concreta, no con un supuesto acuerdo inventado. No se sobrescribe automáticamente. Si cambias cuenta, configuración del proyecto, repo, issue o correo inicial, usa otra copia de la demo con su propio `.env` y estado.
 
-## 5. Enviar la nueva solicitud y revisar sin publicar
+## 6. Enviar la nueva solicitud y revisar sin publicar
 
 Desde el mismo remitente, envía:
 
@@ -193,7 +353,7 @@ El comentario debe contener:
 
 Hasta aquí **no debe aparecer un comentario nuevo en GitHub**. Una petición ambigua, de otro alcance o con evidencia inventada se omite o provoca un error. Los errores del proveedor no se sustituyen por fixtures.
 
-## 6. Publicar solo el comentario
+## 7. Publicar solo el comentario
 
 Después de revisar el preview, cambia en `.env`:
 
@@ -217,7 +377,7 @@ Comprueba también que el título, la descripción, el formato, los criterios, l
 
 El programa guarda el resultado en `.private/state.json`. Repetir `once` no debe duplicar el comentario ni volver a clasificar mensajes ya procesados. Si hubo un timeout después de publicarlo, recupera el comentario de la misma cuenta mediante un marcador por mensaje y paginación.
 
-## 7. Observar la llegada de mensajes automáticamente
+## 8. Observar la llegada de mensajes automáticamente
 
 `once` realiza una iteración. Para comprobar periódicamente Gmail:
 
@@ -245,7 +405,7 @@ Detén el proceso con `Ctrl+C`. No hay aprobaciones automáticas ni un PR pendie
 
 ## Fallos, permisos y límites
 
-- **Correo no visible:** comprueba etiqueta, remitente único, texto plano y fecha posterior a `GMAIL_AFTER`. Se ignoran HTML, adjuntos y cuerpos de más de 20 000 caracteres. La ventana admite hasta 500 mensajes.
+- **Correo no visible:** sigue la comprobación del paso 4: cuenta receptora autorizada, etiqueta aplicada al mensaje, remitente único, texto plano y fecha posterior a `GMAIL_AFTER`. Crear una etiqueta no la aplica por sí solo a los mensajes. No actualices la fecha de corte después de recibir el correo inicial. Se ignoran HTML, adjuntos y cuerpos de más de 20 000 caracteres. La ventana admite hasta 500 mensajes.
 - **Issue no relacionado:** conserva las líneas de identificación y un único `Formato actual: CSV` o `PDF`. Un PR o un issue cerrado no son destinos válidos.
 - **Cambio durante el análisis:** antes de publicar se comprueba de nuevo el texto y estado del issue. Si cambió, reintenta con contexto actualizado. No es una transacción: sigue siendo una propuesta advisory.
 - **Error OAuth/401:** revisa cuentas, claves y scopes; reautoriza si expiró el token. El modelo necesita credenciales de API, no solo una suscripción a un chat web.
