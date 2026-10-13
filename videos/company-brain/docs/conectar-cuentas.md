@@ -12,7 +12,7 @@ Desde `demo/`, copia `.env.example` a `.env` si todavía no existe. Completa las
 | `MODEL_ID` | Identificador de un modelo disponible en tu cuenta |
 | `MODEL_API_KEY` | Clave de API del proveedor indicado en la URL |
 
-Puedes declarar estas variables en el entorno del proceso en lugar de usar `.env`. Tras cambiarlas, reinicia el servidor. Una configuración incompleta o inválida muestra un error; nunca carga datos de ejemplo. Puedes crear proyectos y guardar filtros mientras completas las conexiones.
+Estas cinco variables son toda la configuración de `.env` para la UI. Puedes declararlas en el entorno del proceso en lugar de usar `.env`. Tras cambiarlas, reinicia el servidor. Una configuración incompleta o inválida muestra un error; nunca carga datos de ejemplo. Puedes crear proyectos y guardar filtros mientras completas las conexiones.
 
 ## Gmail y GitHub
 
@@ -57,7 +57,7 @@ Puedes editar la fecha y la etiqueta, añadir o eliminar filtros y cambiar el pr
 
 ## Capturar, analizar y revisar
 
-1. Selecciona el proyecto. En **Conexiones**, pulsa **Cargar correos** y captura el acuerdo inicial. El modelo valida que correo e issue coincidan en el formato.
+1. Selecciona el proyecto. En **Conexiones**, pulsa **Cargar correos** y captura el acuerdo inicial. Su ID se guarda en SQLite al seleccionarlo. El modelo valida que correo e issue coincidan en el formato.
 2. Cuando llegue una solicitud de un participante, pulsa **Buscar solicitudes**.
 3. En **Revisar propuesta**, comprueba los extractos y el comentario. **Publicar comentario en GitHub** escribe solo ese comentario y evita duplicarlo.
 
@@ -65,9 +65,7 @@ Puedes editar la fecha y la etiqueta, añadir o eliminar filtros y cambiar el pr
 
 SQLite guarda proyectos, fechas de inicio, etiquetas opcionales, filtros, asignaciones, acuerdos, propuestas y publicaciones en `.private/company-brain.sqlite`. Al reiniciar o recargar la página, las propuestas pendientes siguen disponibles. Para conservar los datos, respalda `.private/`; las credenciales de `.env` y la sesión de `gh` se mantienen por separado. La base y los diagnósticos de `output/<proyecto>/` no se sirven al navegador ni se incluyen en Git.
 
-Una base anterior se actualiza sin perder el estado: copia una sola vez la fecha y etiqueta antiguas a cada proyecto. Si falta una fecha válida, elige una que incluya el acuerdo guardado o el día actual cuando no hay acuerdo. Los cambios posteriores de `GMAIL_LABEL` y `GMAIL_AFTER` no modifican los proyectos de la UI.
-
-El inicio normal deja los proyectos vacíos hasta que los creas en el formulario. Para importar el proyecto de la CLI y su estado, activa `IMPORT_LEGACY_PROJECT=true` antes de iniciar con una base vacía y configura `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SENDER`. La importación es única y deja los JSON originales intactos. Si el proyecto ya se importó con una versión anterior, sigue guardado y la UI indica su procedencia. Después, los proyectos de la UI se gestionan en SQLite. [Ver compatibilidad con los scripts](scripts.md).
+Al iniciar con una base vacía, crea tu primer proyecto desde **Proyectos y filtros**. Los proyectos guardados en SQLite vuelven a aparecer al reiniciar.
 
 ## Si algo no aparece
 

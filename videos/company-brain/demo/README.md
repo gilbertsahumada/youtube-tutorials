@@ -21,7 +21,7 @@ Completa `.env` con estas cinco variables:
 | Cliente OAuth de Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
 | Proveedor y modelo de IA | `MODEL_BASE_URL`, `MODEL_ID`, `MODEL_API_KEY` |
 
-La fecha de inicio y la etiqueta opcional se guardan por proyecto en SQLite, junto con sus participantes. La UI no necesita `GMAIL_LABEL` ni `GMAIL_AFTER` en `.env`. [Cómo configurar las conexiones](../README.md#1-prepara-las-conexiones).
+Estas cinco variables son toda la configuración de `.env` para la UI. El destino de GitHub, los participantes, la fecha de inicio y la etiqueta opcional se guardan por proyecto en SQLite. Selecciona el correo inicial desde **Conexiones → Capturar acuerdo**; su ID también queda guardado por proyecto. [Cómo configurar las conexiones](../README.md#1-prepara-las-conexiones).
 
 Si usas nvm, ejecuta `nvm use`. Después:
 
@@ -60,6 +60,6 @@ Para respaldarlo, detén la demo y copia `.private/`; guarda `.env` por separado
 | `npm run test:fixture` | Prueba aislada del recorrido por terminal, sin publicación. |
 | `PORT=4174 npm start` | Arranca en otro puerto si el 4173 está ocupado. |
 
-Los datos de `fixtures/` se utilizan solo en pruebas, sin sustituir los datos de la UI. Las variables opcionales de `.env.example` corresponden a los comandos originales. Al actualizar una base anterior, la fecha y la etiqueta se copian una sola vez a sus proyectos; después se editan en la UI, sin reiniciar.
+Los datos de `fixtures/` se utilizan solo en pruebas, sin sustituir los datos de la UI. Al iniciar con una base vacía, crea tu primer proyecto desde el formulario.
 
-[Tutorial completo](../README.md) · [Resolver problemas](../README.md#si-algo-no-funciona) · [Detalle de conexiones](../docs/conectar-cuentas.md) · [Scripts y compatibilidad con la CLI](../docs/scripts.md)
+[Tutorial completo](../README.md) · [Resolver problemas](../README.md#si-algo-no-funciona) · [Detalle de conexiones](../docs/conectar-cuentas.md) · [Comandos por terminal](../docs/scripts.md)

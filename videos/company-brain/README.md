@@ -68,7 +68,7 @@ Esto crea `.env` sin reemplazar una configuración existente. Si usas nvm, ejecu
 | `MODEL_ID` | Identificador de un modelo disponible en ese proveedor y en tu cuenta. |
 | `MODEL_API_KEY` | Clave de API del mismo proveedor. |
 
-La fecha de inicio, la etiqueta opcional y los participantes se configuran por proyecto en la UI y se guardan en SQLite. No necesitas `GMAIL_LABEL` ni `GMAIL_AFTER` en `.env` para usar la interfaz.
+Estas son todas las variables de la plantilla. El repositorio, el issue, los participantes, la fecha de inicio y la etiqueta opcional se configuran por proyecto en la UI y se guardan en SQLite. El correo inicial también se selecciona en la UI; su ID se guarda al capturar el acuerdo.
 
 Obtén las tres variables del modelo en el panel o la documentación de tu proveedor. El servidor añade `/chat/completions` a la URL base. La URL, el modelo y la clave deben corresponder a la misma API. El modelo recibirá los textos de los correos y del issue para analizarlos.
 
@@ -83,8 +83,6 @@ gh auth login
 GitHub CLI te guía por la autorización. [Ayuda oficial del comando](https://cli.github.com/manual/gh_auth_login).
 
 Las credenciales se leen únicamente en el servidor, desde `.env` o el entorno del proceso. Si faltan variables o sus valores tienen un formato inválido, la UI muestra el error. Tras cambiar `.env`, reinicia el servidor. Los valores cargados se comprueban con las APIs al conectar o analizar; **“Entorno listo” no garantiza que una clave sea válida**.
-
-Las variables opcionales de la plantilla, como `GITHUB_REPO`, `ALLOWED_SENDER` o `PUBLISH`, pertenecen a los [scripts por terminal](docs/scripts.md). Para un proyecto nuevo en la UI, el destino y los participantes se guardan con el formulario del siguiente paso.
 
 ### 2. Crea la tarea y el proyecto
 
@@ -224,9 +222,7 @@ La base guarda el contexto utilizado por la demo; no replica todo el buzón. Las
 
 Para respaldar el estado, detén la demo y copia `.private/`. Conserva `.env` por separado si necesitas restaurar las conexiones; la sesión de GitHub CLI se gestiona con `gh`. `.env`, `.private/` y `output/` están excluidos de Git, y los archivos privados y diagnósticos no se sirven como archivos web.
 
-Al actualizar una base de una versión anterior, la demo copia una sola vez `GMAIL_LABEL` y `GMAIL_AFTER` a los proyectos existentes. Si falta una fecha válida, usa el día actual o una fecha que incluya el acuerdo ya guardado. Conserva los proyectos, filtros, acuerdos y publicaciones. Después, puedes eliminar esas dos variables del entorno de la UI; sus cambios se hacen en **Editar proyecto**.
-
-El inicio normal no crea proyectos a partir de las variables de los scripts. Para importar una configuración anterior, activa `IMPORT_LEGACY_PROJECT=true` antes del primer inicio con una base vacía y configura `GITHUB_REPO`, `GITHUB_ISSUE_NUMBER` y `ALLOWED_SENDER`. La importación es única y conserva los archivos originales. Los proyectos que ya se importaron siguen guardados y muestran **Importado de la configuración anterior**. Después, la UI y la CLI gestionan sus cambios por separado. [Detalles de compatibilidad](docs/scripts.md).
+Al iniciar con una base vacía, crea tu primer proyecto desde **Proyectos y filtros**. Los proyectos guardados en SQLite vuelven a aparecer al reiniciar.
 
 ## Si algo no funciona
 

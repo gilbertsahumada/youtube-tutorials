@@ -7,9 +7,8 @@ import { getEmails } from "./gmail.mjs";
 import { gh, readIssue, publishComment } from "./github.mjs";
 import { assertBaseline, processEmails } from "./pipeline.mjs";
 import { environmentStatus } from "./environment.mjs";
-import { createStore, projectContext, validateProject } from "./store.mjs";
-import { normalizeFilter, senderProjects } from "./filters.mjs";
-import { legacyMailSettings } from "./mail-settings.mjs";
+import { createStore, projectContext } from "./store.mjs";
+import { senderProjects } from "./filters.mjs";
 
 const optional = async path => {
   try { return await readJson(path); }
@@ -30,39 +29,11 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
   };
   async function database() {
     if (!initializing) initializing = (async () => {
-      store = await createStore(root, { GMAIL_AFTER: env.GMAIL_AFTER, GMAIL_LABEL: env.GMAIL_LABEL });
-      // Legacy variables alone must not create a project during a normal UI startup.
-      if (!store.metadata("legacy_imported")) {
-        if (store.projects().length) store.setMetadata("legacy_imported", "true");
-        else if (env.IMPORT_LEGACY_PROJECT === "true" && env.GITHUB_REPO && env.GITHUB_ISSUE_NUMBER && env.ALLOWED_SENDER) {
-          const context = await readJson(local("config/project.json"));
-          const filter = normalizeFilter("email", env.ALLOWED_SENDER);
-          const saved = await optional(local(".private/baseline.json"));
-          const project = validateProject({ id: context.id, name: context.name, delivery: context.delivery, requirement: context.requirement, repository: env.GITHUB_REPO, issueNumber: env.GITHUB_ISSUE_NUMBER, ...legacyMailSettings(env, saved?.initialEmail) });
-          const state = await optional(local(".private/state.json"));
-          if (saved) {
-            assertBaseline(saved, project.repository, project.issueNumber);
-            if (JSON.stringify(saved.project) !== JSON.stringify(projectContext(project))) throw Error("La configuración del proyecto cambió desde la captura inicial.");
-          }
-          if (state && (state.schemaVersion !== 2 || state.repo !== project.repository || state.issueNumber !== project.issueNumber)) throw Error("El estado pertenece a otro destino. Utiliza otra copia de la demo.");
-          store.transaction(() => {
-            store.saveProject(projectFields(project));
-            store.addFilter({ projectId: project.id, ...filter });
-            if (saved) store.saveBaseline(project.id, saved);
-            for (const [emailId, result] of Object.entries(state?.processed || {})) {
-              store.saveRecord(project.id, emailId, { requestEmail: { id: emailId }, plan: { action: result.action } });
-              store.publish(project.id, emailId, result);
-            }
-            store.setMetadata("legacy_project", project.id);
-            store.setMetadata("legacy_imported", "true");
-          });
-        }
-      }
+      store = await createStore(root);
       return store;
     })();
     return initializing;
   }
-  const projectFields = ({ id, name, repository, issueNumber, delivery, requirement, gmailAfter, gmailLabel }) => ({ id, name, repository, issueNumber, delivery, requirement, gmailAfter, gmailLabel });
   const requireEnvironment = () => {
     const status = environmentStatus(env);
     if (!status.ready) throw Object.assign(Error(status.error), { status: 503 });
@@ -127,7 +98,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
     return {
       ...status, ready, environmentReady: status.ready,
       error: status.error || (!project ? "Crea o selecciona un proyecto para continuar." : !rulesFor(project.id).length ? "Añade al menos un correo o dominio a este proyecto." : null),
-      project: project && projectContext(project), projects: store.projects().map(item => ({ ...item, captured: Boolean(store.baseline(item.id)), imported: store.metadata("legacy_project") === item.id })), filters,
+      project: project && projectContext(project), projects: store.projects().map(item => ({ ...item, captured: Boolean(store.baseline(item.id)) })), filters,
       repository: project?.repository || "", issueNumber: project?.issueNumber || null,
       connections: { ...status.connections, github: Boolean(project) },
       gmailConnected: Boolean(token?.refresh_token), baseline: project && baseline(project),
@@ -161,7 +132,6 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
     const project = await requireProject(projectId); requireRules(project);
     return locked(async () => {
       if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(id)) throw Error("ID de correo inválido.");
-      if (store.metadata("legacy_project") === project.id && env.GMAIL_INITIAL_MESSAGE_ID && env.GMAIL_INITIAL_MESSAGE_ID !== id) throw Error("El correo seleccionado no coincide con GMAIL_INITIAL_MESSAGE_ID. Actualiza el entorno y reinicia el servidor.");
       const previous = baseline(project);
       if (previous) { if (id !== previous.initialEmail.id) throw Error("Ya existe un contexto inicial. No se puede reemplazar desde esta sesión."); return previous; }
       const email = partition(await api.emails(project), project.id).emails.find(item => item.id === id);
@@ -221,7 +191,7 @@ export function createStudio({ root = ROOT, env = { ...process.env }, adapters =
     });
   }
   async function saveProject(input) {
-    return locked(() => { const project = store.saveProject(input); store.select(project.id); store.setMetadata("legacy_imported", "true"); return project; });
+    return locked(() => { const project = store.saveProject(input); store.select(project.id); return project; });
   }
   async function saveFilter(input) { return locked(() => store.addFilter(input)); }
   async function removeFilter(id, projectId) { return locked(() => store.removeFilter(id, projectId)); }
