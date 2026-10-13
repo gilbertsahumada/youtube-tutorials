@@ -1,14 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  cp,
-  mkdir,
-  mkdtemp,
-  writeFile,
-  readFile,
-  rm,
-  access,
-} from "node:fs/promises";
+import { cp, mkdir, mkdtemp, writeFile, readFile, rm, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -96,48 +88,33 @@ test("CLI completa: inbox → baseline → preview real simulado → comentario 
     const run = (command, extra = {}) => {
       const result = spawnSync(
         process.execPath,
-        [
-          "--import",
-          join(root, "mock-fetch.mjs"),
-          join(root, "src/main.mjs"),
-          command,
-        ],
+        ["--import", join(root, "mock-fetch.mjs"), join(root, "src/main.mjs"), command],
         { encoding: "utf8", env: { ...env, ...extra } },
       );
       assert.equal(result.status, 0, result.stderr);
       return result.stdout;
     };
     assert.match(run("--inbox"), /initial-csv/);
-    assert.match(run("--inbox", { GMAIL_LABEL: "" }), /initial-csv/, "la CLI también permite omitir la etiqueta");
+    assert.match(
+      run("--inbox", { GMAIL_LABEL: "" }),
+      /initial-csv/,
+      "la CLI también permite omitir la etiqueta",
+    );
     const goodAnalysis = await json("fixtures/initial-analysis.json");
     const badAnalysis = { ...goodAnalysis, initialEvidence: "CSV" };
-    await writeFile(
-      join(root, "fixtures/initial-analysis.json"),
-      JSON.stringify(badAnalysis),
-    );
+    await writeFile(join(root, "fixtures/initial-analysis.json"), JSON.stringify(badAnalysis));
     const rejected = spawnSync(
       process.execPath,
-      [
-        "--import",
-        join(root, "mock-fetch.mjs"),
-        join(root, "src/main.mjs"),
-        "--baseline",
-      ],
+      ["--import", join(root, "mock-fetch.mjs"), join(root, "src/main.mjs"), "--baseline"],
       { encoding: "utf8", env },
     );
     assert.notEqual(rejected.status, 0);
     assert.match(rejected.stderr, /3 caracteres; debe tener al menos 20/);
     assert.match(rejected.stderr, /output\/initial-context.json/);
-    assert.deepEqual(
-      (await json("output/initial-context.json")).analysis,
-      badAnalysis,
-    );
+    assert.deepEqual((await json("output/initial-context.json")).analysis, badAnalysis);
     await assert.rejects(access(join(root, ".private/baseline.json")));
     assert.equal((await json("mock-state.json")).comments.length, 0);
-    await writeFile(
-      join(root, "fixtures/initial-analysis.json"),
-      JSON.stringify(goodAnalysis),
-    );
+    await writeFile(join(root, "fixtures/initial-analysis.json"), JSON.stringify(goodAnalysis));
     assert.match(run("--baseline"), /Contexto inicial capturado: CSV/);
     const before = await json(".private/baseline.json");
     let remote = await json("mock-state.json");
@@ -146,36 +123,18 @@ test("CLI completa: inbox → baseline → preview real simulado → comentario 
     assert.match(run("--once"), /no publicado/);
     assert.equal((await json("mock-state.json")).comments.length, 0);
     await assert.rejects(access(join(root, ".private/state.json")));
-    assert.match(
-      run("--once", { PUBLISH: "true" }),
-      /Comentario creado o recuperado/,
-    );
+    assert.match(run("--once", { PUBLISH: "true" }), /Comentario creado o recuperado/);
     run("--once", { PUBLISH: "true" });
     remote = await json("mock-state.json");
     assert.equal(remote.comments.length, 1);
-    assert.equal(
-      remote.calls.filter((c) => c.kind === "github" && c.method !== "GET")
-        .length,
-      1,
-    );
+    assert.equal(remote.calls.filter((c) => c.kind === "github" && c.method !== "GET").length, 1);
     assert.deepEqual(await json(".private/baseline.json"), before);
-    assert.match(
-      (await json("fixtures/issue.json")).body,
-      /Formato actual: CSV/,
-    );
+    assert.match((await json("fixtures/issue.json")).body, /Formato actual: CSV/);
     assert.match(remote.comments[0].body, /Pendiente de revisión humana/);
-    assert.equal(
-      (await json(".private/state.json")).processed["request-pdf"].id,
-      8,
-    );
+    assert.equal((await json(".private/state.json")).processed["request-pdf"].id, 8);
     const changed = spawnSync(
       process.execPath,
-      [
-        "--import",
-        join(root, "mock-fetch.mjs"),
-        join(root, "src/main.mjs"),
-        "--once",
-      ],
+      ["--import", join(root, "mock-fetch.mjs"), join(root, "src/main.mjs"), "--once"],
       { encoding: "utf8", env: { ...env, GITHUB_REPO: "other/sandbox" } },
     );
     assert.notEqual(changed.status, 0);

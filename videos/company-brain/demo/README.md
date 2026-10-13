@@ -47,13 +47,13 @@ SQLite conserva configuración, mensajes, propuestas, decisiones y actividad en 
 
 ## Comandos útiles
 
-| Comando | Resultado |
-|---|---|
-| `npm start` | UI local con conexiones reales. |
-| `npm run dev` | Reinicia el servidor al cambiar su código. |
-| `npm run preview` | Misma UI que `start`. |
-| `npm test` | Pruebas aisladas, sin acceder a tus cuentas. |
-| `PORT=4174 npm start` | Otro puerto para el servidor. |
+| Comando               | Resultado                                    |
+| --------------------- | -------------------------------------------- |
+| `npm start`           | UI local con conexiones reales.              |
+| `npm run dev`         | Reinicia el servidor al cambiar su código.   |
+| `npm run preview`     | Misma UI que `start`.                        |
+| `npm test`            | Pruebas aisladas, sin acceder a tus cuentas. |
+| `PORT=4174 npm start` | Otro puerto para el servidor.                |
 
 Los comandos por terminal y sus fixtures pertenecen al ejemplo original acotado a CSV/PDF. La UI usa el flujo por proyectos, varias tareas y aprobación de creaciones y actualizaciones; no carga esos fixtures.
 

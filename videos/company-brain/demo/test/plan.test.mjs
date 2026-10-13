@@ -62,8 +62,7 @@ test("una solicitud de priorizar PDF basta; no se exige aprobación previa", () 
   assert.match(plan.body, /Pendiente de revisión humana/);
   assert.match(plan.body, /No se creó un PR/);
   assert.ok(
-    plan.body.includes(analysis.initialEvidence) &&
-      plan.body.includes(analysis.requestEvidence),
+    plan.body.includes(analysis.initialEvidence) && plan.body.includes(analysis.requestEvidence),
   );
   assert.deepEqual(data, before);
 });
@@ -72,10 +71,7 @@ test("también permite PDF → CSV cuando el contexto y la tarea coinciden", () 
   data.baseline.initialFormat = "PDF";
   data.baseline.initialEmail.text = initialEmail.text.replaceAll("CSV", "PDF");
   data.analysis.initialFormat = "PDF";
-  data.analysis.initialEvidence = initialAnalysis.initialEvidence.replaceAll(
-    "CSV",
-    "PDF",
-  );
+  data.analysis.initialEvidence = initialAnalysis.initialEvidence.replaceAll("CSV", "PDF");
   data.issue.body = data.issue.body.replaceAll("CSV", "PDF");
   data.issue.title = "Exportar PDF";
   data.email.text = email.text
@@ -107,38 +103,23 @@ for (const [name, mutate] of [
   ],
   [
     "evidencia inventada",
-    (d) =>
-      (d.analysis.requestEvidence =
-        "Una petición de PDF inexistente en el correo"),
+    (d) => (d.analysis.requestEvidence = "Una petición de PDF inexistente en el correo"),
   ],
   [
     "contexto inicial inventado",
-    (d) =>
-      (d.analysis.initialEvidence =
-        "Un acuerdo CSV inexistente en el correo original"),
+    (d) => (d.analysis.initialEvidence = "Un acuerdo CSV inexistente en el correo original"),
   ],
-  [
-    "formato/ruta arbitraria",
-    (d) => (d.analysis.requestedFormat = "../../workflow"),
-  ],
+  ["formato/ruta arbitraria", (d) => (d.analysis.requestedFormat = "../../workflow")],
   ["issue cerrado", (d) => (d.issue.state = "closed")],
   [
     "issue ajeno",
-    (d) =>
-      (d.issue.body = d.issue.body.replace(
-        "Proyecto: portal-cliente",
-        "Proyecto: otro",
-      )),
+    (d) => (d.issue.body = d.issue.body.replace("Proyecto: portal-cliente", "Proyecto: otro")),
   ],
   ["formato inicial contradictorio", (d) => (d.analysis.initialFormat = "PDF")],
   ["booleano inválido", (d) => (d.analysis.changeRequested = "true")],
   [
     "sin formato actual",
-    (d) =>
-      (d.issue.body = d.issue.body.replace(
-        "Formato actual: CSV",
-        "Formato: CSV",
-      )),
+    (d) => (d.issue.body = d.issue.body.replace("Formato actual: CSV", "Formato: CSV")),
   ],
 ])
   test(`rechaza ${name}`, () => {
@@ -149,10 +130,7 @@ for (const [name, mutate] of [
 for (const [quote, reason] of [
   [null, /cadena de texto/],
   ["PDF", /3 caracteres; debe tener al menos 20/],
-  [
-    "Una solicitud PDF inventada que no está en el correo",
-    /no coincide literalmente/,
-  ],
+  ["Una solicitud PDF inventada que no está en el correo", /no coincide literalmente/],
   ["Por favor planteen el cambio y su impacto", /mencionar el formato PDF/],
 ])
   test("diagnostica evidencia rechazada: " + reason, () => {
@@ -168,10 +146,7 @@ test("correos anteriores e inicial no se reproponen", () => {
   assert.equal(buildPlan(data).action, "skip");
 });
 test("evidencia no puede inyectar HTML, menciones ni títulos markdown", () => {
-  assert.equal(
-    safeText("@all <script> **hello**"),
-    "&#64;all &lt;script&gt; \\*\\*hello\\*\\*",
-  );
+  assert.equal(safeText("@all <script> **hello**"), "&#64;all &lt;script&gt; \\*\\*hello\\*\\*");
   assert.match(messageKey("../evil"), /^[a-f0-9]{20}$/);
 });
 test("el prompt distingue solicitud de aprobación y no tiene herramientas", () => {
@@ -181,10 +156,7 @@ test("el prompt distingue solicitud de aprobación y no tiene herramientas", () 
     issue,
     project,
   });
-  assert.match(
-    messages[0].content,
-    /no hace falta que sea un acuerdo aprobado/,
-  );
+  assert.match(messages[0].content, /no hace falta que sea un acuerdo aprobado/);
   assert.match(messages[0].content, /No tienes tools/);
   assert.match(messages[0].content, /al menos 20 caracteres/);
   assert.match(messages[0].content, /no cambies espacios/);
@@ -203,10 +175,7 @@ test("adaptador real envía los dos correos sin secretos en el body; errores no 
       const body = JSON.parse(options.body);
       assert.ok(!("tools" in body));
       assert.ok(!options.body.includes("secret"));
-      assert.equal(
-        JSON.parse(body.messages[1].content).initialEmail.id,
-        initialEmail.id,
-      );
+      assert.equal(JSON.parse(body.messages[1].content).initialEmail.id, initialEmail.id);
       return {
         ok: true,
         json: async () => ({
@@ -220,8 +189,5 @@ test("adaptador real envía los dos correos sin secretos en el body; errores no 
     classify({}, env, async () => ({ ok: false, status: 401 })),
     /401/,
   );
-  await assert.rejects(
-    classify({}, { ...env, MODEL_BASE_URL: "http://localhost" }),
-    /HTTPS/,
-  );
+  await assert.rejects(classify({}, { ...env, MODEL_BASE_URL: "http://localhost" }), /HTTPS/);
 });

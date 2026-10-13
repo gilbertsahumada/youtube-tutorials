@@ -1,20 +1,24 @@
-export const locales = { es: 'es-CO', en: 'en-US' };
-export const languageKey = 'company-brain-language';
+export const locales = { es: "es-CO", en: "en-US" };
+export const languageKey = "company-brain-language";
 
 // UI copy only. Source material, evidence and comments remain verbatim.
 export const english = {
-  'El servidor devolvió una respuesta vacía o inválida. Reinicia la demo y recarga la página.': 'The server returned an empty or invalid response. Restart the demo and reload the page.',
-  'Revisa las conexiones y la tarea del proyecto seleccionado.': 'Check the connections and the selected project’s task.',
-  'Cambios guardados.': 'Changes saved.',
+  "El servidor devolvió una respuesta vacía o inválida. Reinicia la demo y recarga la página.":
+    "The server returned an empty or invalid response. Restart the demo and reload the page.",
+  "Revisa las conexiones y la tarea del proyecto seleccionado.":
+    "Check the connections and the selected project’s task.",
+  "Cambios guardados.": "Changes saved.",
   "Proyectos y filtros": "Projects and filters",
-  "Proyecto": "Project",
+  Proyecto: "Project",
   "Proyecto activo": "Active project",
   "Guardado local": "Saved locally",
   "El contexto empieza con las personas.": "Context starts with people.",
-  "Organiza tus proyectos y elige qué correos forman parte de cada uno.": "Organize your projects and choose which emails belong to each one.",
+  "Organiza tus proyectos y elige qué correos forman parte de cada uno.":
+    "Organize your projects and choose which emails belong to each one.",
   "Nuevo proyecto": "New project",
   "Editar proyecto": "Edit project",
-  "Cada proyecto conecta sus correos con una tarea de GitHub.": "Each project connects its emails to a GitHub task.",
+  "Cada proyecto conecta sus correos con una tarea de GitHub.":
+    "Each project connects its emails to a GitHub task.",
   "Nombre del proyecto": "Project name",
   "Nombre de tu proyecto": "Your project name",
   "Referencia del proyecto": "Project reference",
@@ -26,62 +30,81 @@ export const english = {
   "Identificador de la entrega": "Delivery identifier",
   "Referencia del requisito": "Requirement reference",
   "Identificador del requisito": "Requirement identifier",
-  "Usa las mismas referencias en el issue y los correos. Este tutorial compara cambios entre CSV y PDF.": "Use the same references in the issue and emails. This tutorial compares changes between CSV and PDF.",
-  "El acuerdo capturado conserva su tarea y sus referencias. Para otro alcance, crea un proyecto.": "The captured agreement keeps its task and references. Create a project for a different scope.",
+  "Usa las mismas referencias en el issue y los correos. Este tutorial compara cambios entre CSV y PDF.":
+    "Use the same references in the issue and emails. This tutorial compares changes between CSV and PDF.",
+  "El acuerdo capturado conserva su tarea y sus referencias. Para otro alcance, crea un proyecto.":
+    "The captured agreement keeps its task and references. Create a project for a different scope.",
   "Guardar cambios": "Save changes",
   "Crear proyecto": "Create project",
-  "Cancelar": "Cancel",
+  Cancelar: "Cancel",
   "Correos y dominios": "Emails and domains",
   "Añade un filtro y asígnalo a un proyecto.": "Add a filter and assign it to a project.",
   "Filtrar por": "Filter by",
   "Correo exacto": "Exact email",
   "Dominio completo": "Full domain",
-  "Dominio": "Domain",
+  Dominio: "Domain",
   "Correo electrónico": "Email address",
   "Guardar filtro": "Save filter",
   "Primero crea un proyecto.": "Create a project first.",
-  "Después podrás añadir los correos o dominios de sus participantes.": "Then you can add emails or domains for its participants.",
-  "El correo exacto tiene prioridad sobre el dominio. Añade los subdominios por separado.": "Exact emails take priority over domains. Add subdomains separately.",
-  "Si un correo coincide con varios proyectos, tú eliges a cuál asignarlo en Conexiones.": "If an email matches multiple projects, you choose its destination in Connections.",
+  "Después podrás añadir los correos o dominios de sus participantes.":
+    "Then you can add emails or domains for its participants.",
+  "El correo exacto tiene prioridad sobre el dominio. Añade los subdominios por separado.":
+    "Exact emails take priority over domains. Add subdomains separately.",
+  "Si un correo coincide con varios proyectos, tú eliges a cuál asignarlo en Conexiones.":
+    "If an email matches multiple projects, you choose its destination in Connections.",
   "Tus proyectos": "Your projects",
-  "Elige un proyecto para capturar su acuerdo y revisar sus solicitudes.": "Choose a project to capture its agreement and review its requests.",
+  "Elige un proyecto para capturar su acuerdo y revisar sus solicitudes.":
+    "Choose a project to capture its agreement and review its requests.",
   "Pendiente de captura": "Awaiting capture",
   "Eliminar filtro": "Remove filter",
   "Todavía no hay filtros para este proyecto.": "This project has no filters yet.",
   "Abrir proyecto": "Open project",
   "Seleccionar proyecto": "Select project",
-  "Editar": "Edit",
+  Editar: "Edit",
   "Todavía no hay proyectos.": "There are no projects yet.",
   "Crea el primero con el formulario de arriba.": "Create your first one using the form above.",
   "Correos por asignar": "Emails to assign",
-  "Estos correos coinciden con varios proyectos. Elige su destino antes de capturar o analizar.": "These emails match multiple projects. Choose their destination before capturing or analyzing.",
+  "Estos correos coinciden con varios proyectos. Elige su destino antes de capturar o analizar.":
+    "These emails match multiple projects. Choose their destination before capturing or analyzing.",
   "Asignar a": "Assign to",
   "Selecciona un proyecto": "Select a project",
   "Asignar correo": "Assign email",
   "Proyecto configurado": "Project configured",
-  "Las credenciales se leen desde el entorno al iniciar el servidor.": "Credentials are read from the environment when the server starts.",
-  "Para cambiar credenciales, actualiza el entorno y reinicia el servidor. Los proyectos y sus filtros se gestionan en Proyectos y filtros.": "To change credentials, update the environment and restart the server. Manage projects and their filters in Projects and filters.",
+  "Las credenciales se leen desde el entorno al iniciar el servidor.":
+    "Credentials are read from the environment when the server starts.",
+  "Para cambiar credenciales, actualiza el entorno y reinicia el servidor. Los proyectos y sus filtros se gestionan en Proyectos y filtros.":
+    "To change credentials, update the environment and restart the server. Manage projects and their filters in Projects and filters.",
   "Define quién participa en este proyecto.": "Choose who participates in this project.",
   "Crea tu primer proyecto.": "Create your first project.",
-  "Añade correos o dominios para encontrar sus acuerdos y solicitudes.": "Add emails or domains to find their agreements and requests.",
-  "Vincula una tarea de GitHub y elige los correos que forman parte de su contexto.": "Link a GitHub task and choose the emails that belong to its context.",
-  "Consultas, propuestas y revisiones de este proyecto.": "Queries, proposals and reviews for this project.",
-  "Busca nuevos mensajes con la etiqueta y los filtros de este proyecto.": "Look for new messages with the label and filters for this project.",
+  "Añade correos o dominios para encontrar sus acuerdos y solicitudes.":
+    "Add emails or domains to find their agreements and requests.",
+  "Vincula una tarea de GitHub y elige los correos que forman parte de su contexto.":
+    "Link a GitHub task and choose the emails that belong to its context.",
+  "Consultas, propuestas y revisiones de este proyecto.":
+    "Queries, proposals and reviews for this project.",
+  "Busca nuevos mensajes con la etiqueta y los filtros de este proyecto.":
+    "Look for new messages with the label and filters for this project.",
   "Hay correos por asignar. Revisa Conexiones.": "There are emails to assign. Check Connections.",
-  "No aparecen correos. Comprueba cuenta, etiqueta, filtros y fecha.": "No emails found. Check the account, label, filters and date.",
+  "No aparecen correos. Comprueba cuenta, etiqueta, filtros y fecha.":
+    "No emails found. Check the account, label, filters and date.",
   "Filtro eliminado.": "Filter removed.",
-  "Esa referencia ya existe. Edita el proyecto guardado o elige otra.": "This reference already exists. Edit the saved project or choose another.",
+  "Esa referencia ya existe. Edita el proyecto guardado o elige otra.":
+    "This reference already exists. Edit the saved project or choose another.",
   "Proyecto guardado. Añade sus correos o dominios.": "Project saved. Add its emails or domains.",
   "Filtro guardado.": "Filter saved.",
   "Correo asignado al proyecto.": "Email assigned to the project.",
   "Define tu proyecto y sus participantes.": "Define your project and its participants.",
-  "Vincula una tarea y añade correos o dominios en Proyectos y filtros. Después captura el acuerdo inicial en Conexiones.": "Link a task and add emails or domains in Projects and filters. Then capture the initial agreement in Connections.",
+  "Vincula una tarea y añade correos o dominios en Proyectos y filtros. Después captura el acuerdo inicial en Conexiones.":
+    "Link a task and add emails or domains in Projects and filters. Then capture the initial agreement in Connections.",
   "Campo de proyecto inválido.": "Invalid project field.",
-  "Usa identificadores con letras minúsculas, números y guiones.": "Use identifiers with lowercase letters, numbers and hyphens.",
+  "Usa identificadores con letras minúsculas, números y guiones.":
+    "Use identifiers with lowercase letters, numbers and hyphens.",
   "Nombre de proyecto inválido.": "Invalid project name.",
   "El repositorio debe ser owner/repo.": "The repository must be owner/repo.",
-  "El número del issue debe ser un entero positivo.": "The issue number must be a positive integer.",
-  "El alcance capturado no puede cambiar. Crea otro proyecto.": "The captured scope cannot change. Create another project.",
+  "El número del issue debe ser un entero positivo.":
+    "The issue number must be a positive integer.",
+  "El alcance capturado no puede cambiar. Crea otro proyecto.":
+    "The captured scope cannot change. Create another project.",
   "Ese issue ya pertenece a otro proyecto.": "This issue already belongs to another project.",
   "Campo de filtro inválido.": "Invalid filter field.",
   "Proyecto no encontrado.": "Project not found.",
@@ -90,313 +113,419 @@ export const english = {
   "Correo inválido.": "Invalid email.",
   "Tipo de filtro inválido.": "Invalid filter type.",
   "Crea o selecciona un proyecto para continuar.": "Create or select a project to continue.",
-  "Añade al menos un correo o dominio a este proyecto.": "Add at least one email or domain to this project.",
-  "Ese correo no está asignado a este proyecto. Revisa los filtros o su asignación.": "This email is not assigned to this project. Check its filters or assignment.",
-  "El acuerdo inicial no aparece entre los correos asignados a este proyecto. Revisa filtros, etiqueta y fecha.": "The initial agreement is not among the emails assigned to this project. Check filters, label and date.",
-  "Ese correo no coincide con los filtros de este proyecto.": "This email does not match the filters for this project.",
+  "Añade al menos un correo o dominio a este proyecto.":
+    "Add at least one email or domain to this project.",
+  "Ese correo no está asignado a este proyecto. Revisa los filtros o su asignación.":
+    "This email is not assigned to this project. Check its filters or assignment.",
+  "El acuerdo inicial no aparece entre los correos asignados a este proyecto. Revisa filtros, etiqueta y fecha.":
+    "The initial agreement is not among the emails assigned to this project. Check filters, label and date.",
+  "Ese correo no coincide con los filtros de este proyecto.":
+    "This email does not match the filters for this project.",
 
-  'Centro de decisiones': 'Decision center',
-  'Fuentes de contexto': 'Context sources',
-  'Actividad': 'Activity',
-  'Configuración': 'Settings',
-  'Demo interactiva': 'Interactive demo',
-  'Conecta correos y tareas para convertir nuevas solicitudes en propuestas con contexto. Demo interactiva de Company Brain.': 'Connect emails and tasks to turn new requests into proposals with context. An interactive Company Brain demo.',
-  'Cómo funciona': 'How it works',
-  'Tu espacio de trabajo': 'Your workspace',
-  'Navegación principal': 'Main navigation',
-  'Ver el video del tutorial': 'Watch the tutorial',
-  'Tú decides. Company Brain aporta el contexto.': 'You decide. Company Brain brings the context.',
-  'Demo de IA en Producción': 'A demo by IA en Producción',
-  'Acuerdo inicial': 'Initial agreement',
-  'Nueva solicitud': 'New request',
-  'Contexto': 'Context',
-  'Nuevo': 'New',
-  'Tarea en curso': 'Current task',
-  'Abierto': 'Open',
-  'Cerrado': 'Closed',
-  'Formato actual': 'Current format',
-  'Ver tarea completa': 'View the full task',
-  'Conectando las piezas…': 'Connecting the dots…',
-  'No hace falta proponer un cambio': 'No change needs to be proposed',
-  'El contexto está listo.': 'The context is ready.',
-  'Revisando el acuerdo, la tarea y la nueva solicitud.': 'Reviewing the agreement, task and new request.',
-  'Analizando…': 'Analyzing…',
-  'Consulta Gmail, GitHub y tu modelo': 'Uses Gmail, GitHub and your model',
-  'Comentario publicado': 'Comment published',
-  'Necesita tu revisión': 'Needs your review',
-  'Una nueva prioridad para la entrega.': 'A new priority for this delivery.',
-  'Plan actual': 'Current plan',
-  'Propuesta': 'Proposal',
-  'Por qué revisarlo': 'Why it needs a review',
-  'Contraste de los dos correos y la tarea': 'Both emails checked against the task',
-  'Ver comentario': 'View comment',
-  'Revisar propuesta': 'Review proposal',
-  'La tarea conserva su alcance original.': 'The task keeps its original scope.',
-  'El alcance cambia cuando tú lo decides.': 'The scope changes when you decide.',
-  'Recorrido de la solicitud': 'Request workflow',
-  'La conexión, paso a paso': 'Connecting the dots, step by step',
-  'Tu contexto, en una sola vista': 'Your context in one place',
-  'Contexto reunido': 'Context gathered',
-  'Correo inicial + tarea': 'Initial email + task',
-  'Solicitud recibida': 'Request received',
-  'Una nueva prioridad': 'A new priority',
-  'Propuesta con evidencia': 'Proposal with evidence',
-  'Fuentes contrastadas': 'Sources cross-checked',
-  'Lista para analizar': 'Ready to analyze',
-  'Revisión humana': 'Human review',
-  'Tú decides qué hacer': 'You decide what to do',
-  'propuesta pendiente': 'pending proposal',
-  'propuestas pendientes': 'pending proposals',
-  'Conecta el contexto de tu equipo.': 'Connect your team’s context.',
-  'Empieza por tus fuentes y captura el acuerdo inicial.': 'Start with your sources and capture the initial agreement.',
-  'Tu Company Brain empieza con un acuerdo.': 'Your Company Brain starts with an agreement.',
-  'El acuerdo inicial está guardado.': 'The initial agreement is saved.',
-  'Busca nuevas solicitudes para reunir el contexto actual.': 'Look for new requests to gather the current context.',
-  'Buscar solicitudes': 'Find requests',
-  'Del correo a una decisión.': 'From an email to a decision.',
-  'Lo que se conversa y lo que se construye, con el mismo contexto.': 'What gets discussed and what gets built, with the same context.',
-  'Detener observación': 'Stop watching',
-  'Observar Gmail': 'Watch Gmail',
-  'fuentes de contexto': 'context sources',
-  'Revisión humana en cada cambio': 'Human review for every change',
-  'Observando Gmail': 'Watching Gmail',
-  'Cuentas reales': 'Real accounts',
-  'Buscando solicitudes…': 'Finding requests…',
-  'Buscar nuevas solicitudes': 'Find new requests',
-  'Solicitud': 'Request',
-  'Lo que sabemos': 'What we know',
-  'Lo que cambió': 'What changed',
-  'Esperando una nueva solicitud': 'Waiting for a new request',
-  'Mismo proyecto, misma entrega.': 'Same project, same delivery.',
-  'Una prioridad diferente.': 'A different priority.',
-  'Cada solicitud se compara con': 'Each request is compared to',
-  'el acuerdo y la tarea existentes.': 'the existing agreement and task.',
-  'Lo que propone el Brain': 'What the Brain proposes',
-  'Una solicitud no es una aprobación.': 'A request needs approval.',
-  'La propuesta deja evidencia; el equipo decide si cambia la tarea.': 'The proposal records the evidence; the team decides whether to change the task.',
-  'Entender el recorrido': 'Understand the workflow',
-  'Las fuentes detrás de la propuesta.': 'The sources behind the proposal.',
-  'Todo el contexto que Company Brain utiliza para este caso.': 'All the context Company Brain uses for this case.',
-  'Ver correo': 'View email',
-  'Tarea existente': 'Existing task',
-  'Ver tarea': 'View task',
-  'Gmail aporta los acuerdos y las solicitudes. GitHub aporta el trabajo existente.': 'Gmail provides agreements and requests. GitHub provides the existing work.',
-  'El contexto siempre tiene una fuente.': 'Context always has a source.',
-  'La propuesta cita extractos de los correos. El análisis valida que correspondan al mismo proyecto y a la misma entrega.': 'The proposal quotes the emails. The analysis checks that they refer to the same project and delivery.',
-  'Un recorrido que puedes seguir.': 'A workflow you can follow.',
-  'Consultas, propuestas y revisiones de esta sesión.': 'Lookups, proposals and reviews from this session.',
-  'Aquí verás cada paso.': 'See every step here.',
-  'Analiza la solicitud para ver cómo se conecta el contexto.': 'Analyze the request to see how the context connects.',
-  'Ir al centro de decisiones': 'Go to the decision center',
-  'El acuerdo inicial y las nuevas solicitudes.': 'The initial agreement and new requests.',
-  'En': 'In',
-  'Conectar Gmail': 'Connect Gmail',
-  'La tarea existente y el destino de la propuesta.': 'The existing task and the destination for the proposal.',
-  'Comprobar acceso': 'Check access',
-  'Modelo de IA': 'AI model',
-  'Un proveedor compatible con Chat Completions.': 'A provider compatible with Chat Completions.',
-  'Captura el acuerdo inicial': 'Capture the initial agreement',
-  'Contexto guardado': 'Context saved',
-  'Cargar correos': 'Load emails',
-  'Capturar acuerdo': 'Capture agreement',
-  'Cerrar': 'Close',
-  'Autoriza la': 'Authorize the',
-  '. Al terminar vuelve a esta pantalla.': '. Return to this screen when you are done.',
-  'Abrir autorización de Google': 'Open Google authorization',
-  'Gmail conectado. Ya puedes cargar los correos.': 'Gmail connected. You can now load emails.',
-  'Preparando la autorización…': 'Preparing authorization…',
-  'Propuesta para el issue': 'Proposal for the issue',
-  'El comentario reúne la evidencia y pide revisar el alcance. Publicarlo conserva la tarea actual.': 'The comment gathers the evidence and requests a scope review. Publishing it preserves the current task.',
-  'Ver el comentario completo': 'View the full comment',
-  'Evidencia del acuerdo inicial': 'Evidence from the initial agreement',
-  'Evidencia de la nueva solicitud': 'Evidence from the new request',
-  'La propuesta sigue pendiente de revisión humana. La decisión de cambiar el issue se toma en GitHub.': 'The proposal still needs human review. The decision to change the issue is made in GitHub.',
-  'Copiar comentario': 'Copy comment',
-  'Ver en GitHub': 'View on GitHub',
-  'Publicar comentario en GitHub': 'Publish comment on GitHub',
-  'De información dispersa a una propuesta clara.': 'From scattered information to a clear proposal.',
-  'Reúne lo que ya se acordó.': 'Gather what was already agreed.',
-  'Conecta la nueva solicitud.': 'Connect the new request.',
-  'Company Brain contrasta los correos con la tarea y prepara una propuesta con evidencia.': 'Company Brain checks the emails against the task and prepares a proposal with evidence.',
-  'Revisa y decide.': 'Review and decide.',
-  'La propuesta puede publicarse como comentario. El equipo decide si modifica el alcance.': 'The proposal can be published as a comment. The team decides whether to change the scope.',
-  'Correo del acuerdo inicial': 'Initial agreement email',
-  'Correo de la nueva solicitud': 'New request email',
-  'No aparecen correos. Comprueba cuenta, etiqueta, remitente y fecha.': 'No emails found. Check the account, label, sender and date.',
-  'Publicando comentario…': 'Publishing comment…',
-  'Comentario publicado. La tarea sigue pendiente de tu decisión.': 'Comment published. The task still awaits your decision.',
-  'Observando Gmail cada 30 segundos. Las propuestas esperan tu revisión.': 'Watching Gmail every 30 seconds. Proposals await your review.',
-  'Copiado.': 'Copied.',
-  'Selecciona el texto y cópialo con el teclado.': 'Select the text and copy it with your keyboard.',
-  'No se pudo completar la operación.': 'The operation could not be completed.',
-  'Ir al contenido': 'Skip to content',
-  'Preparando Company Brain…': 'Preparing Company Brain…',
-  'Activa JavaScript para utilizar esta demo.': 'Enable JavaScript to use this demo.',
-  'Propuesta preparada': 'Proposal prepared',
-  'Acuerdo inicial capturado': 'Initial agreement captured',
-  'Correo revisado': 'Email reviewed',
-  'Gmail conectado': 'Gmail connected',
-  'Acceso de lectura autorizado.': 'Read access authorized.',
-  'Acceso local únicamente.': 'Local access only.',
-  'Origen no permitido.': 'Origin not allowed.',
-  'Página no encontrada.': 'Page not found.',
-  'Recarga la página para recuperar la sesión local.': 'Reload the page to restore your local session.',
-  'Solicitud no admitida.': 'Request not supported.',
-  'Solicitud demasiado grande.': 'Request too large.',
-  'Solicitud inválida.': 'Invalid request.',
-  'Acción no encontrada.': 'Action not found.',
-  'Hay una operación en curso. Espera a que termine.': 'An operation is in progress. Wait for it to finish.',
-  'Otra instancia está usando esta demo. Detén el script o servidor anterior antes de continuar.': 'Another instance is using this demo. Stop the previous script or server before continuing.',
-  'El correo inicial cambió. Conserva la configuración de esta demo o utiliza otra copia.': 'The initial email changed. Keep this demo’s settings or use another copy.',
-  'La configuración del proyecto cambió desde la captura inicial.': 'The project settings changed since the initial capture.',
-  'El estado pertenece a otro destino. Utiliza otra copia de la demo.': 'The saved state belongs to another destination. Use another copy of the demo.',
-  'ID de correo inválido.': 'Invalid email ID.',
-  'Ya existe un contexto inicial. No se puede reemplazar desde esta sesión.': 'Initial context already exists. It cannot be replaced from this session.',
-  'No aparece ese correo. Revisa la etiqueta, el remitente y la fecha.': 'That email was not found. Check the label, sender and date.',
-  'El correo inicial ya no aparece en esta cuenta. Comprueba la etiqueta y la fecha de lectura.': 'The initial email is no longer in this account. Check the label and the read-after date.',
-  'Falta el acuerdo inicial. Captúralo antes de publicar.': 'The initial agreement is missing. Capture it before publishing.',
-  'Vuelve a analizar la solicitud antes de publicar.': 'Analyze the request again before publishing.',
-  'Ya hay una operación en curso.': 'An operation is already in progress.',
-  'No se pudo iniciar la conexión. Revisa las credenciales de Google.': 'Could not start the connection. Check your Google credentials.',
-  'La conexión no se completó. Inténtalo de nuevo.': 'The connection did not complete. Try again.',
-  'Correo inicial o anterior al contexto inicial': 'Initial email or email sent before the initial context',
-  'No hay una solicitud de cambio identificada': 'No change request identified',
-  'El issue ya solicita ese formato': 'The issue already requests that format',
-  'GITHUB_REPO debe ser owner/repo': 'GITHUB_REPO must be owner/repo',
-  'GITHUB_ISSUE_NUMBER inválido': 'Invalid GITHUB_ISSUE_NUMBER',
-  'Se esperaba el issue configurado, no un PR': 'Expected the configured issue, not a pull request',
-  'Comentario fuera del alcance': 'Comment outside the allowed scope',
-  'Cuerpo de comentario inválido': 'Invalid comment body',
-  'No se pudo identificar la cuenta GitHub': 'Could not identify the GitHub account',
-  'Remitente ambiguo': 'Ambiguous sender',
-  'No existe GMAIL_LABEL. Créala manualmente en Gmail.': 'GMAIL_LABEL does not exist. Create it in Gmail.',
-  'Define GMAIL_AFTER como fecha ISO válida': 'Set GMAIL_AFTER to a valid ISO date',
-  'El issue no está abierto': 'The issue is not open',
-  'Define una sola línea Formato actual: CSV o PDF en el issue': 'Add exactly one line Formato actual: CSV or PDF to the issue',
-  'La evidencia debe ser una cadena de texto': 'Evidence must be a text string',
-  'Remitente fuera de la allowlist': 'Sender is not on the allowlist',
-  'Fecha de correo inválida': 'Invalid email date',
-  'El correo inicial y el issue no coinciden en el formato': 'The initial email and the issue specify different formats',
-  'La captura inicial no debe proponer un cambio': 'The initial capture must not propose a change',
-  'Respuesta inválida: changeRequested': 'Invalid response: changeRequested',
-  'El modelo contradice el formato inicial': 'The model contradicts the initial format',
-  'Formato fuera del alcance': 'Format outside the allowed scope',
-  'Falta una explicación breve de la propuesta': 'A brief explanation of the proposal is missing',
-  'El modelo no devolvió el JSON solicitado': 'The model did not return the requested JSON',
-  'La captura inicial pertenece a otro repositorio o issue': 'The initial capture belongs to another repository or issue',
-  'Autorización cancelada o sin código': 'Authorization was canceled or returned no code',
-  'No se recibió refresh_token; revoca el permiso y autoriza nuevamente': 'No refresh_token received; revoke permission and authorize again',
-  'Conexiones': 'Connections',
-  'Ver conexiones': 'View connections',
-  'Proyecto conectado': 'Connected project',
-  'Datos de tus cuentas': 'Data from your accounts',
-  'Credenciales desde el entorno.': 'Credentials from the environment.',
-  'Entorno listo': 'Environment ready',
-  'Entorno incompleto': 'Environment incomplete',
-  'Configuración requerida': 'Configuration required',
-  'Faltan variables de entorno.': 'Environment variables are missing.',
-  'Revisa las variables de entorno.': 'Check your environment variables.',
-  'No se pudo cargar tu contexto.': 'Your context could not be loaded.',
-  'Completa las variables en el entorno o en': 'Set the variables in the environment or in',
-  'y reinicia el servidor.': 'and restart the server.',
-  'Variables faltantes': 'Missing variables',
-  'Reintentar': 'Retry',
-  'Las credenciales se leen en el servidor.': 'Credentials are read on the server.',
-  'Remitente': 'Sender',
-  'Autoriza Gmail y selecciona el correo que define el alcance de la tarea configurada en GitHub.': 'Authorize Gmail and select the email that defines the task’s scope in GitHub.',
-  'Busca solicitudes en Gmail para contrastarlas con el acuerdo y la tarea.': 'Find requests in Gmail to compare them with the agreement and task.',
-  'Ver acuerdo inicial completo': 'View the full initial agreement',
-  'Ver solicitud completa': 'View the full request',
-  'Abrir en Gmail': 'Open in Gmail',
-  'Abrir en GitHub': 'Open in GitHub',
-  'Busca nuevos mensajes con la etiqueta y el remitente configurados.': 'Look for new messages with the configured label and sender.',
-  'Captura el acuerdo inicial para reunir tus fuentes.': 'Capture the initial agreement to gather your sources.',
-  'El estado de tus conexiones.': 'Your connection status.',
-  'La configuración se lee desde el entorno al iniciar el servidor.': 'Settings are read from the environment when the server starts.',
-  'Para cambiar credenciales o fuentes, actualiza el entorno y reinicia el servidor.': 'To change credentials or sources, update the environment and restart the server.',
-  'Lectura autorizada': 'Read access authorized',
-  'Pendiente de autorización': 'Awaiting authorization',
-  'Autoriza la cuenta receptora usando las credenciales cargadas en el servidor.': 'Authorize the receiving account using the credentials loaded on the server.',
-  'Variables cargadas': 'Variables loaded',
-  'Variables pendientes': 'Variables missing',
-  'La URL, el modelo y la clave se leen exclusivamente en el servidor.': 'The URL, model and key are read exclusively on the server.',
-  'Selecciona el correo real que define el alcance de la tarea.': 'Select the actual email that defines the task’s scope.',
-  'cuenta receptora': 'receiving account',
-  'No hay nuevas solicitudes con los filtros configurados.': 'No new requests match the configured filters.',
-  'Acuerdo capturado. Ya puedes buscar nuevas solicitudes.': 'Agreement captured. You can now look for new requests.',
-  'Company Brain conecta tus correos de Gmail con la tarea configurada en GitHub.': 'Company Brain connects your Gmail emails with the task configured in GitHub.',
-  'Selecciona el correo inicial para contrastarlo con el alcance de la tarea.': 'Select the initial email to compare it with the task’s scope.',
-  'Continuar': 'Continue',
-  'La interfaz solo admite datos reales.': 'The interface only accepts real data.',
-  'La configuración se carga desde el entorno. Edita .env y reinicia el servidor.': 'Settings are loaded from the environment. Edit .env and restart the server.',
-  'Hay variables de entorno inválidas. Corrige el archivo .env y reinicia el servidor.': 'Some environment variables are invalid. Fix the .env file and restart the server.',
-  'GITHUB_REPO debe ser owner/repo.': 'GITHUB_REPO must be owner/repo.',
-  'GITHUB_ISSUE_NUMBER debe ser un entero positivo.': 'GITHUB_ISSUE_NUMBER must be a positive integer.',
-  'GMAIL_AFTER debe ser una fecha ISO válida anterior al primer correo.': 'GMAIL_AFTER must be a valid ISO date before the first email.',
-  'ALLOWED_SENDER debe ser una dirección de correo válida.': 'ALLOWED_SENDER must be a valid email address.',
-  'MODEL_BASE_URL debe ser HTTPS sin credenciales ni parámetros.': 'MODEL_BASE_URL must use HTTPS without credentials or parameters.',
-  'La variable no puede contener saltos de línea.': 'The variable must not contain line breaks.',
-  'Selecciona el correo inicial y captura el acuerdo desde Conexiones.': 'Select the initial email and capture the agreement from Connections.',
-  'Leer correos desde (UTC)': 'Read emails from (UTC)',
-  'Etiqueta de Gmail': 'Gmail label',
-  'Etiqueta de Gmail (opcional)': 'Gmail label (optional)',
-  'Sin etiqueta: buscar por participantes': 'No label: search by participants',
-  'La fecha incluye correos desde las 00:00 UTC de ese día. Elige una fecha que incluya el acuerdo inicial.': 'The date includes emails from 00:00 UTC that day. Choose a date that includes the initial agreement.',
-  'Sin etiqueta se buscan los correos de los participantes. Si eliges una, debe existir en Gmail y estar aplicada a los mensajes.': 'Without a label, emails are searched by participant. If you choose one, it must exist in Gmail and be applied to the messages.',
-  'La fecha de inicio debe ser una fecha válida.': 'The start date must be a valid date.',
-  'La fecha de inicio debe incluir el correo del acuerdo inicial.': 'The start date must include the initial agreement email.',
-  'La etiqueta de Gmail debe ser un nombre válido de hasta 200 caracteres.': 'The Gmail label must be a valid name of up to 200 characters.',
-  'La etiqueta del proyecto no existe en Gmail. Créala o deja la etiqueta vacía en Proyectos y filtros.': 'The project label does not exist in Gmail. Create it or leave the label empty in Projects and filters.',
-  'Más de 500 correos: acota los participantes, la fecha o la etiqueta del proyecto.': 'More than 500 emails: narrow the project’s participants, start date or label.',
-
+  "Centro de decisiones": "Decision center",
+  "Fuentes de contexto": "Context sources",
+  Actividad: "Activity",
+  Configuración: "Settings",
+  "Demo interactiva": "Interactive demo",
+  "Conecta correos y tareas para convertir nuevas solicitudes en propuestas con contexto. Demo interactiva de Company Brain.":
+    "Connect emails and tasks to turn new requests into proposals with context. An interactive Company Brain demo.",
+  "Cómo funciona": "How it works",
+  "Tu espacio de trabajo": "Your workspace",
+  "Navegación principal": "Main navigation",
+  "Ver el video del tutorial": "Watch the tutorial",
+  "Tú decides. Company Brain aporta el contexto.": "You decide. Company Brain brings the context.",
+  "Demo de IA en Producción": "A demo by IA en Producción",
+  "Acuerdo inicial": "Initial agreement",
+  "Nueva solicitud": "New request",
+  Contexto: "Context",
+  Nuevo: "New",
+  "Tarea en curso": "Current task",
+  Abierto: "Open",
+  Cerrado: "Closed",
+  "Formato actual": "Current format",
+  "Ver tarea completa": "View the full task",
+  "Conectando las piezas…": "Connecting the dots…",
+  "No hace falta proponer un cambio": "No change needs to be proposed",
+  "El contexto está listo.": "The context is ready.",
+  "Revisando el acuerdo, la tarea y la nueva solicitud.":
+    "Reviewing the agreement, task and new request.",
+  "Analizando…": "Analyzing…",
+  "Consulta Gmail, GitHub y tu modelo": "Uses Gmail, GitHub and your model",
+  "Comentario publicado": "Comment published",
+  "Necesita tu revisión": "Needs your review",
+  "Una nueva prioridad para la entrega.": "A new priority for this delivery.",
+  "Plan actual": "Current plan",
+  Propuesta: "Proposal",
+  "Por qué revisarlo": "Why it needs a review",
+  "Contraste de los dos correos y la tarea": "Both emails checked against the task",
+  "Ver comentario": "View comment",
+  "Revisar propuesta": "Review proposal",
+  "La tarea conserva su alcance original.": "The task keeps its original scope.",
+  "El alcance cambia cuando tú lo decides.": "The scope changes when you decide.",
+  "Recorrido de la solicitud": "Request workflow",
+  "La conexión, paso a paso": "Connecting the dots, step by step",
+  "Tu contexto, en una sola vista": "Your context in one place",
+  "Contexto reunido": "Context gathered",
+  "Correo inicial + tarea": "Initial email + task",
+  "Solicitud recibida": "Request received",
+  "Una nueva prioridad": "A new priority",
+  "Propuesta con evidencia": "Proposal with evidence",
+  "Fuentes contrastadas": "Sources cross-checked",
+  "Lista para analizar": "Ready to analyze",
+  "Revisión humana": "Human review",
+  "Tú decides qué hacer": "You decide what to do",
+  "propuesta pendiente": "pending proposal",
+  "propuestas pendientes": "pending proposals",
+  "Conecta el contexto de tu equipo.": "Connect your team’s context.",
+  "Empieza por tus fuentes y captura el acuerdo inicial.":
+    "Start with your sources and capture the initial agreement.",
+  "Tu Company Brain empieza con un acuerdo.": "Your Company Brain starts with an agreement.",
+  "El acuerdo inicial está guardado.": "The initial agreement is saved.",
+  "Busca nuevas solicitudes para reunir el contexto actual.":
+    "Look for new requests to gather the current context.",
+  "Buscar solicitudes": "Find requests",
+  "Del correo a una decisión.": "From an email to a decision.",
+  "Lo que se conversa y lo que se construye, con el mismo contexto.":
+    "What gets discussed and what gets built, with the same context.",
+  "Detener observación": "Stop watching",
+  "Observar Gmail": "Watch Gmail",
+  "fuentes de contexto": "context sources",
+  "Revisión humana en cada cambio": "Human review for every change",
+  "Observando Gmail": "Watching Gmail",
+  "Cuentas reales": "Real accounts",
+  "Buscando solicitudes…": "Finding requests…",
+  "Buscar nuevas solicitudes": "Find new requests",
+  Solicitud: "Request",
+  "Lo que sabemos": "What we know",
+  "Lo que cambió": "What changed",
+  "Esperando una nueva solicitud": "Waiting for a new request",
+  "Mismo proyecto, misma entrega.": "Same project, same delivery.",
+  "Una prioridad diferente.": "A different priority.",
+  "Cada solicitud se compara con": "Each request is compared to",
+  "el acuerdo y la tarea existentes.": "the existing agreement and task.",
+  "Lo que propone el Brain": "What the Brain proposes",
+  "Una solicitud no es una aprobación.": "A request needs approval.",
+  "La propuesta deja evidencia; el equipo decide si cambia la tarea.":
+    "The proposal records the evidence; the team decides whether to change the task.",
+  "Entender el recorrido": "Understand the workflow",
+  "Las fuentes detrás de la propuesta.": "The sources behind the proposal.",
+  "Todo el contexto que Company Brain utiliza para este caso.":
+    "All the context Company Brain uses for this case.",
+  "Ver correo": "View email",
+  "Tarea existente": "Existing task",
+  "Ver tarea": "View task",
+  "Gmail aporta los acuerdos y las solicitudes. GitHub aporta el trabajo existente.":
+    "Gmail provides agreements and requests. GitHub provides the existing work.",
+  "El contexto siempre tiene una fuente.": "Context always has a source.",
+  "La propuesta cita extractos de los correos. El análisis valida que correspondan al mismo proyecto y a la misma entrega.":
+    "The proposal quotes the emails. The analysis checks that they refer to the same project and delivery.",
+  "Un recorrido que puedes seguir.": "A workflow you can follow.",
+  "Consultas, propuestas y revisiones de esta sesión.":
+    "Lookups, proposals and reviews from this session.",
+  "Aquí verás cada paso.": "See every step here.",
+  "Analiza la solicitud para ver cómo se conecta el contexto.":
+    "Analyze the request to see how the context connects.",
+  "Ir al centro de decisiones": "Go to the decision center",
+  "El acuerdo inicial y las nuevas solicitudes.": "The initial agreement and new requests.",
+  En: "In",
+  "Conectar Gmail": "Connect Gmail",
+  "La tarea existente y el destino de la propuesta.":
+    "The existing task and the destination for the proposal.",
+  "Comprobar acceso": "Check access",
+  "Modelo de IA": "AI model",
+  "Un proveedor compatible con Chat Completions.": "A provider compatible with Chat Completions.",
+  "Captura el acuerdo inicial": "Capture the initial agreement",
+  "Contexto guardado": "Context saved",
+  "Cargar correos": "Load emails",
+  "Capturar acuerdo": "Capture agreement",
+  Cerrar: "Close",
+  "Autoriza la": "Authorize the",
+  ". Al terminar vuelve a esta pantalla.": ". Return to this screen when you are done.",
+  "Abrir autorización de Google": "Open Google authorization",
+  "Gmail conectado. Ya puedes cargar los correos.": "Gmail connected. You can now load emails.",
+  "Preparando la autorización…": "Preparing authorization…",
+  "Propuesta para el issue": "Proposal for the issue",
+  "El comentario reúne la evidencia y pide revisar el alcance. Publicarlo conserva la tarea actual.":
+    "The comment gathers the evidence and requests a scope review. Publishing it preserves the current task.",
+  "Ver el comentario completo": "View the full comment",
+  "Evidencia del acuerdo inicial": "Evidence from the initial agreement",
+  "Evidencia de la nueva solicitud": "Evidence from the new request",
+  "La propuesta sigue pendiente de revisión humana. La decisión de cambiar el issue se toma en GitHub.":
+    "The proposal still needs human review. The decision to change the issue is made in GitHub.",
+  "Copiar comentario": "Copy comment",
+  "Ver en GitHub": "View on GitHub",
+  "Publicar comentario en GitHub": "Publish comment on GitHub",
+  "De información dispersa a una propuesta clara.":
+    "From scattered information to a clear proposal.",
+  "Reúne lo que ya se acordó.": "Gather what was already agreed.",
+  "Conecta la nueva solicitud.": "Connect the new request.",
+  "Company Brain contrasta los correos con la tarea y prepara una propuesta con evidencia.":
+    "Company Brain checks the emails against the task and prepares a proposal with evidence.",
+  "Revisa y decide.": "Review and decide.",
+  "La propuesta puede publicarse como comentario. El equipo decide si modifica el alcance.":
+    "The proposal can be published as a comment. The team decides whether to change the scope.",
+  "Correo del acuerdo inicial": "Initial agreement email",
+  "Correo de la nueva solicitud": "New request email",
+  "No aparecen correos. Comprueba cuenta, etiqueta, remitente y fecha.":
+    "No emails found. Check the account, label, sender and date.",
+  "Publicando comentario…": "Publishing comment…",
+  "Comentario publicado. La tarea sigue pendiente de tu decisión.":
+    "Comment published. The task still awaits your decision.",
+  "Observando Gmail cada 30 segundos. Las propuestas esperan tu revisión.":
+    "Watching Gmail every 30 seconds. Proposals await your review.",
+  "Copiado.": "Copied.",
+  "Selecciona el texto y cópialo con el teclado.":
+    "Select the text and copy it with your keyboard.",
+  "No se pudo completar la operación.": "The operation could not be completed.",
+  "Ir al contenido": "Skip to content",
+  "Preparando Company Brain…": "Preparing Company Brain…",
+  "Activa JavaScript para utilizar esta demo.": "Enable JavaScript to use this demo.",
+  "Propuesta preparada": "Proposal prepared",
+  "Acuerdo inicial capturado": "Initial agreement captured",
+  "Correo revisado": "Email reviewed",
+  "Gmail conectado": "Gmail connected",
+  "Acceso de lectura autorizado.": "Read access authorized.",
+  "Acceso local únicamente.": "Local access only.",
+  "Origen no permitido.": "Origin not allowed.",
+  "Página no encontrada.": "Page not found.",
+  "Recarga la página para recuperar la sesión local.":
+    "Reload the page to restore your local session.",
+  "Solicitud no admitida.": "Request not supported.",
+  "Solicitud demasiado grande.": "Request too large.",
+  "Solicitud inválida.": "Invalid request.",
+  "Acción no encontrada.": "Action not found.",
+  "Hay una operación en curso. Espera a que termine.":
+    "An operation is in progress. Wait for it to finish.",
+  "Otra instancia está usando esta demo. Detén el script o servidor anterior antes de continuar.":
+    "Another instance is using this demo. Stop the previous script or server before continuing.",
+  "El correo inicial cambió. Conserva la configuración de esta demo o utiliza otra copia.":
+    "The initial email changed. Keep this demo’s settings or use another copy.",
+  "La configuración del proyecto cambió desde la captura inicial.":
+    "The project settings changed since the initial capture.",
+  "El estado pertenece a otro destino. Utiliza otra copia de la demo.":
+    "The saved state belongs to another destination. Use another copy of the demo.",
+  "ID de correo inválido.": "Invalid email ID.",
+  "Ya existe un contexto inicial. No se puede reemplazar desde esta sesión.":
+    "Initial context already exists. It cannot be replaced from this session.",
+  "No aparece ese correo. Revisa la etiqueta, el remitente y la fecha.":
+    "That email was not found. Check the label, sender and date.",
+  "El correo inicial ya no aparece en esta cuenta. Comprueba la etiqueta y la fecha de lectura.":
+    "The initial email is no longer in this account. Check the label and the read-after date.",
+  "Falta el acuerdo inicial. Captúralo antes de publicar.":
+    "The initial agreement is missing. Capture it before publishing.",
+  "Vuelve a analizar la solicitud antes de publicar.":
+    "Analyze the request again before publishing.",
+  "Ya hay una operación en curso.": "An operation is already in progress.",
+  "No se pudo iniciar la conexión. Revisa las credenciales de Google.":
+    "Could not start the connection. Check your Google credentials.",
+  "La conexión no se completó. Inténtalo de nuevo.": "The connection did not complete. Try again.",
+  "Correo inicial o anterior al contexto inicial":
+    "Initial email or email sent before the initial context",
+  "No hay una solicitud de cambio identificada": "No change request identified",
+  "El issue ya solicita ese formato": "The issue already requests that format",
+  "GITHUB_REPO debe ser owner/repo": "GITHUB_REPO must be owner/repo",
+  "GITHUB_ISSUE_NUMBER inválido": "Invalid GITHUB_ISSUE_NUMBER",
+  "Se esperaba el issue configurado, no un PR": "Expected the configured issue, not a pull request",
+  "Comentario fuera del alcance": "Comment outside the allowed scope",
+  "Cuerpo de comentario inválido": "Invalid comment body",
+  "No se pudo identificar la cuenta GitHub": "Could not identify the GitHub account",
+  "Remitente ambiguo": "Ambiguous sender",
+  "No existe GMAIL_LABEL. Créala manualmente en Gmail.":
+    "GMAIL_LABEL does not exist. Create it in Gmail.",
+  "Define GMAIL_AFTER como fecha ISO válida": "Set GMAIL_AFTER to a valid ISO date",
+  "El issue no está abierto": "The issue is not open",
+  "Define una sola línea Formato actual: CSV o PDF en el issue":
+    "Add exactly one line Formato actual: CSV or PDF to the issue",
+  "La evidencia debe ser una cadena de texto": "Evidence must be a text string",
+  "Remitente fuera de la allowlist": "Sender is not on the allowlist",
+  "Fecha de correo inválida": "Invalid email date",
+  "El correo inicial y el issue no coinciden en el formato":
+    "The initial email and the issue specify different formats",
+  "La captura inicial no debe proponer un cambio": "The initial capture must not propose a change",
+  "Respuesta inválida: changeRequested": "Invalid response: changeRequested",
+  "El modelo contradice el formato inicial": "The model contradicts the initial format",
+  "Formato fuera del alcance": "Format outside the allowed scope",
+  "Falta una explicación breve de la propuesta": "A brief explanation of the proposal is missing",
+  "El modelo no devolvió el JSON solicitado": "The model did not return the requested JSON",
+  "La captura inicial pertenece a otro repositorio o issue":
+    "The initial capture belongs to another repository or issue",
+  "Autorización cancelada o sin código": "Authorization was canceled or returned no code",
+  "No se recibió refresh_token; revoca el permiso y autoriza nuevamente":
+    "No refresh_token received; revoke permission and authorize again",
+  Conexiones: "Connections",
+  "Ver conexiones": "View connections",
+  "Proyecto conectado": "Connected project",
+  "Datos de tus cuentas": "Data from your accounts",
+  "Credenciales desde el entorno.": "Credentials from the environment.",
+  "Entorno listo": "Environment ready",
+  "Entorno incompleto": "Environment incomplete",
+  "Configuración requerida": "Configuration required",
+  "Faltan variables de entorno.": "Environment variables are missing.",
+  "Revisa las variables de entorno.": "Check your environment variables.",
+  "No se pudo cargar tu contexto.": "Your context could not be loaded.",
+  "Completa las variables en el entorno o en": "Set the variables in the environment or in",
+  "y reinicia el servidor.": "and restart the server.",
+  "Variables faltantes": "Missing variables",
+  Reintentar: "Retry",
+  "Las credenciales se leen en el servidor.": "Credentials are read on the server.",
+  Remitente: "Sender",
+  "Autoriza Gmail y selecciona el correo que define el alcance de la tarea configurada en GitHub.":
+    "Authorize Gmail and select the email that defines the task’s scope in GitHub.",
+  "Busca solicitudes en Gmail para contrastarlas con el acuerdo y la tarea.":
+    "Find requests in Gmail to compare them with the agreement and task.",
+  "Ver acuerdo inicial completo": "View the full initial agreement",
+  "Ver solicitud completa": "View the full request",
+  "Abrir en Gmail": "Open in Gmail",
+  "Abrir en GitHub": "Open in GitHub",
+  "Busca nuevos mensajes con la etiqueta y el remitente configurados.":
+    "Look for new messages with the configured label and sender.",
+  "Captura el acuerdo inicial para reunir tus fuentes.":
+    "Capture the initial agreement to gather your sources.",
+  "El estado de tus conexiones.": "Your connection status.",
+  "La configuración se lee desde el entorno al iniciar el servidor.":
+    "Settings are read from the environment when the server starts.",
+  "Para cambiar credenciales o fuentes, actualiza el entorno y reinicia el servidor.":
+    "To change credentials or sources, update the environment and restart the server.",
+  "Lectura autorizada": "Read access authorized",
+  "Pendiente de autorización": "Awaiting authorization",
+  "Autoriza la cuenta receptora usando las credenciales cargadas en el servidor.":
+    "Authorize the receiving account using the credentials loaded on the server.",
+  "Variables cargadas": "Variables loaded",
+  "Variables pendientes": "Variables missing",
+  "La URL, el modelo y la clave se leen exclusivamente en el servidor.":
+    "The URL, model and key are read exclusively on the server.",
+  "Selecciona el correo real que define el alcance de la tarea.":
+    "Select the actual email that defines the task’s scope.",
+  "cuenta receptora": "receiving account",
+  "No hay nuevas solicitudes con los filtros configurados.":
+    "No new requests match the configured filters.",
+  "Acuerdo capturado. Ya puedes buscar nuevas solicitudes.":
+    "Agreement captured. You can now look for new requests.",
+  "Company Brain conecta tus correos de Gmail con la tarea configurada en GitHub.":
+    "Company Brain connects your Gmail emails with the task configured in GitHub.",
+  "Selecciona el correo inicial para contrastarlo con el alcance de la tarea.":
+    "Select the initial email to compare it with the task’s scope.",
+  Continuar: "Continue",
+  "La interfaz solo admite datos reales.": "The interface only accepts real data.",
+  "La configuración se carga desde el entorno. Edita .env y reinicia el servidor.":
+    "Settings are loaded from the environment. Edit .env and restart the server.",
+  "Hay variables de entorno inválidas. Corrige el archivo .env y reinicia el servidor.":
+    "Some environment variables are invalid. Fix the .env file and restart the server.",
+  "GITHUB_REPO debe ser owner/repo.": "GITHUB_REPO must be owner/repo.",
+  "GITHUB_ISSUE_NUMBER debe ser un entero positivo.":
+    "GITHUB_ISSUE_NUMBER must be a positive integer.",
+  "GMAIL_AFTER debe ser una fecha ISO válida anterior al primer correo.":
+    "GMAIL_AFTER must be a valid ISO date before the first email.",
+  "ALLOWED_SENDER debe ser una dirección de correo válida.":
+    "ALLOWED_SENDER must be a valid email address.",
+  "MODEL_BASE_URL debe ser HTTPS sin credenciales ni parámetros.":
+    "MODEL_BASE_URL must use HTTPS without credentials or parameters.",
+  "La variable no puede contener saltos de línea.": "The variable must not contain line breaks.",
+  "Selecciona el correo inicial y captura el acuerdo desde Conexiones.":
+    "Select the initial email and capture the agreement from Connections.",
+  "Leer correos desde (UTC)": "Read emails from (UTC)",
+  "Etiqueta de Gmail": "Gmail label",
+  "Etiqueta de Gmail (opcional)": "Gmail label (optional)",
+  "Sin etiqueta: buscar por participantes": "No label: search by participants",
+  "La fecha incluye correos desde las 00:00 UTC de ese día. Elige una fecha que incluya el acuerdo inicial.":
+    "The date includes emails from 00:00 UTC that day. Choose a date that includes the initial agreement.",
+  "Sin etiqueta se buscan los correos de los participantes. Si eliges una, debe existir en Gmail y estar aplicada a los mensajes.":
+    "Without a label, emails are searched by participant. If you choose one, it must exist in Gmail and be applied to the messages.",
+  "La fecha de inicio debe ser una fecha válida.": "The start date must be a valid date.",
+  "La fecha de inicio debe incluir el correo del acuerdo inicial.":
+    "The start date must include the initial agreement email.",
+  "La etiqueta de Gmail debe ser un nombre válido de hasta 200 caracteres.":
+    "The Gmail label must be a valid name of up to 200 characters.",
+  "La etiqueta del proyecto no existe en Gmail. Créala o deja la etiqueta vacía en Proyectos y filtros.":
+    "The project label does not exist in Gmail. Create it or leave the label empty in Projects and filters.",
+  "Más de 500 correos: acota los participantes, la fecha o la etiqueta del proyecto.":
+    "More than 500 emails: narrow the project’s participants, start date or label.",
 };
 
 const patterns = [
-  [/^El cliente solicita (\w+), pero la tarea sigue planificada en (\w+)\.$/, (_, to, from) => `The client requests ${to}, while the task is still planned as ${from}.`],
+  [
+    /^El cliente solicita (\w+), pero la tarea sigue planificada en (\w+)\.$/,
+    (_, to, from) => `The client requests ${to}, while the task is still planned as ${from}.`,
+  ],
   [/^Proponer (\w+) en lugar de (\w+)$/, (_, to, from) => `Propose ${to} instead of ${from}`],
   [/^Issue #(\d+) · Portal del cliente$/, (_, number) => `Issue #${number} · Customer portal`],
   [/^Tarea en GitHub · Issue #(\d+)$/, (_, number) => `GitHub task · Issue #${number}`],
-  [/^Acuerdo (\w+) · Issue #(\d+)\. Este contexto se conserva para comparar nuevas solicitudes\.$/, (_, format, number) => `Agreement ${format} · Issue #${number}. This context is saved to compare new requests.`],
+  [
+    /^Acuerdo (\w+) · Issue #(\d+)\. Este contexto se conserva para comparar nuevas solicitudes\.$/,
+    (_, format, number) =>
+      `Agreement ${format} · Issue #${number}. This context is saved to compare new requests.`,
+  ],
   [/^GitHub conectado como (.+)\.$/, (_, login) => `GitHub connected as ${login}.`],
-  [/^Faltan variables de entorno: (.+)\.$/, (_, fields) => `Missing environment variables: ${fields}.`],
+  [
+    /^Faltan variables de entorno: (.+)\.$/,
+    (_, fields) => `Missing environment variables: ${fields}.`,
+  ],
   [/^Completa la configuración: (.+)\.$/, (_, fields) => `Complete the settings: ${fields}.`],
-  [/^Correo e issue coinciden en (\w+)\.$/, (_, format) => `Email and issue both specify ${format}.`],
-  [/^(\w+) a (\w+)\. Pendiente de revisión\.$/, (_, from, to) => `${from} to ${to}. Awaiting review.`],
-  [/^Issue #(\d+)\. El cambio sigue pendiente de decisión humana\.$/, (_, number) => `Issue #${number}. The change still awaits a human decision.`],
+  [
+    /^Correo e issue coinciden en (\w+)\.$/,
+    (_, format) => `Email and issue both specify ${format}.`,
+  ],
+  [
+    /^(\w+) a (\w+)\. Pendiente de revisión\.$/,
+    (_, from, to) => `${from} to ${to}. Awaiting review.`,
+  ],
+  [
+    /^Issue #(\d+)\. El cambio sigue pendiente de decisión humana\.$/,
+    (_, number) => `Issue #${number}. The change still awaits a human decision.`,
+  ],
   [/^Falta (\w+)$/, (_, key) => `Missing ${key}`],
-  [/^(Gmail|OAuth) respondió HTTP (\d+)$/, (_, service, status) => `${service} returned HTTP ${status}`],
+  [
+    /^(Gmail|OAuth) respondió HTTP (\d+)$/,
+    (_, service, status) => `${service} returned HTTP ${status}`,
+  ],
   [/^Issue no relacionado: falta (.+)$/, (_, line) => `Unrelated issue: missing ${line}`],
-  [/^La evidencia debe mencionar el formato (\w+)$/, (_, format) => `Evidence must mention the ${format} format`],
+  [
+    /^La evidencia debe mencionar el formato (\w+)$/,
+    (_, format) => `Evidence must mention the ${format} format`,
+  ],
   [/^Contexto incorrecto: (\w+)$/, (_, key) => `Incorrect context: ${key}`],
 ];
 
 export function readLanguage(storage) {
-  try { return storage?.getItem(languageKey) === 'en' ? 'en' : 'es'; }
-  catch { return 'es'; }
+  try {
+    return storage?.getItem(languageKey) === "en" ? "en" : "es";
+  } catch {
+    return "es";
+  }
 }
 
 export function saveLanguage(storage, language) {
-  try { storage?.setItem(languageKey, language === 'en' ? 'en' : 'es'); }
-  catch { /* The switch still works when browser storage is unavailable. */ }
+  try {
+    storage?.setItem(languageKey, language === "en" ? "en" : "es");
+  } catch {
+    /* The switch still works when browser storage is unavailable. */
+  }
 }
 
 export function translate(value, language) {
-  if (language !== 'en') return value;
-  const key = value.trim().replace(/\s+/g, ' ');
+  if (language !== "en") return value;
+  const key = value.trim().replace(/\s+/g, " ");
   let translated = Object.hasOwn(english, key) ? english[key] : undefined;
   if (translated === undefined) {
     for (const [pattern, format] of patterns) {
       const match = key.match(pattern);
-      if (match) { translated = format(...match); break; }
+      if (match) {
+        translated = format(...match);
+        break;
+      }
     }
   }
   if (translated === undefined) return value;
-  return value.slice(0, value.length - value.trimStart().length) + translated + value.slice(value.trimEnd().length);
+  return (
+    value.slice(0, value.length - value.trimStart().length) +
+    translated +
+    value.slice(value.trimEnd().length)
+  );
 }
 
 const originals = new WeakMap();
 const originalAttributes = new WeakMap();
-const sourceSelector = '[data-source], pre, code, svg, script, style, noscript';
+const sourceSelector = "[data-source], pre, code, svg, script, style, noscript";
 
 // Keep the original nodes so switching never recreates an open review.
 export function localize(root, language) {
@@ -406,13 +535,13 @@ export function localize(root, language) {
     if (!originals.has(node)) originals.set(node, node.nodeValue);
     node.nodeValue = translate(originals.get(node), language);
   }
-  const elements = [...root.querySelectorAll('[aria-label], [title], [placeholder]')];
-  if (root.matches?.('[aria-label], [title], [placeholder]')) elements.unshift(root);
+  const elements = [...root.querySelectorAll("[aria-label], [title], [placeholder]")];
+  if (root.matches?.("[aria-label], [title], [placeholder]")) elements.unshift(root);
   for (const element of elements) {
     if (element.closest(sourceSelector)) continue;
     if (!originalAttributes.has(element)) originalAttributes.set(element, {});
     const attributes = originalAttributes.get(element);
-    for (const name of ['aria-label', 'title', 'placeholder']) {
+    for (const name of ["aria-label", "title", "placeholder"]) {
       if (!element.hasAttribute(name)) continue;
       attributes[name] ??= element.getAttribute(name);
       element.setAttribute(name, translate(attributes[name], language));

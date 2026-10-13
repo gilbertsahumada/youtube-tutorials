@@ -3,8 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createBaseline } from "../src/plan.mjs";
 import { processEmails, assertBaseline } from "../src/pipeline.mjs";
-const read = async (p) =>
-  JSON.parse(await readFile(new URL("../" + p, import.meta.url), "utf8"));
+const read = async (p) => JSON.parse(await readFile(new URL("../" + p, import.meta.url), "utf8"));
 const initial = await read("fixtures/initial-email.json"),
   email = await read("fixtures/email.json"),
   issue = await read("fixtures/issue.json"),
@@ -78,8 +77,5 @@ test("fallo de publicación no marca procesado y se puede recuperar", async () =
 test("captura inicial impide cambiar de repositorio/issue o reutilizar protocolo antiguo", () => {
   assert.throws(() => assertBaseline(baseline, "other/repo", 1), /otro/);
   assert.throws(() => assertBaseline(baseline, "demo/sandbox", 2), /otro/);
-  assert.throws(
-    () => assertBaseline({ schemaVersion: 1 }, "demo/sandbox", 1),
-    /compatible/,
-  );
+  assert.throws(() => assertBaseline({ schemaVersion: 1 }, "demo/sandbox", 1), /compatible/);
 });

@@ -17,30 +17,25 @@ if (
   throw Error("Usa --fixture, --inbox, --baseline, --once o --watch");
 const publishing = command !== "--fixture" && process.env.PUBLISH === "true";
 const local = (path) => readJson(resolve(ROOT, path));
-async function savePlan(
-  { email, context, analysis, plan },
-  prefix = messageKey(email.id),
-) {
+async function savePlan({ email, context, analysis, plan }, prefix = messageKey(email.id)) {
   await saveJson(resolve(ROOT, `output/${prefix}.json`), {
     context,
     analysis,
     plan,
   });
   const commentPath = resolve(ROOT, `output/${prefix}-comment.md`);
-  if (plan.action === "comment")
-    await writeFile(commentPath, plan.body + "\n", { mode: 0o600 });
+  if (plan.action === "comment") await writeFile(commentPath, plan.body + "\n", { mode: 0o600 });
   else await rm(commentPath, { force: true });
 }
 async function fixture() {
-  const [project, initialEmail, email, issue, initialAnalysis, analysis] =
-    await Promise.all([
-      local("config/project.json"),
-      local("fixtures/initial-email.json"),
-      local("fixtures/email.json"),
-      local("fixtures/issue.json"),
-      local("fixtures/initial-analysis.json"),
-      local("fixtures/analysis.json"),
-    ]);
+  const [project, initialEmail, email, issue, initialAnalysis, analysis] = await Promise.all([
+    local("config/project.json"),
+    local("fixtures/initial-email.json"),
+    local("fixtures/email.json"),
+    local("fixtures/issue.json"),
+    local("fixtures/initial-analysis.json"),
+    local("fixtures/analysis.json"),
+  ]);
   const baseline = createBaseline({
     repo: "demo/sandbox",
     project,
@@ -79,12 +74,7 @@ async function optional(path) {
   }
 }
 async function real() {
-  for (const key of [
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET",
-    "GMAIL_AFTER",
-    "ALLOWED_SENDER",
-  ])
+  for (const key of ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GMAIL_AFTER", "ALLOWED_SENDER"])
     if (!process.env[key]) throw Error(`Falta ${key}`);
   if (command === "--inbox") {
     const emails = await getEmails();
@@ -111,28 +101,20 @@ async function real() {
   if (previous) {
     assertBaseline(previous, repo, number);
     if (previous.initialEmail.id !== process.env.GMAIL_INITIAL_MESSAGE_ID)
-      throw Error(
-        "GMAIL_INITIAL_MESSAGE_ID no coincide con la captura inicial",
-      );
+      throw Error("GMAIL_INITIAL_MESSAGE_ID no coincide con la captura inicial");
     if (JSON.stringify(previous.project) !== JSON.stringify(project))
-      throw Error(
-        "La configuración cambió desde la captura inicial; usa otra copia de la demo",
-      );
+      throw Error("La configuración cambió desde la captura inicial; usa otra copia de la demo");
   }
   if (command === "--baseline") {
     if (!process.env.GMAIL_INITIAL_MESSAGE_ID)
       throw Error("Define GMAIL_INITIAL_MESSAGE_ID usando npm run inbox");
     if (previous) {
       if (previous.initialEmail.id !== process.env.GMAIL_INITIAL_MESSAGE_ID)
-        throw Error(
-          "Ya existe otra captura inicial; usa otra copia de la demo",
-        );
+        throw Error("Ya existe otra captura inicial; usa otra copia de la demo");
       console.log("Captura inicial existente. No se sobrescribió.");
       return;
     }
-    const email = (await getEmails()).find(
-      (e) => e.id === process.env.GMAIL_INITIAL_MESSAGE_ID,
-    );
+    const email = (await getEmails()).find((e) => e.id === process.env.GMAIL_INITIAL_MESSAGE_ID);
     if (!email)
       throw Error(
         "El correo inicial no está entre los mensajes etiquetados, permitidos y posteriores a GMAIL_AFTER",
@@ -158,6 +140,7 @@ async function real() {
     } catch (error) {
       throw Error(
         `${error.message}. Revisa context.initialEmail.text y analysis.initialEvidence en output/initial-context.json. No se guardó la captura inicial ni se escribió en GitHub.`,
+        { cause: error },
       );
     }
     await saveJson(privatePath("baseline.json"), baseline);
@@ -166,28 +149,18 @@ async function real() {
     );
     return;
   }
-  if (!previous)
-    throw Error(
-      "Primero ejecuta npm run baseline con el correo y el issue iniciales",
-    );
+  if (!previous) throw Error("Primero ejecuta npm run baseline con el correo y el issue iniciales");
   if (command === "--watch" && !publishing)
-    throw Error(
-      "Para watch usa PUBLISH=true solo después de revisar once con PUBLISH=false",
-    );
+    throw Error("Para watch usa PUBLISH=true solo después de revisar once con PUBLISH=false");
   const seconds = Number(process.env.POLL_SECONDS || 30);
-  if (!Number.isFinite(seconds) || seconds < 10)
-    throw Error("POLL_SECONDS debe ser >= 10");
+  if (!Number.isFinite(seconds) || seconds < 10) throw Error("POLL_SECONDS debe ser >= 10");
   let state = (await optional(privatePath("state.json"))) || {
     schemaVersion: 2,
     repo,
     issueNumber: number,
     processed: {},
   };
-  if (
-    state.schemaVersion !== 2 ||
-    state.repo !== repo ||
-    state.issueNumber !== number
-  )
+  if (state.schemaVersion !== 2 || state.repo !== repo || state.issueNumber !== number)
     throw Error(
       "Estado incompatible o de otro destino: usa otra copia de la demo; no borres una revisión activa",
     );
@@ -230,8 +203,7 @@ async function real() {
         );
       }
       if (command !== "--watch" || stopping) break;
-      for (let elapsed = 0; elapsed < seconds && !stopping; elapsed++)
-        await sleep(1000);
+      for (let elapsed = 0; elapsed < seconds && !stopping; elapsed++) await sleep(1000);
     } while (!stopping);
   } finally {
     process.off("SIGINT", stop);
@@ -249,6 +221,7 @@ else {
     if (e.code === "EEXIST")
       throw Error(
         "Otro proceso o lock antiguo en .private/watch.lock. Verifica antes de borrarlo.",
+        { cause: e },
       );
     throw e;
   }

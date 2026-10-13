@@ -2,10 +2,16 @@
   "name": "company-brain-demo",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "check": "npm run format:check && npm run lint && npm test && npm run test:fixture",
     "test": "node --test test/*.test.mjs",
     "preview": "node src/server.mjs",
     "test:fixture": "node src/main.mjs --fixture",
@@ -14,5 +20,12 @@
     "inbox": "node src/main.mjs --inbox",
     "baseline": "node src/main.mjs --baseline",
     "gmail:login": "node src/gmail-login.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "prettier": "3.9.10"
   }
 }

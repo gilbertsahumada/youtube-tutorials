@@ -6,11 +6,9 @@ export function mailbox(header) {
   if (header.includes(",") || (header.match(/</g) || []).length > 1)
     throw Error("Remitente ambiguo");
   const match = header.match(/<([^<>]+)>\s*$/);
-  if (match && header.slice(0, match.index).includes("@"))
-    throw Error("Remitente ambiguo");
+  if (match && header.slice(0, match.index).includes("@")) throw Error("Remitente ambiguo");
   const address = (match ? match[1] : header).trim().toLowerCase();
-  if (!/^[^\s<>@,]+@[^\s<>@,]+\.[^\s<>@,]+$/.test(address))
-    throw Error("Remitente ambiguo");
+  if (!/^[^\s<>@,]+@[^\s<>@,]+\.[^\s<>@,]+$/.test(address)) throw Error("Remitente ambiguo");
   return address;
 }
 export function plainText(payload) {
@@ -25,8 +23,13 @@ export function plainText(payload) {
 }
 export async function gmailClient(env = process.env, tokenPath = privatePath("gmail-token.json")) {
   let token;
-  try { token = await readJson(tokenPath); }
-  catch (error) { if (error.code === "ENOENT") throw Error("Conecta Gmail desde Conexiones y datos antes de sincronizar."); throw error; }
+  try {
+    token = await readJson(tokenPath);
+  } catch (error) {
+    if (error.code === "ENOENT")
+      throw Error("Conecta Gmail desde Conexiones y datos antes de sincronizar.", { cause: error });
+    throw error;
+  }
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     signal: AbortSignal.timeout(30000),
@@ -38,14 +41,10 @@ export async function gmailClient(env = process.env, tokenPath = privatePath("gm
     }),
   });
   if (!response.ok)
-    throw Error(
-      `Refresh OAuth: HTTP ${response.status}. Reautoriza Gmail si el token expiró.`,
-    );
+    throw Error(`Refresh OAuth: HTTP ${response.status}. Reautoriza Gmail si el token expiró.`);
   const { access_token } = await response.json();
   return async (path, params = {}) => {
-    const url = new URL(
-      `https://gmail.googleapis.com/gmail/v1/users/me/${path}`,
-    );
+    const url = new URL(`https://gmail.googleapis.com/gmail/v1/users/me/${path}`);
     url.search = new URLSearchParams(params).toString();
     const res = await fetch(url, {
       headers: { authorization: `Bearer ${access_token}` },
@@ -55,21 +54,36 @@ export async function gmailClient(env = process.env, tokenPath = privatePath("gm
     return res.json();
   };
 }
-export async function getEmails({ env = process.env, api, tokenPath, filters = env.ALLOWED_SENDER, after = env.GMAIL_AFTER, label = env.GMAIL_LABEL || "" } = {}) {
-  const rules = typeof filters === "string" ? [normalizeFilter("email", filters)] : (filters || []).map(rule => normalizeFilter(rule.kind, rule.value));
+export async function getEmails({
+  env = process.env,
+  api,
+  tokenPath,
+  filters = env.ALLOWED_SENDER,
+  after = env.GMAIL_AFTER,
+  label = env.GMAIL_LABEL || "",
+} = {}) {
+  const rules =
+    typeof filters === "string"
+      ? [normalizeFilter("email", filters)]
+      : (filters || []).map((rule) => normalizeFilter(rule.kind, rule.value));
   if (!rules.length) throw Error("Añade al menos un correo o dominio a este proyecto.");
   // Quoted values cannot inject Gmail search operators. Quoted local parts are unsupported.
-  if (rules.some(rule => /["\\]/.test(rule.value))) throw Error("Correo inválido.");
+  if (rules.some((rule) => /["\\]/.test(rule.value))) throw Error("Correo inválido.");
   const since = Date.parse(normalizeAfter(after));
   const labelName = normalizeLabel(label);
-  const senders = [...new Set(rules.map(rule => `from:"${rule.kind === "domain" ? "@" : ""}${rule.value}"`))];
+  const senders = [
+    ...new Set(rules.map((rule) => `from:"${rule.kind === "domain" ? "@" : ""}${rule.value}"`)),
+  ];
   const query = `after:${Math.floor(since / 1000) - 1} {${senders.join(" ")}}`;
   api ||= await gmailClient(env, tokenPath);
   let labelId;
   if (labelName) {
     const labels = await api("labels");
-    labelId = labels.labels?.find(item => item.name === labelName)?.id;
-    if (!labelId) throw Error("La etiqueta del proyecto no existe en Gmail. Créala o deja la etiqueta vacía en Configuración del proyecto.");
+    labelId = labels.labels?.find((item) => item.name === labelName)?.id;
+    if (!labelId)
+      throw Error(
+        "La etiqueta del proyecto no existe en Gmail. Créala o deja la etiqueta vacía en Configuración del proyecto.",
+      );
   }
   const ids = [];
   let pageToken = "";
@@ -93,8 +107,7 @@ export async function getEmails({ env = process.env, api, tokenPath, filters = e
       format: "full",
     });
     const header = (name) =>
-      mail.payload.headers.find((x) => x.name.toLowerCase() === name)?.value ||
-      "";
+      mail.payload.headers.find((x) => x.name.toLowerCase() === name)?.value || "";
     let from;
     try {
       from = mailbox(header("from"));
@@ -103,7 +116,12 @@ export async function getEmails({ env = process.env, api, tokenPath, filters = e
     }
     if (!matchesSender(from, rules)) continue;
     const text = plainText(mail.payload);
-    if (!text || text.length > 20000 || !Number.isFinite(Number(mail.internalDate)) || Number(mail.internalDate) < since)
+    if (
+      !text ||
+      text.length > 20000 ||
+      !Number.isFinite(Number(mail.internalDate)) ||
+      Number(mail.internalDate) < since
+    )
       continue;
     emails.push({
       id,
