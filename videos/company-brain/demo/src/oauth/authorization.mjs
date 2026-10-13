@@ -20,6 +20,7 @@ export async function createGmailAuthorization({
   const server = createServer();
   const controller = new AbortController();
   let settled = false,
+    authorizing = false,
     timer,
     resolveDone,
     rejectDone;
@@ -65,6 +66,12 @@ export async function createGmailAuthorization({
       res.writeHead(400).end("Estado OAuth incorrecto");
       return;
     }
+    // Una recarga no debe canjear el mismo código ni cancelar el primer callback válido.
+    if (authorizing || settled) {
+      res.writeHead(409).end("La autorización ya está en curso o se completó.");
+      return;
+    }
+    authorizing = true;
     try {
       const code = callback.searchParams.get("code");
       if (!code) throw Error("Autorización cancelada o sin código");

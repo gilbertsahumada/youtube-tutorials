@@ -192,63 +192,84 @@ test.describe("navegación y formularios", () => {
     }
   });
 
-  test("regresión TDD: una revisión tardía no se abre después de cambiar de pantalla", async ({
-    page,
-    demo,
-  }) => {
-    await demo.studio.sync(project.id);
-    await demo.studio.analyze(project.id);
-    await page.goto("/#/projects/portal/proposals");
-    await expect(page.getByRole("button", { name: "Revisar propuesta" })).toBeVisible();
-    let release, arrived;
-    const blocked = new Promise((resolve) => {
-      release = resolve;
-    });
-    const requested = new Promise((resolve) => {
-      arrived = resolve;
-    });
-    const detailPattern = "**/api/proposals/detail?**";
-    await page.route(detailPattern, async (route) => {
-      const response = await route.fetch();
-      expect(response.status()).toBe(200);
-      arrived();
-      await blocked;
-      await route.fulfill({ response });
-    });
-    try {
-      await page.getByRole("button", { name: "Revisar propuesta" }).click();
-      await requested;
-      // Conservamos el mismo proyecto para comprobar la navegación entre sus pantallas.
-      await page.locator(".sidebar").getByRole("link", { name: "Correos", exact: true }).click();
-      await expect(page.getByRole("heading", { name: "Correos del proyecto" })).toBeVisible();
-      await expect(page.locator("#dialog")).toHaveJSProperty("open", false);
+  for (const returnToProposals of [false, true]) {
+    test(
+      returnToProposals
+        ? "regresión TDD: una revisión tardía se descarta aunque vuelvas a la misma pantalla"
+        : "regresión TDD: una revisión tardía no se abre después de cambiar de pantalla",
+      async ({ page, demo }) => {
+        await demo.studio.sync(project.id);
+        await demo.studio.analyze(project.id);
+        await page.goto("/#/projects/portal/proposals");
+        await expect(page.getByRole("button", { name: "Revisar propuesta" })).toBeVisible();
+        let release, arrived;
+        const blocked = new Promise((resolve) => {
+          release = resolve;
+        });
+        const requested = new Promise((resolve) => {
+          arrived = resolve;
+        });
+        const detailPattern = "**/api/proposals/detail?**";
+        await page.route(detailPattern, async (route) => {
+          const response = await route.fetch();
+          expect(response.status()).toBe(200);
+          arrived();
+          await blocked;
+          await route.fulfill({ response });
+        });
+        try {
+          await page.getByRole("button", { name: "Revisar propuesta" }).click();
+          await requested;
+          // Conservamos el mismo proyecto para comprobar la navegación entre sus pantallas.
+          await page
+            .locator(".sidebar")
+            .getByRole("link", { name: "Correos", exact: true })
+            .click();
+          await expect(page.getByRole("heading", { name: "Correos del proyecto" })).toBeVisible();
+          if (returnToProposals) {
+            await page
+              .locator(".sidebar")
+              .getByRole("link", { name: /^Propuestas\b/ })
+              .click();
+            await expect(
+              page.getByRole("heading", { name: "Propuestas", exact: true }),
+            ).toBeVisible();
+          }
+          await expect(page.locator("#dialog")).toHaveJSProperty("open", false);
 
-      const delivered = page.waitForResponse((response) =>
-        response.url().includes("/api/proposals/detail?"),
-      );
-      release();
-      const response = await delivered;
-      expect(response.status()).toBe(200);
-      expect(await response.finished()).toBeNull();
-      // Dejamos procesar la respuesta y el render antes de comprobar que el diálogo sigue cerrado.
-      await page.evaluate(
-        () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
-      );
-      await expect(page).toHaveURL(/projects\/portal\/mail$/);
-      await expect(page.locator("#dialog")).toHaveJSProperty("open", false);
-      expect(demo.live.writes).toEqual([]);
+          const delivered = page.waitForResponse((response) =>
+            response.url().includes("/api/proposals/detail?"),
+          );
+          release();
+          const response = await delivered;
+          expect(response.status()).toBe(200);
+          expect(await response.finished()).toBeNull();
+          // Dejamos procesar la respuesta y el render antes de comprobar que el diálogo sigue cerrado.
+          await page.evaluate(
+            () =>
+              new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+          );
+          const view = returnToProposals ? "proposals" : "mail";
+          await expect(page).toHaveURL(new RegExp("projects/portal/" + view + "$"));
+          await expect(page.locator("#dialog")).toHaveJSProperty("open", false);
+          expect(demo.live.writes).toEqual([]);
 
-      // Descartar una revisión antigua no debe impedir abrir otra desde Propuestas.
-      await page.unroute(detailPattern, { behavior: "wait" });
-      await page.locator(".sidebar").getByRole("link", { name: "Propuestas", exact: true }).click();
-      await page.getByRole("button", { name: "Revisar propuesta" }).click();
-      await expect(page.getByRole("dialog")).toBeVisible();
-      await expect(page.getByRole("button", { name: "Aprobar y crear issue" })).toBeVisible();
-    } finally {
-      release();
-      await page.unroute(detailPattern, { behavior: "wait" });
-    }
-  });
+          // Descartar una revisión antigua no debe impedir abrir otra desde Propuestas.
+          await page.unroute(detailPattern, { behavior: "wait" });
+          await page
+            .locator(".sidebar")
+            .getByRole("link", { name: /^Propuestas\b/ })
+            .click();
+          await page.getByRole("button", { name: "Revisar propuesta" }).click();
+          await expect(page.getByRole("dialog")).toBeVisible();
+          await expect(page.getByRole("button", { name: "Aprobar y crear issue" })).toBeVisible();
+        } finally {
+          release();
+          await page.unroute(detailPattern, { behavior: "wait" });
+        }
+      },
+    );
+  }
 
   test("el seguimiento actualiza la pantalla sin borrar un formulario activo", async ({
     page,
