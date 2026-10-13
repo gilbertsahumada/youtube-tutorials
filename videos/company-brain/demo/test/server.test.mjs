@@ -62,9 +62,6 @@ test("HTTP: con entorno completo carga únicamente los datos de las integracione
   const [initial, email, issue, initialAnalysis, analysis] = await Promise.all(["initial-email", "email", "issue", "initial-analysis", "analysis"].map(fixture));
   const env = {
     GOOGLE_CLIENT_ID: "test-client", GOOGLE_CLIENT_SECRET: "private-google",
-    GMAIL_LABEL: "test-label", ALLOWED_SENDER: initial.from, GMAIL_AFTER: "2025-01-01T00:00:00Z",
-    GITHUB_REPO: "example/company-brain-sandbox", GITHUB_ISSUE_NUMBER: String(issue.number),
-    IMPORT_LEGACY_PROJECT: "true",
     MODEL_BASE_URL: "https://model.invalid/v1", MODEL_ID: "test-model", MODEL_API_KEY: "private-model",
   };
   let analyzed = 0;
@@ -77,12 +74,18 @@ test("HTTP: con entorno completo carga únicamente los datos de las integracione
   });
   await writeFile(join(root, ".env"), "NO_EDITAR=original\n");
   const bootstrapResponse = await fetch(base + "/api/bootstrap");
-  assert.equal(bootstrapResponse.status, 200);
+  assert.equal(bootstrapResponse.status, 503);
   const bootstrap = await bootstrapResponse.json();
-  assert.equal(bootstrap.config.ready, true);
+  assert.equal(bootstrap.config.environmentReady, true);
+  assert.deepEqual(bootstrap.config.projects, []);
   assert.equal(bootstrap.workspace, null);
   assert.equal(analyzed, 0);
   const headers = { "Content-Type": "application/json", "X-Company-Brain-Token": bootstrap.token };
+  const { allowedFormats, ...project } = JSON.parse(await readFile(join(root, "config/project.json"), "utf8"));
+  const post = (path, body) => fetch(base + path, { method: "POST", headers, body: JSON.stringify(body) });
+  assert.equal((await post("/api/projects", { ...project, repository: "example/company-brain-sandbox", issueNumber: issue.number, gmailAfter: "2025-01-01", gmailLabel: "" })).status, 200);
+  assert.equal((await post("/api/filters", { projectId: project.id, kind: "email", value: initial.from })).status, 200);
+  assert.equal((await (await fetch(base + "/api/bootstrap")).json()).config.ready, true);
   assert.equal((await fetch(base + "/api/run", { method: "POST", headers, body: '{"mode":"fixture"}' })).status, 400);
   assert.equal(analyzed, 0);
   assert.equal((await fetch(base + "/api/baseline", { method: "POST", headers, body: JSON.stringify({ id: initial.id }) })).status, 200);
@@ -106,7 +109,7 @@ test("HTTP: con entorno completo carga únicamente los datos de las integracione
   assert.equal(inaccessibleResponse.status, 400);
   const inaccessible = await inaccessibleResponse.json();
   assert.match(inaccessible.error, /GitHub.*404/);
-  assert.equal(inaccessible.config.project.id, bootstrap.config.project.id);
+  assert.equal(inaccessible.config.project.id, project.id);
   assert.equal(inaccessible.config.environmentReady, true);
   assert.equal(inaccessible.workspace, null);
   assert.equal(analyzed, 2, "un error al cargar la tarea no llama al modelo");
@@ -135,7 +138,6 @@ test("HTTP: variables CLI no crean proyectos; selección y eliminación de filtr
   assert.equal(filter.value, "empresa.com");
   const current = await (await fetch(base + "/api/bootstrap?projectId=ventas")).json();
   assert.equal(current.config.project.id, "ventas");
-  assert.equal(current.config.projects[0].imported, false);
   assert.equal(current.config.filters.length, 1);
   assert.equal(current.workspace, null);
   assert.equal(current.config.environmentReady, false);

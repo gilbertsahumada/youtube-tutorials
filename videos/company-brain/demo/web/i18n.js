@@ -3,7 +3,6 @@ export const languageKey = 'company-brain-language';
 
 // UI copy only. Source material, evidence and comments remain verbatim.
 export const english = {
-  'Importado de la configuración anterior.': 'Imported from the previous configuration.',
   'El servidor devolvió una respuesta vacía o inválida. Reinicia la demo y recarga la página.': 'The server returned an empty or invalid response. Restart the demo and reload the page.',
   'Revisa las conexiones y la tarea del proyecto seleccionado.': 'Check the connections and the selected project’s task.',
   'Cambios guardados.': 'Changes saved.',
@@ -335,10 +334,8 @@ export const english = {
   'GITHUB_ISSUE_NUMBER debe ser un entero positivo.': 'GITHUB_ISSUE_NUMBER must be a positive integer.',
   'GMAIL_AFTER debe ser una fecha ISO válida anterior al primer correo.': 'GMAIL_AFTER must be a valid ISO date before the first email.',
   'ALLOWED_SENDER debe ser una dirección de correo válida.': 'ALLOWED_SENDER must be a valid email address.',
-  'GMAIL_INITIAL_MESSAGE_ID debe ser un ID de Gmail API válido.': 'GMAIL_INITIAL_MESSAGE_ID must be a valid Gmail API ID.',
   'MODEL_BASE_URL debe ser HTTPS sin credenciales ni parámetros.': 'MODEL_BASE_URL must use HTTPS without credentials or parameters.',
   'La variable no puede contener saltos de línea.': 'The variable must not contain line breaks.',
-  'El correo seleccionado no coincide con GMAIL_INITIAL_MESSAGE_ID. Actualiza el entorno y reinicia el servidor.': 'The selected email does not match GMAIL_INITIAL_MESSAGE_ID. Update the environment and restart the server.',
   'Selecciona el correo inicial y captura el acuerdo desde Conexiones.': 'Select the initial email and capture the agreement from Connections.',
   'Leer correos desde (UTC)': 'Read emails from (UTC)',
   'Etiqueta de Gmail': 'Gmail label',
