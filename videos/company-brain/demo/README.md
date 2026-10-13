@@ -6,7 +6,7 @@ La [guía completa](../README.md#paso-a-paso) explica la configuración de Googl
 
 ## Arranque
 
-Necesitas **Node.js ≥22.13**, [GitHub CLI](https://cli.github.com/), Gmail con un cliente OAuth de escritorio y un proveedor compatible con Chat Completions. No hay dependencias que instalar.
+Necesitas **Node.js ≥22.13**, [GitHub CLI](https://cli.github.com/), Gmail con un cliente OAuth de escritorio y un proveedor compatible con Chat Completions. Para ejecutar la demo basta con Node.js; las dependencias de desarrollo se instalan para las comprobaciones descritas más abajo.
 
 Desde esta carpeta:
 
@@ -15,6 +15,19 @@ cp -n .env.example .env
 ```
 
 Completa `.env` con `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MODEL_BASE_URL`, `MODEL_ID` y `MODEL_API_KEY`. Usa una URL base HTTPS sin `/chat/completions`. Las credenciales quedan en el servidor; no se editan desde la UI. Reinicia la demo después de cambiarlas.
+
+El ejemplo incluye la configuración utilizada con QwenCloud y un modelo de DeepSeek:
+
+```dotenv
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+MODEL_BASE_URL=https://maas.qwencloudapi.com/compatible-mode/v1
+MODEL_ID=deepseek-v4.1-flash
+MODEL_API_KEY=
+```
+
+Completa los secretos y adapta URL, modelo y clave a tu cuenta. El proveedor de la API puede alojar modelos de otra compañía. El servidor añade `/chat/completions` a la URL base.
 
 Si usas nvm, ejecuta `nvm use`. Después:
 
@@ -56,5 +69,22 @@ SQLite conserva configuración, mensajes, propuestas, decisiones y actividad en 
 | `PORT=4174 npm start` | Otro puerto para el servidor.                |
 
 Los comandos por terminal y sus fixtures pertenecen al ejemplo original acotado a CSV/PDF. La UI usa el flujo por proyectos, varias tareas y aprobación de creaciones y actualizaciones; no carga esos fixtures.
+
+## Desarrollo
+
+Desde esta carpeta, con la versión de Node indicada en `.nvmrc`:
+
+```bash
+npm ci
+npx playwright install chromium
+npm run format
+npm run check
+```
+
+`format` aplica el formato; `format:check` lo verifica y `lint` comprueba JavaScript. `check` reúne formato, lint, pruebas de Node, el fixture por terminal y las pruebas de Chromium con un trabajador. Estas últimas recorren el flujo completo y las siete vistas en escritorio y móvil con puertos libres, SQLite temporal y adaptadores de prueba. Los fallos guardan capturas y trazas en `output/playwright/`; GitHub Actions las conserva como artefactos. Ninguna prueba utiliza tus cuentas ni tu `.env`.
+
+`web/app.js` conecta la aplicación; `api.js`, `state.js`, `controllers/`, `views/` y `components/` se encargan de peticiones, estado, acciones, pantallas y elementos compartidos. `messages.js` reúne las traducciones; correos, citas y propuestas conservan su texto original. El servidor publica únicamente los archivos registrados en `src/public-assets.mjs`.
+
+En el servidor, `studio.mjs` coordina el flujo y sus bloqueos; `services/` gestiona seguimiento y conexión; `oauth/` implementa la autorización y sus eventos; `store.mjs` contiene consultas y transacciones; `db/schema.mjs` conserva el esquema SQLite v3 y sus migraciones. `domain/` contiene validaciones, hashes y texto compartido, y `contracts.mjs` documenta los datos con JSDoc en español. Las versiones de fuentes y los marcadores de publicación permiten detener aprobaciones desactualizadas y recuperar escrituras sin duplicar issues.
 
 [Tutorial completo](../README.md) · [Resolver problemas](../README.md#si-algo-no-funciona) · [Conectar cuentas](../docs/conectar-cuentas.md) · [Ejemplo por terminal](../docs/scripts.md)

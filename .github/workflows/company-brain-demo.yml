@@ -24,7 +24,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm test
+          cache: npm
+          cache-dependency-path: videos/company-brain/demo/package-lock.json
+      - run: npm ci
         working-directory: videos/company-brain/demo
-      - run: npm run test:fixture
+      - run: npx playwright install --with-deps chromium
         working-directory: videos/company-brain/demo
+      - run: npm run check
+        working-directory: videos/company-brain/demo
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: company-brain-browser-failures
+          path: videos/company-brain/demo/output/playwright/
+          if-no-files-found: ignore
+          retention-days: 7

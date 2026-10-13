@@ -11,8 +11,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "check": "npm run format:check && npm run lint && npm test && npm run test:fixture",
+    "check": "npm run format:check && npm run lint && npm test && npm run test:fixture && npm run test:browser",
     "test": "node --test test/*.test.mjs",
+    "test:browser": "playwright test",
     "preview": "node src/server.mjs",
     "test:fixture": "node src/main.mjs --fixture",
     "once": "node src/main.mjs --once",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.0",
     "eslint": "10.12.0",
     "eslint-config-prettier": "10.1.8",
     "globals": "17.13.0",

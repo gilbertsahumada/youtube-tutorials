@@ -23,7 +23,7 @@ test("CLI completa: inbox → baseline → preview real simulado → comentario 
       join(root, "mock-state.json"),
       JSON.stringify({ withRequest: false, comments: [], calls: [] }),
     );
-    // Fail closed: every fetch is intercepted, and any unrecognized endpoint throws.
+    // Interceptamos toda petición; una ruta desconocida falla sin acceder a cuentas reales.
     await writeFile(
       join(root, "mock-fetch.mjs"),
       `

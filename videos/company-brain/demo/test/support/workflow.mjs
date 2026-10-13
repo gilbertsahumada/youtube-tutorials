@@ -71,7 +71,12 @@ export function result(context) {
     ],
   };
 }
-export async function harness(t, { seed = true, clock = () => Date.now() } = {}) {
+/** Cada prueba tiene SQLite y adaptadores propios; nunca se abren las cuentas de la demo. */
+export async function createWorkflowFixture({
+  seed = true,
+  clock = () => Date.now(),
+  environment = env,
+} = {}) {
   const root = await mkdtemp(join(tmpdir(), "brain-workflow-"));
   await mkdir(join(root, ".private"));
   await writeFile(
@@ -155,14 +160,24 @@ export async function harness(t, { seed = true, clock = () => Date.now() } = {})
       throw Error("Ruta inesperada: " + path);
     },
   };
-  const studio = createStudio({ root, env, adapters, scheduler: false, now: clock });
-  t.after(async () => {
+  const studio = createStudio({ root, env: environment, adapters, scheduler: false, now: clock });
+  const dispose = async () => {
     await studio.close();
     await rm(root, { recursive: true, force: true });
-  });
-  if (seed) {
-    await studio.saveProject(project);
-    await studio.saveFilter({ projectId: project.id, kind: "domain", value: "live.cl" });
+  };
+  try {
+    if (seed) {
+      await studio.saveProject(project);
+      await studio.saveFilter({ projectId: project.id, kind: "domain", value: "live.cl" });
+    }
+    return { root, studio, live, adapters, dispose };
+  } catch (problem) {
+    await dispose();
+    throw problem;
   }
-  return { root, studio, live, adapters };
+}
+export async function harness(t, options) {
+  const fixture = await createWorkflowFixture(options);
+  t.after(fixture.dispose);
+  return fixture;
 }
