@@ -23,8 +23,10 @@ export function plainText(payload) {
     .filter(Boolean)
     .join("\n");
 }
-export async function gmailClient(env = process.env) {
-  const token = await readJson(privatePath("gmail-token.json"));
+export async function gmailClient(env = process.env, tokenPath = privatePath("gmail-token.json")) {
+  let token;
+  try { token = await readJson(tokenPath); }
+  catch (error) { if (error.code === "ENOENT") throw Error("Conecta Gmail desde Conexiones y datos antes de sincronizar."); throw error; }
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     signal: AbortSignal.timeout(30000),
@@ -53,7 +55,7 @@ export async function gmailClient(env = process.env) {
     return res.json();
   };
 }
-export async function getEmails({ env = process.env, api, filters = env.ALLOWED_SENDER, after = env.GMAIL_AFTER, label = env.GMAIL_LABEL || "" } = {}) {
+export async function getEmails({ env = process.env, api, tokenPath, filters = env.ALLOWED_SENDER, after = env.GMAIL_AFTER, label = env.GMAIL_LABEL || "" } = {}) {
   const rules = typeof filters === "string" ? [normalizeFilter("email", filters)] : (filters || []).map(rule => normalizeFilter(rule.kind, rule.value));
   if (!rules.length) throw Error("Añade al menos un correo o dominio a este proyecto.");
   // Quoted values cannot inject Gmail search operators. Quoted local parts are unsupported.
@@ -62,12 +64,12 @@ export async function getEmails({ env = process.env, api, filters = env.ALLOWED_
   const labelName = normalizeLabel(label);
   const senders = [...new Set(rules.map(rule => `from:"${rule.kind === "domain" ? "@" : ""}${rule.value}"`))];
   const query = `after:${Math.floor(since / 1000) - 1} {${senders.join(" ")}}`;
-  api ||= await gmailClient(env);
+  api ||= await gmailClient(env, tokenPath);
   let labelId;
   if (labelName) {
     const labels = await api("labels");
     labelId = labels.labels?.find(item => item.name === labelName)?.id;
-    if (!labelId) throw Error("La etiqueta del proyecto no existe en Gmail. Créala o deja la etiqueta vacía en Proyectos y filtros.");
+    if (!labelId) throw Error("La etiqueta del proyecto no existe en Gmail. Créala o deja la etiqueta vacía en Configuración del proyecto.");
   }
   const ids = [];
   let pageToken = "";
@@ -105,6 +107,7 @@ export async function getEmails({ env = process.env, api, filters = env.ALLOWED_
       continue;
     emails.push({
       id,
+      threadId: mail.threadId || id,
       from,
       subject: header("subject"),
       date: new Date(Number(mail.internalDate)).toISOString(),

@@ -1,133 +1,94 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, stat } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createStore, validateProject } from "../src/store.mjs";
 import { DatabaseSync } from "node:sqlite";
-
-const project = { id: "uno", name: "Mi proyecto", repository: "org/repo", issueNumber: 1, delivery: "entrega-1", requirement: "informe", gmailAfter: "2026-01-01", gmailLabel: "" };
+import { createStore, validateProject } from "../src/store.mjs";
+import { project, initial, reply } from "./support/workflow.mjs";
 async function storage(t) {
   const root = await mkdtemp(join(tmpdir(), "brain-sqlite-"));
   const store = await createStore(root);
   t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
   return { root, store };
 }
-
-test("SQLite: persiste proyectos, filtros y selección; no almacena credenciales desde formularios", async t => {
+const proposal = mail => ({ projectId: project.id, generationKey: "request-key", sources: [{ id: mail.id, hash: mail.hash, threadId: mail.threadId }], action: "create_issue" });
+test("proyecto sin issue: genera ID, conserva hora y permite compartir repositorio", async t => {
   const { root, store } = await storage(t);
-  assert.deepEqual(store.projects(), []);
+  const { id, ...input } = project;
+  const generated = store.saveProject(input);
+  assert.match(generated.id, /^portal-[a-f0-9]{8}$/);
   store.saveProject(project);
-  store.saveProject({ ...project, id: "dos", repository: "org/otro" });
-  store.select("dos");
-  const first = store.addFilter({ projectId: "uno", kind: "email", value: "Persona@Empresa.com" });
-  assert.equal(store.addFilter({ projectId: "uno", kind: "email", value: "persona@empresa.com" }).id, first.id);
-  store.addFilter({ projectId: "dos", kind: "domain", value: "empresa.com" });
-  assert.throws(() => store.saveProject({ ...project, MODEL_API_KEY: "forbidden" }), /Campo de proyecto/);
-  assert.throws(() => store.addFilter({ projectId: "uno", kind: "domain", value: "empresa.com", secret: "forbidden" }), /Campo de filtro/);
-  assert.throws(() => store.addFilter({ projectId: "desconocido", kind: "email", value: "a@empresa.com" }), /no encontrado/);
+  assert.equal(store.project(project.id).gmailAfter, "2026-10-12T09:30:15.000Z");
+  assert.equal(store.projects().length, 2);
+  store.select(project.id);
+  store.addFilter({ projectId: project.id, kind: "domain", value: "@LIVE.CL" });
   store.close();
   const reopened = await createStore(root);
-  try {
-    assert.equal(reopened.selected(), "dos");
-    assert.equal(reopened.projects().length, 2);
-    assert.equal(reopened.filters().length, 2);
-    reopened.removeFilter(first.id, "dos");
-    assert.equal(reopened.filters().length, 2, "no elimina un filtro de otro proyecto");
-    reopened.removeFilter(first.id, "uno");
-    assert.equal(reopened.filters().length, 1);
-    assert.equal((await stat(join(root, ".private/company-brain.sqlite"))).mode & 0o777, 0o600);
-  } finally { reopened.close(); }
+  try { assert.equal(reopened.selected(), project.id); assert.equal(reopened.filters()[0].value, "live.cl"); }
+  finally { reopened.close(); }
+  assert.equal((await stat(join(root, ".private/company-brain.sqlite"))).mode & 0o777, 0o600);
 });
-
-test("SQLite: configura fecha y etiqueta por proyecto, persiste cambios y protege el acuerdo", async t => {
-  const { root, store } = await storage(t);
-  store.saveProject({ ...project, gmailLabel: " primera " });
-  store.saveProject({ ...project, id: "dos", repository: "org/dos", gmailAfter: "2026-02-01", gmailLabel: "segunda" });
-  store.saveBaseline("uno", { initialEmail: { id: "initial", date: "2026-01-10T00:00:00Z" } });
-  assert.throws(() => store.saveProject({ ...project, gmailAfter: "2026-01-11" }), /incluir el correo/);
-  assert.equal(store.project("uno").gmailLabel, "primera", "el cambio rechazado no modifica la etiqueta");
-  for (const fields of [{ gmailAfter: "" }, { gmailAfter: "2026-02-30" }, { gmailLabel: "x\ny" }, { gmailLabel: "x".repeat(201) }]) assert.throws(() => store.saveProject({ ...project, ...fields }));
-  store.saveProject({ ...project, gmailAfter: "2026-01-10T00:00:00Z", gmailLabel: "" });
-  store.saveProject({ id: project.id, name: project.name, repository: project.repository, issueNumber: 1, delivery: project.delivery, requirement: project.requirement });
-  store.close();
-  const reopened = await createStore(root, { GMAIL_AFTER: "2099-01-01", GMAIL_LABEL: "ignored" });
-  try {
-    assert.equal(reopened.project("uno").gmailAfter, "2026-01-10T00:00:00.000Z");
-    assert.equal(reopened.project("uno").gmailLabel, "");
-    assert.equal(reopened.project("dos").gmailAfter, "2026-02-01T00:00:00.000Z");
-    assert.equal(reopened.project("dos").gmailLabel, "segunda");
-  } finally { reopened.close(); }
-});
-
-test("SQLite v1 → v2: migra una vez sin perder filtros, asignaciones, acuerdos, publicaciones ni actividad", async t => {
-  const { root, store } = await storage(t);
-  store.saveProject(project);
-  store.saveProject({ ...project, id: "dos", repository: "org/dos" });
-  store.addFilter({ projectId: "uno", kind: "domain", value: "example.com" });
-  const saved = { initialEmail: { id: "initial", date: "2026-01-10T10:00:00Z" }, initialFormat: "CSV" };
-  store.saveBaseline("uno", saved);
-  store.saveRecord("uno", "request", { requestEmail: { id: "request" }, plan: { action: "comment" } });
-  store.publish("uno", "request", { id: 42 });
-  store.assign("request", "uno");
-  store.event("uno", "Publicado", "Comentario guardado");
-  store.select("dos");
-  store.close();
-  const old = new DatabaseSync(join(root, ".private/company-brain.sqlite"));
-  old.exec("ALTER TABLE projects DROP COLUMN gmail_after; ALTER TABLE projects DROP COLUMN gmail_label; PRAGMA user_version = 1;");
-  old.close();
-  const upgraded = await createStore(root, { GMAIL_AFTER: "2026-01-12T10:00:00Z", GMAIL_LABEL: "anterior" });
-  try {
-    assert.equal(upgraded.project("uno").gmailAfter, "2026-01-10T00:00:00.000Z", "la migración incluye el acuerdo aunque la fecha antigua lo excluyera");
-    assert.equal(upgraded.project("dos").gmailAfter, "2026-01-12T00:00:00.000Z");
-    assert.equal(upgraded.project("uno").gmailLabel, "anterior");
-    assert.deepEqual(upgraded.baseline("uno"), saved);
-    assert.equal(upgraded.filters().length, 1);
-    assert.equal(upgraded.assignment("request"), "uno");
-    assert.equal(upgraded.records("uno")[0].published.id, 42);
-    assert.equal(upgraded.events("uno").length, 1);
-    assert.equal(upgraded.selected(), "dos");
-  } finally { upgraded.close(); }
-  const restarted = await createStore(root, { GMAIL_AFTER: "2000-01-01", GMAIL_LABEL: "otra" });
-  try { assert.equal(restarted.project("uno").gmailLabel, "anterior"); }
-  finally { restarted.close(); }
-});
-
-test("SQLite v1: migra sin variables de Gmail y mantiene el correo del acuerdo dentro de la consulta", async t => {
-  const { root, store } = await storage(t);
-  store.saveProject(project);
-  store.saveBaseline("uno", { initialEmail: { id: "initial", date: "2026-01-10T10:00:00Z" } });
-  store.close();
-  const old = new DatabaseSync(join(root, ".private/company-brain.sqlite"));
-  old.exec("ALTER TABLE projects DROP COLUMN gmail_after; ALTER TABLE projects DROP COLUMN gmail_label; PRAGMA user_version = 1;");
-  old.close();
-  const upgraded = await createStore(root);
-  try {
-    assert.ok(Date.parse(upgraded.project("uno").gmailAfter) <= Date.parse(upgraded.baseline("uno").initialEmail.date));
-    assert.equal(upgraded.project("uno").gmailLabel, "");
-  } finally { upgraded.close(); }
-});
-
-test("SQLite: alcance inmutable al capturar, issue único y transacciones sin escrituras parciales", async t => {
+test("formularios rechazan secretos y destinos inválidos; nombres se parametrizan", async t => {
   const { store } = await storage(t);
-  store.saveProject(project);
-  assert.throws(() => store.saveProject({ ...project, id: "dos" }), /issue ya pertenece/);
-  store.saveBaseline("uno", { initialEmail: { id: "inicial" } });
-  for (const fields of [{ issueNumber: 2 }, { repository: "org/otro" }, { delivery: "otra" }, { requirement: "otro" }]) assert.throws(() => store.saveProject({ ...project, ...fields }), /alcance capturado/);
-  store.saveProject({ ...project, name: "Proyecto renombrado" });
-  assert.equal(store.project("uno").name, "Proyecto renombrado");
-  assert.throws(() => store.transaction(() => {
-    store.saveProject({ ...project, id: "rollback", repository: "org/rollback" });
-    store.addFilter({ projectId: "rollback", kind: "domain", value: "https://invalid.com" });
-  }), /Dominio inválido/);
-  assert.equal(store.project("rollback"), undefined);
-  assert.equal(store.projects().length, 1);
-});
-
-test("formularios: valida destinos y referencias, parametriza el nombre en SQLite", async t => {
-  const { store } = await storage(t);
-  for (const fields of [{ id: "../escape" }, { delivery: "x\nfoo" }, { requirement: "" }, { repository: "org/repo?query" }, { issueNumber: 0 }, { issueNumber: 1.5 }, { issueNumber: "1e2" }, { name: "\n" }]) assert.throws(() => validateProject({ ...project, ...fields }));
+  for (const fields of [{ repository: "org/repo?x" }, { name: "\n" }, { id: "../escape" }, { gmailAfter: "2026-02-30" }, { gmailLabel: "a\nb" }, { MODEL_API_KEY: "secret" }, { issueNumber: 1 }, { autoEnabled: "true" }, { pollSeconds: 0 }]) assert.throws(() => validateProject({ ...project, ...fields }));
   store.saveProject({ ...project, name: "O'Reilly'); DROP TABLE projects; --" });
-  assert.equal(store.project("uno").name, "O'Reilly'); DROP TABLE projects; --");
   assert.equal(store.projects().length, 1);
+  assert.throws(() => store.addFilter({ projectId: project.id, kind: "email", value: "a@live.cl", secret: "invalid" }));
+});
+test("sincronización comprueba dominio y hora, conserva análisis y retira fuentes fuera de alcance", async t => {
+  const { store } = await storage(t);
+  store.saveProject(project); store.addFilter({ projectId: project.id, kind: "domain", value: "live.cl" });
+  assert.deepEqual(store.replaceMail(project.id, [initial, { ...initial, id: "old", date: "2026-10-12T09:30:14Z" }, { ...initial, id: "spoof", from: "x@live.cl.evil.com" }]), { total: 1, added: 1 });
+  store.markAnalyzed(project.id, store.mails(project.id));
+  const saved = store.saveProposal(proposal(store.mails(project.id)[0]));
+  assert.deepEqual(store.replaceMail(project.id, [initial]), { total: 1, added: 0 });
+  assert.equal(store.mails(project.id)[0].analyzed, true);
+  store.replaceMail(project.id, []);
+  assert.equal(store.proposal(saved.id).status, "stale");
+  assert.equal(store.mails(project.id).length, 0);
+});
+test("una respuesta nueva invalida la propuesta del hilo y vuelve a analizar sus fuentes", async t => {
+  const { store } = await storage(t);
+  store.saveProject(project); store.addFilter({ projectId: project.id, kind: "domain", value: "live.cl" });
+  store.replaceMail(project.id, [initial]);
+  const saved = store.saveProposal(proposal(store.mails(project.id)[0]));
+  store.markAnalyzed(project.id, store.mails(project.id));
+  store.replaceMail(project.id, [initial, reply]);
+  assert.equal(store.proposal(saved.id).status, "stale");
+  assert.ok(store.mails(project.id).every(mail => !mail.analyzed));
+  const regenerated = store.saveProposal(proposal(store.mails(project.id)[0]));
+  assert.notEqual(regenerated.id, saved.id);
+  assert.equal(store.proposal(saved.id).status, "stale");
+  store.setProposal(regenerated.id, "rejected");
+  assert.equal(store.saveProposal(proposal(store.mails(project.id)[0])).id, regenerated.id, "una decisión rechazada no reaparece automáticamente");
+});
+test("editar alcance limpia caché y cambiar repositorio retira vínculos; filtros respetan el proyecto", async t => {
+  const { store } = await storage(t);
+  store.saveProject(project); store.saveProject({ ...project, id: "otro" });
+  const filter = store.addFilter({ projectId: project.id, kind: "domain", value: "live.cl" });
+  store.replaceMail(project.id, [initial]);
+  const saved = store.saveProposal(proposal(store.mails(project.id)[0]));
+  store.link(project.id, initial.threadId, 8);
+  store.removeFilter(filter.id, "otro"); assert.equal(store.mails(project.id).length, 1);
+  store.saveProject({ id: project.id, repository: "org/new" });
+  assert.equal(store.proposal(saved.id).status, "stale"); assert.deepEqual(store.links(project.id), []);
+  store.saveProject({ id: project.id, gmailAfter: "2026-10-12T11:00:00Z" });
+  assert.deepEqual(store.mails(project.id), []); assert.equal(store.runtime(project.id).lastSync, null);
+});
+test("schema v2: quita el issue único y conserva proyectos, participantes y selección", async t => {
+  const root = await mkdtemp(join(tmpdir(), "brain-migrate-"));
+  await mkdir(join(root, ".private"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const old = new DatabaseSync(join(root, ".private/company-brain.sqlite"));
+  old.exec("CREATE TABLE projects(id TEXT PRIMARY KEY,name TEXT,repository TEXT,issue_number INTEGER,delivery TEXT,requirement TEXT,gmail_after TEXT,gmail_label TEXT,UNIQUE(repository,issue_number)); CREATE TABLE sender_filters(id INTEGER PRIMARY KEY,project_id TEXT REFERENCES projects(id),kind TEXT,value TEXT,UNIQUE(project_id,kind,value)); CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT); CREATE TABLE baselines(project_id TEXT PRIMARY KEY REFERENCES projects(id),data TEXT); INSERT INTO projects VALUES('portal','Portal','org/portal',1,'one','csv','2026-10-12T09:30:15Z',''); INSERT INTO sender_filters VALUES(1,'portal','domain','live.cl'); INSERT INTO metadata VALUES('selected_project','portal'); INSERT INTO baselines VALUES('portal','{}'); PRAGMA user_version=2;");
+  old.close();
+  const store = await createStore(root);
+  try {
+    assert.equal(store.project(project.id).gmailAfter, "2026-10-12T09:30:15.000Z");
+    assert.equal(store.selected(), project.id); assert.equal(store.filters()[0].value, "live.cl");
+    store.saveProject({ ...project, id: "second" }); assert.equal(store.projects().length, 2);
+    store.deleteProject(project.id); assert.equal(store.selected(), "second");
+    store.reset(); assert.deepEqual(store.projects(), []); assert.deepEqual(store.filters(), []); assert.equal(store.selected(), null);
+  } finally { store.close(); }
 });
