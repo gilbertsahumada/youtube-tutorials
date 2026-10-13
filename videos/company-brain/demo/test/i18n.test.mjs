@@ -39,3 +39,13 @@ test('idioma: preferencia persistente y fallback cuando el navegador bloquea alm
   assert.equal(readLanguage(blocked), 'es');
   assert.doesNotThrow(() => saveLanguage(blocked, 'en'));
 });
+
+test('idioma: nuevas vistas y acciones tienen traducción al inglés', async () => {
+  const { workflowEnglish } = await import('../web/workflow-i18n.js');
+  const { readFile } = await import('node:fs/promises');
+  Object.assign(english, workflowEnglish);
+  const app = await readFile(new URL('../web/app.js', import.meta.url), 'utf8');
+  const labels = [...app.matchAll(/\bt\("([^"]+)"\)/g)].map(match => match[1]);
+  for (const label of labels) assert.notEqual(translate(label, 'en'), label, label);
+  for (const label of ['Sincronizar correo', 'Analizar correos', 'Aprobar y crear issue', 'Aprobar y actualizar issue', 'Reiniciar datos locales', 'Escribe REINICIAR para confirmar', 'Escribe ELIMINAR para confirmar']) assert.notEqual(translate(label, 'en'), label, label);
+});

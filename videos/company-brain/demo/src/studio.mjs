@@ -1,236 +1,269 @@
-import { writeFile, mkdir, open, unlink } from "node:fs/promises";
+import { open, unlink } from "node:fs/promises";
 import { resolve } from "node:path";
 import { spawn } from "node:child_process";
-import { ROOT, readJson, saveJson } from "./common.mjs";
-import { createBaseline, classify, messageKey, issueFingerprint } from "./plan.mjs";
+import { ROOT, readJson } from "./common.mjs";
 import { getEmails } from "./gmail.mjs";
-import { gh, readIssue, publishComment } from "./github.mjs";
-import { assertBaseline, processEmails } from "./pipeline.mjs";
 import { environmentStatus } from "./environment.mjs";
-import { createStore, projectContext } from "./store.mjs";
-import { senderProjects } from "./filters.mjs";
+import { createStore } from "./store.mjs";
+import { matchesSender } from "./filters.mjs";
+import { analyzeMailbox, validateAnalysis, batches, issueDigest, issueVersion } from "./agent.mjs";
+import { githubApi, listIssues, listRepositories, applyProposal, writeBody } from "./coordination-github.mjs";
 
-const optional = async path => {
-  try { return await readJson(path); }
-  catch (error) { if (error.code === "ENOENT") return null; throw error; }
-};
+const optional = async path => { try { return await readJson(path); } catch (error) { if (error.code === "ENOENT") return null; throw error; } };
+const error = (message, status = 400) => Object.assign(Error(message), { status });
 
-export function createStudio({ root = ROOT, env = { ...process.env }, adapters = {} } = {}) {
+export function createStudio({ root = ROOT, env = { ...process.env }, adapters = {}, scheduler = true, now = () => Date.now() } = {}) {
   const local = path => resolve(root, path);
-  const destination = project => ({ ...env, GITHUB_REPO: project.repository, GITHUB_ISSUE_NUMBER: String(project.issueNumber) });
-  let store, initializing, busy = false, loginProcess;
+  let store, initializing, busy = null, inFlight, timer, closing = false, loginProcess;
   let oauth = { status: "idle" };
   const api = {
-    emails: project => getEmails({ env, api: adapters.gmail, filters: rulesFor(project.id), after: project.gmailAfter, label: project.gmailLabel }),
-    issue: project => readIssue(destination(project)),
-    analyze: context => classify(context, env),
-    publish: (plan, project) => publishComment(plan, destination(project)),
-    account: () => gh("user"), ...adapters,
+    emails: project => getEmails({ env, api: adapters.gmail, tokenPath: local(".private/gmail-token.json"), filters: store.filters(project.id), after: project.gmailAfter, label: project.gmailLabel }),
+    issues: project => listIssues(project.repository, adapters.github || githubApi),
+    analyze: context => analyzeMailbox(context, env, adapters.model || fetch),
+    apply: proposal => applyProposal(proposal, adapters.github || githubApi),
+    account: () => (adapters.github || githubApi)("user"),
+    repositories: () => listRepositories(adapters.github || githubApi),
+    ...adapters,
   };
   async function database() {
-    if (!initializing) initializing = (async () => {
-      store = await createStore(root);
+    if (!initializing) initializing = createStore(root).then(value => {
+      store = value;
+      if (scheduler && !closing) { timer = setInterval(() => autoTick().catch(() => {}), 10000); timer.unref(); }
       return store;
-    })();
+    });
     return initializing;
   }
-  const requireEnvironment = () => {
+  function requireEnvironment(keys) {
     const status = environmentStatus(env);
-    if (!status.ready) throw Object.assign(Error(status.error), { status: 503 });
-  };
+    const missing = status.missing.filter(key => keys.includes(key));
+    const invalid = status.errors.filter(item => keys.includes(item.field));
+    if (missing.length) throw error("Faltan variables de entorno: " + missing.join(", ") + ".", 503);
+    if (invalid.length) throw error(invalid.map(item => item.message).join(" "), 503);
+  }
   async function requireProject(id) {
     await database();
     const project = store.project(id || store.selected());
-    if (!project) throw Error("Crea o selecciona un proyecto para continuar.");
+    if (!project) throw error(id ? "Proyecto no encontrado." : "Crea o selecciona un proyecto para continuar.", 404);
     return project;
   }
-  const rulesFor = id => store.filters().filter(rule => rule.projectId === id);
-  function resolvedProject(email) {
-    const candidates = senderProjects(email.from, store.filters());
-    if (candidates.length === 1) return candidates[0];
-    const assigned = store.assignment(email.id);
-    return candidates.includes(assigned) ? assigned : null;
+  const requireFilters = project => { if (!store.filters(project.id).length) throw error("Añade al menos un correo o dominio a este proyecto."); };
+  function errorMessage(problem) {
+    let message = String(problem.message || problem).replace(/Bearer\s+[^\s]+/gi, "[credencial]");
+    for (const key of ["GOOGLE_CLIENT_SECRET", "MODEL_API_KEY", "GH_TOKEN", "GITHUB_TOKEN"]) if (env[key]) message = message.split(env[key]).join("[credencial]");
+    return message.slice(0, 1500);
   }
-  function partition(emails, projectId) {
-    const projects = store.projects();
-    const ambiguous = [];
-    const matched = [];
-    for (const email of emails) {
-      const candidates = senderProjects(email.from, store.filters());
-      const selected = resolvedProject(email);
-      if (selected === projectId) matched.push(email);
-      else if (!selected && candidates.length > 1 && candidates.includes(projectId)) ambiguous.push({ ...email, projects: projects.filter(project => candidates.includes(project.id)).map(({ id, name }) => ({ id, name })) });
-    }
-    return { emails: matched, ambiguous };
-  }
-  function requireRules(project) {
-    if (!rulesFor(project.id).length) throw Error("Añade al menos un correo o dominio a este proyecto.");
-  }
-  function errorMessage(error) {
-    let message = String(error.message || error).replace(/(?:Bearer\s+)[^\s]+/gi, "[credencial]");
-    for (const key of ["GOOGLE_CLIENT_SECRET", "MODEL_API_KEY"]) if (env[key]) message = message.split(env[key]).join("[credencial]");
-    return message;
-  }
-  async function locked(action) {
-    if (busy) throw Error("Hay una operación en curso. Espera a que termine.");
-    busy = true;
-    let lock;
-    const path = local(".private/watch.lock");
-    try {
-      await database();
-      try { lock = await open(path, "wx", 0o600); }
-      catch (error) { if (error.code === "EEXIST") throw Error("Otra instancia está usando esta demo. Detén el script o servidor anterior antes de continuar."); throw error; }
-      return await action();
-    } finally { if (lock) { await lock.close(); await unlink(path); } busy = false; }
-  }
-  function baseline(project) {
-    const saved = store.baseline(project.id);
-    if (saved) assertBaseline(saved, project.repository, project.issueNumber);
-    return saved;
+  async function locked(operation, projectId, action) {
+    if (closing) throw error("El servidor se está deteniendo.", 503);
+    if (busy) throw error("Hay una operación en curso. Espera a que termine.", 423);
+    busy = { operation, projectId };
+    const task = (async () => {
+      let lock;
+      const path = local(".private/watch.lock");
+      try {
+        await database();
+        try { lock = await open(path, "wx", 0o600); }
+        catch (problem) { if (problem.code === "EEXIST") throw error("Otra instancia está usando esta demo. Detén el otro servidor o script.", 423); throw problem; }
+        return await action();
+      } finally {
+        if (lock) { await lock.close(); await unlink(path); }
+        busy = null;
+      }
+    })();
+    inFlight = task;
+    try { return await task; }
+    finally { if (inFlight === task) inFlight = null; }
   }
   async function config(projectId) {
     await database();
     const status = environmentStatus(env);
     const project = store.project(projectId || store.selected()) || null;
-    const filters = store.filters();
     const token = await optional(local(".private/gmail-token.json"));
-    const ready = status.ready && Boolean(project) && rulesFor(project.id).length > 0;
     return {
-      ...status, ready, environmentReady: status.ready,
-      error: status.error || (!project ? "Crea o selecciona un proyecto para continuar." : !rulesFor(project.id).length ? "Añade al menos un correo o dominio a este proyecto." : null),
-      project: project && projectContext(project), projects: store.projects().map(item => ({ ...item, captured: Boolean(store.baseline(item.id)) })), filters,
-      repository: project?.repository || "", issueNumber: project?.issueNumber || null,
-      connections: { ...status.connections, github: Boolean(project) },
-      gmailConnected: Boolean(token?.refresh_token), baseline: project && baseline(project),
-      oauth: { ...oauth, ...(oauth.message ? { message: errorMessage(Error(oauth.message)) } : {}) }, events: project ? store.events(project.id) : [],
+      ...status, environmentReady: status.ready, project,
+      projects: store.projects().map(item => {
+        const mails = store.mails(item.id), proposals = store.proposals(item.id), runtime = store.runtime(item.id);
+        return { ...item, mailCount: mails.length, unreadCount: mails.filter(mail => !mail.analyzed).length, pendingCount: proposals.filter(proposal => proposal.status === "pending").length, lastSync: runtime.lastSync || null, lastAnalysis: runtime.lastAnalysis || null, error: runtime.error || null };
+      }),
+      filters: store.filters(), selectedProjectId: store.selected(), busy,
+      gmailConnected: Boolean(token?.refresh_token),
+      oauth: { ...oauth, ...(oauth.message ? { message: errorMessage(Error(oauth.message)) } : {}) },
+      defaultRepository: /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(env.GITHUB_REPO || "") ? env.GITHUB_REPO : "",
     };
   }
-  function entries(project, issue) {
-    return store.records(project.id).filter(entry => entry.issue && entry.requestEmail?.from && resolvedProject(entry.requestEmail) === project.id && issueFingerprint(entry.issue) === issueFingerprint(issue));
-  }
-  function view(project, issue, saved) {
-    const records = entries(project, issue);
-    const proposals = records.filter(entry => entry.plan.action === "comment" && !entry.published);
-    const workspace = proposals.at(-1) || records.at(-1) || { project: projectContext(project), initialEmail: saved.initialEmail, issue, requestEmail: null, analysis: null, plan: null };
-    return { workspace, proposals, events: store.events(project.id) };
-  }
   async function snapshot(projectId) {
-    requireEnvironment();
-    const project = await requireProject(projectId); requireRules(project);
-    const saved = baseline(project);
-    if (!saved) return { workspace: null, proposals: [], events: store.events(project.id) };
-    return view(project, await api.issue(project), saved);
+    await database();
+    const project = projectId ? await requireProject(projectId) : store.project(store.selected());
+    if (!project) return { project: null, mails: [], proposals: [], events: [], runtime: {}, links: [] };
+    return { project, mails: store.mails(project.id), proposals: store.proposals(project.id), events: store.events(project.id), runtime: store.runtime(project.id), links: store.links(project.id) };
   }
-  async function workspace(projectId) { return (await snapshot(projectId)).workspace; }
-  async function inbox(projectId) {
-    requireEnvironment();
-    const project = await requireProject(projectId); requireRules(project);
-    return locked(async () => partition(await api.emails(project), project.id));
+  async function syncProject(project) {
+    requireEnvironment(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]); requireFilters(project);
+    const result = store.replaceMail(project.id, await api.emails(project));
+    store.event(project.id, "Correos sincronizados", result.added + " nuevos o actualizados; " + result.total + " disponibles.");
+    return result;
   }
-  async function capture(id, projectId) {
-    requireEnvironment();
-    const project = await requireProject(projectId); requireRules(project);
-    return locked(async () => {
-      if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(id)) throw Error("ID de correo inválido.");
-      const previous = baseline(project);
-      if (previous) { if (id !== previous.initialEmail.id) throw Error("Ya existe un contexto inicial. No se puede reemplazar desde esta sesión."); return previous; }
-      const email = partition(await api.emails(project), project.id).emails.find(item => item.id === id);
-      if (!email) throw Error("Ese correo no está asignado a este proyecto. Revisa los filtros o su asignación.");
-      const issue = await api.issue(project);
-      const context = { project: projectContext(project), initialEmail: email, issue, requestEmail: null };
-      const analysis = await api.analyze(context);
-      await saveJson(local(`output/${project.id}/initial-context.json`), { context, analysis });
-      const saved = createBaseline({ repo: project.repository, project: projectContext(project), email, issue, analysis, sender: rulesFor(project.id) });
-      store.saveBaseline(project.id, saved);
-      store.event(project.id, "Acuerdo inicial capturado", `Correo e issue coinciden en ${saved.initialFormat}.`);
-      return saved;
-    });
-  }
-  async function run(mode, projectId) {
-    if (mode !== undefined) throw Error("La interfaz solo admite datos reales.");
-    requireEnvironment();
-    const project = await requireProject(projectId); requireRules(project);
-    return locked(async () => {
-      const saved = baseline(project);
-      if (!saved) throw Error("Selecciona el correo inicial y captura el acuerdo desde Conexiones.");
-      const mailbox = partition(await api.emails(project), project.id);
-      if (!mailbox.emails.some(email => email.id === saved.initialEmail.id)) throw Error("El acuerdo inicial no aparece entre los correos asignados a este proyecto. Revisa filtros, etiqueta y fecha.");
-      const issue = await api.issue(project);
-      const current = entries(project, issue);
-      const processed = Object.fromEntries(store.records(project.id).filter(entry => entry.published).map(entry => [entry.requestEmail.id, entry.published]));
-      const state = { processed };
-      await processEmails({
-        baseline: saved, emails: mailbox.emails.filter(email => !current.some(entry => entry.requestEmail.id === email.id)), state,
-        publishing: false, sender: rulesFor(project.id), readIssue: () => issue, analyze: api.analyze,
-        publish: () => { throw Error("La publicación necesita el botón de revisión."); },
-        persist: () => { throw Error("Un análisis no marca correos como publicados."); },
-        onPlan: async ({ email, context, analysis, plan }) => {
-          const entry = { project: projectContext(project), initialEmail: saved.initialEmail, requestEmail: email, issue, analysis, plan };
-          await saveJson(local(`output/${project.id}/${messageKey(email.id)}.json`), { context, analysis, plan });
-          if (plan.action === "comment") await writeFile(local(`output/${project.id}/${messageKey(email.id)}-comment.md`), plan.body + "\n", { mode: 0o600 });
-          store.saveRecord(project.id, email.id, entry);
-          store.event(project.id, plan.action === "comment" ? "Propuesta preparada" : "Correo revisado", plan.action === "comment" ? `${plan.fromFormat} a ${plan.toFormat}. Pendiente de revisión.` : plan.reason);
-        },
+  async function analyzeProject(project) {
+    requireEnvironment(["MODEL_BASE_URL", "MODEL_ID", "MODEL_API_KEY"]); requireFilters(project);
+    if (!store.runtime(project.id).lastSync) throw error("Sincroniza los correos antes de analizarlos.");
+    const issues = await api.issues(project);
+    const version = issueDigest(issues);
+    const previousVersion = store.runtime(project.id).issueDigest;
+    if (previousVersion && previousVersion !== version) store.markUnanalyzed(project.id, store.mails(project.id).map(mail => mail.id));
+    for (const item of store.proposals(project.id).filter(item => item.status === "pending")) {
+      const target = issues.find(issue => issue.number === item.issueNumber);
+      const changed = item.action === "create_issue" ? item.issueDigest !== version : !target || issueVersion(target) !== issueVersion(item.issueSnapshot);
+      if (changed) {
+        store.setProposal(item.id, "stale", { error: "Los issues cambiaron. Analiza de nuevo." });
+        store.markUnanalyzed(project.id, item.sources.map(source => source.id));
+      }
+    }
+    const emails = store.mails(project.id).filter(mail => matchesSender(mail.from, store.filters(project.id)) && Date.parse(mail.date) >= Date.parse(project.gmailAfter));
+    const chunks = batches(emails);
+    let analyzed = 0, prepared = 0;
+    const summaries = [];
+    const existingIds = new Set(store.proposals(project.id).map(item => item.id));
+    const decisions = store.proposals(project.id).filter(item => ["approved", "rejected"].includes(item.status)).slice(0, 100).map(item => ({ action: item.action, title: item.title, status: item.status, issueNumber: item.result?.number || item.issueNumber, sourceEmailIds: item.sources.map(source => source.id) }));
+    for (const batch of chunks) {
+      const context = {
+        project: { id: project.id, name: project.name, repository: project.repository },
+        emails: batch.emails.map(({ id, threadId, from, subject, date, text }) => ({ id, threadId, from, subject, date, text })),
+        freshEmailIds: batch.fresh.map(mail => mail.id), issues, links: store.links(project.id), decisions,
+        pendingProposals: store.proposals(project.id).filter(item => item.status === "pending").map(item => ({ action: item.action, title: item.title, body: item.body, issueNumber: item.issueNumber, sourceEmailIds: item.sources.map(source => source.id) })),
+      };
+      const validated = validateAnalysis(await api.analyze(context), { project, emails: batch.emails, fresh: batch.fresh, issues });
+      store.transaction(() => {
+        for (const data of validated.proposals) {
+          const saved = store.saveProposal(data);
+          if (!existingIds.has(saved.id)) { prepared++; existingIds.add(saved.id); }
+        }
+        store.markAnalyzed(project.id, batch.fresh);
       });
-      return { ...view(project, issue, saved), ambiguous: mailbox.ambiguous };
-    });
+      analyzed += batch.fresh.length;
+      summaries.push(validated.summary);
+    }
+    const summary = summaries.join("\n\n") || (emails.length ? "No hay correos nuevos por analizar." : "No hay correos que coincidan con los participantes y la fecha.");
+    store.setRuntime(project.id, { issues, issueDigest: version, lastAnalysis: new Date(now()).toISOString(), summary, error: null });
+    if (chunks.length) store.event(project.id, "Análisis completado", analyzed + " correos revisados; " + prepared + " propuestas nuevas.");
+    return { analyzed, prepared, summary };
   }
-  async function publish(key, projectId) {
-    requireEnvironment();
-    const project = await requireProject(projectId); requireRules(project);
-    return locked(async () => {
-      if (!baseline(project)) throw Error("Falta el acuerdo inicial. Captúralo antes de publicar.");
-      const entry = store.records(project.id).find(item => item.plan.key === key);
-      if (!entry || entry.plan.action !== "comment" || resolvedProject(entry.requestEmail) !== project.id) throw Error("Vuelve a analizar la solicitud antes de publicar.");
-      if (entry.published) return entry.published;
-      const comment = await api.publish(entry.plan, project);
-      const result = { action: "comment", id: comment.id, url: comment.html_url };
-      store.publish(project.id, entry.requestEmail.id, result);
-      store.event(project.id, "Comentario publicado", `Issue #${entry.issue.number}. El cambio sigue pendiente de decisión humana.`);
-      return result;
-    });
+  async function recordFailure(project, problem) {
+    const message = errorMessage(problem);
+    if (store.runtime(project.id).error !== message) store.event(project.id, "Operación pendiente", message);
+    store.setRuntime(project.id, { error: message });
   }
-  async function saveProject(input) {
-    return locked(() => { const project = store.saveProject(input); store.select(project.id); return project; });
-  }
-  async function saveFilter(input) { return locked(() => store.addFilter(input)); }
-  async function removeFilter(id, projectId) { return locked(() => store.removeFilter(id, projectId)); }
-  async function selectProject(id) { return locked(() => { store.select(id); return { projectId: id }; }); }
-  async function assign(id, projectId) {
-    requireEnvironment();
+  async function sync(projectId) {
     const project = await requireProject(projectId);
-    return locked(async () => {
-      if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(id)) throw Error("ID de correo inválido.");
-      const email = (await api.emails(project)).find(item => item.id === id);
-      if (!email || !senderProjects(email.from, store.filters()).includes(project.id)) throw Error("Ese correo no coincide con los filtros de este proyecto.");
-      store.assign(id, project.id);
-      return { projectId: project.id };
+    return locked("sync", project.id, async () => {
+      try { return await syncProject(project); } catch (problem) { await recordFailure(project, problem); throw problem; }
     });
+  }
+  async function analyze(projectId) {
+    const project = await requireProject(projectId);
+    return locked("analyze", project.id, async () => {
+      try { return await analyzeProject(project); } catch (problem) { await recordFailure(project, problem); throw problem; }
+    });
+  }
+  async function approve(id, projectId) {
+    const project = await requireProject(projectId);
+    return locked("approve", project.id, async () => {
+      const item = store.proposal(id);
+      if (!item || item.projectId !== project.id) throw error("Propuesta no encontrada.", 404);
+      if (item.status === "approved") return item.result;
+      if (item.status !== "pending") throw error("Esta propuesta ya no está pendiente.", 409);
+      const available = new Map(store.mails(project.id).map(mail => [mail.id, mail]));
+      if (item.repository !== project.repository || item.sources.some(source => available.get(source.id)?.hash !== source.hash)) throw error("Las fuentes cambiaron. Sincroniza y analiza de nuevo.", 409);
+      try {
+        const result = await api.apply(item);
+        store.transaction(() => {
+          store.setProposal(id, "approved", { result });
+          for (const source of item.sources) store.link(project.id, source.threadId, result.number);
+          const runtime = store.runtime(project.id);
+          const issues = (runtime.issues || []).filter(issue => issue.number !== result.number);
+          if (result.state === "open") issues.push(result);
+          store.setRuntime(project.id, { issues, issueDigest: issueDigest(issues), error: null });
+          store.event(project.id, item.action === "create_issue" ? "Issue creado" : "Issue actualizado", "#" + result.number + " · " + result.title);
+        });
+        return result;
+      } catch (problem) {
+        if (problem.stale) { store.setProposal(id, "stale", { error: errorMessage(problem) }); store.markUnanalyzed(project.id, item.sources.map(source => source.id)); }
+        else store.setProposal(id, "pending", { error: errorMessage(problem) });
+        throw problem;
+      }
+    });
+  }
+  async function reject(id, projectId) {
+    const project = await requireProject(projectId);
+    return locked("reject", project.id, () => {
+      const item = store.proposal(id);
+      if (!item || item.projectId !== project.id) throw error("Propuesta no encontrada.", 404);
+      if (item.status !== "pending") throw error("Esta propuesta ya no está pendiente.", 409);
+      store.setProposal(id, "rejected");
+      store.event(project.id, "Propuesta rechazada", item.title);
+      return { rejected: true };
+    });
+  }
+  async function autoTick() {
+    if (closing || busy) return;
+    await database();
+    for (const project of store.projects().filter(project => project.autoEnabled)) {
+      if (closing || busy) return;
+      const runtime = store.runtime(project.id);
+      const delay = (runtime.error ? Math.max(project.pollSeconds, 300) : project.pollSeconds) * 1000;
+      if (runtime.lastAutoAttempt && now() - runtime.lastAutoAttempt < delay) continue;
+      try {
+        await locked("automatic", project.id, async () => {
+          store.setRuntime(project.id, { lastAutoAttempt: now() });
+          try { await syncProject(project); await analyzeProject(project); }
+          catch (problem) { await recordFailure(project, problem); }
+        });
+      } catch (problem) { if (problem.status !== 423) throw problem; }
+    }
   }
   async function login() {
-    requireEnvironment();
-    if (loginProcess || busy) throw Error("Ya hay una operación en curso.");
+    requireEnvironment(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]);
+    if (loginProcess || busy) throw error("Hay una operación en curso. Espera a que termine.", 423);
     oauth = { status: "starting" };
-    loginProcess = spawn(process.execPath, [local("src/gmail-login.mjs")], { env, stdio: ["ignore", "pipe", "pipe"] });
-    const child = loginProcess;
-    let output = "", errors = "";
-    child.stderr.on("data", data => { errors += data.toString(); });
+    loginProcess = spawn(process.execPath, [local("src/gmail-login.mjs")], { env: { ...process.env, ...env }, stdio: ["ignore", "pipe", "pipe"] });
+    const child = loginProcess; let output = "", errors = "";
     child.stdout.on("data", data => {
       output += data.toString();
       const url = output.match(/https:\/\/accounts\.google\.com\/[^\s]+/);
       if (url) oauth = { status: "waiting", url: url[0] };
       if (output.includes("Refresh token guardado")) oauth = { status: "connected" };
     });
+    child.stderr.on("data", data => { errors += data.toString().slice(0, 1500); });
     child.on("error", () => { oauth = { status: "error", message: "No se pudo iniciar la conexión. Revisa las credenciales de Google." }; loginProcess = null; });
     child.on("exit", () => {
-      if (oauth.status !== "connected") oauth = { status: "error", message: errors.trim().slice(0, 500) || "La conexión no se completó. Inténtalo de nuevo." };
-      if (oauth.status === "connected" && store?.selected()) store.event(store.selected(), "Gmail conectado", "Acceso de lectura autorizado.");
+      if (oauth.status !== "connected") oauth = { status: "error", message: errors.trim().slice(0, 1000) || "La conexión no se completó. Inténtalo de nuevo." };
       loginProcess = null;
     });
     return oauth;
   }
-  return { config, workspace, snapshot, inbox, capture, run, publish, login, errorMessage, saveProject, saveFilter, removeFilter, selectProject, assign,
-    github: async () => { requireEnvironment(); const actor = await api.account(); return { login: actor.login, url: actor.html_url }; },
-    close: async () => { loginProcess?.kill(); if (initializing) { try { (await initializing).close(); } catch { store?.close(); } } },
+  if (scheduler) database().catch(() => {});
+  return {
+    config, snapshot, sync, analyze, approve, reject, login, errorMessage, autoTick,
+    async proposalDetail(id, projectId) {
+      const project = await requireProject(projectId);
+      const item = store.proposal(id);
+      if (!item || item.projectId !== project.id) throw error("Propuesta no encontrada.", 404);
+      return { ...item, previewBody: writeBody(item) };
+    },
+    saveProject: input => locked("save", input.id, () => store.saveProject(input)),
+    saveFilter: input => locked("save", input.projectId, () => store.addFilter(input)),
+    removeFilter: (id, projectId) => locked("save", projectId, () => store.removeFilter(id, projectId)),
+    selectProject: id => locked("select", id, () => { store.select(id); return { projectId: id }; }),
+    async automation(projectId, enabled, pollSeconds) {
+      const project = await requireProject(projectId);
+      if (typeof enabled !== "boolean") throw error("Seguimiento automático inválido.");
+      const saved = store.saveProject({ ...project, autoEnabled: enabled, pollSeconds: pollSeconds ?? project.pollSeconds });
+      if (enabled) store.setRuntime(projectId, { lastAutoAttempt: null });
+      store.event(projectId, enabled ? "Seguimiento activado" : "Seguimiento pausado", "Intervalo: " + saved.pollSeconds + " segundos. Las propuestas requieren aprobación.");
+      return saved;
+    },
+    deleteProject: (id, confirmation) => locked("delete", id, () => { if (confirmation !== id) throw error("Confirma el proyecto que quieres eliminar."); store.deleteProject(id); return { deleted: true }; }),
+    reset: confirmation => locked("reset", null, () => { if (confirmation !== "RESET_LOCAL_DATA") throw error("Confirma el reinicio de los datos locales."); return store.reset(); }),
+    repositories: () => api.repositories(),
+    github: async () => { const actor = await api.account(); return { login: actor.login, html_url: actor.html_url }; },
+    close: async () => { closing = true; clearInterval(timer); loginProcess?.kill(); if (inFlight) await inFlight.catch(() => {}); if (initializing) { try { (await initializing).close(); } catch { store?.close(); } } },
   };
 }

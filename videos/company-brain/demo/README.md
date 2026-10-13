@@ -1,12 +1,12 @@
 # Demo visual de Company Brain
 
-La demo compara un acuerdo de Gmail con una tarea de GitHub y una solicitud posterior. El caso del tutorial pasa de **CSV a PDF**: ves las tres fuentes, revisas una propuesta con evidencia y decides si publicas el comentario en el issue.
+Crea proyectos con un repositorio, participantes y una fecha con hora. Sincroniza Gmail, analiza los mensajes con el modelo y revisa propuestas para crear o actualizar issues. Cada escritura en GitHub necesita tu aprobación.
 
-**Para hacerla de principio a fin, sigue la [guía del tutorial](../README.md#paso-a-paso).** Incluye la creación de las credenciales, la descripción del issue, los campos del proyecto y dos correos que puedes enviar con tus cuentas.
+La [guía completa](../README.md#paso-a-paso) explica la configuración de Google, el modelo y una conversación de prueba paso a paso. La interfaz usa datos reales; empieza sin proyectos ni mensajes precargados.
 
 ## Arranque
 
-Necesitas **Node.js ≥22.13**, GitHub CLI con una sesión autorizada, Gmail con un cliente OAuth de escritorio y un proveedor compatible con Chat Completions. No hay paquetes que instalar.
+Necesitas **Node.js ≥22.13**, [GitHub CLI](https://cli.github.com/), Gmail con un cliente OAuth de escritorio y un proveedor compatible con Chat Completions. No hay dependencias que instalar.
 
 Desde esta carpeta:
 
@@ -14,14 +14,7 @@ Desde esta carpeta:
 cp -n .env.example .env
 ```
 
-Completa `.env` con estas cinco variables:
-
-| Conexión | Variables |
-|---|---|
-| Cliente OAuth de Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
-| Proveedor y modelo de IA | `MODEL_BASE_URL`, `MODEL_ID`, `MODEL_API_KEY` |
-
-Estas cinco variables son toda la configuración de `.env` para la UI. El destino de GitHub, los participantes, la fecha de inicio y la etiqueta opcional se guardan por proyecto en SQLite. Selecciona el correo inicial desde **Conexiones → Capturar acuerdo**; su ID también queda guardado por proyecto. [Cómo configurar las conexiones](../README.md#1-prepara-las-conexiones).
+Completa `.env` con `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MODEL_BASE_URL`, `MODEL_ID` y `MODEL_API_KEY`. Usa una URL base HTTPS sin `/chat/completions`. Las credenciales quedan en el servidor; no se editan desde la UI. Reinicia la demo después de cambiarlas.
 
 Si usas nvm, ejecuta `nvm use`. Después:
 
@@ -30,36 +23,38 @@ gh auth login
 npm start
 ```
 
-Abre [http://127.0.0.1:4173](http://127.0.0.1:4173). Las credenciales se leen exclusivamente del entorno o `.env` en el servidor. Al cambiarlas, reinícialo. Una configuración incompleta muestra un error; la interfaz utiliza datos de tus cuentas.
+Abre [http://127.0.0.1:4173](http://127.0.0.1:4173). Si faltan variables, verás el error correspondiente. El repositorio y los filtros se guardan por proyecto en SQLite. Un `GITHUB_REPO` existente solo rellena el campo inicial del repositorio.
 
-## Recorrido en la UI
+## Recorrido de la interfaz
 
-1. **Proyectos y filtros:** crea el proyecto con su nombre, referencia, repositorio `owner/repo`, número del issue, entrega y requisito. Elige la fecha de inicio que incluya el acuerdo inicial y deja la etiqueta vacía si quieres consultar por participantes. Añade el correo exacto del remitente o su dominio y asígnalo al proyecto.
-2. **Conexiones:** autoriza el Gmail receptor y comprueba la sesión de GitHub. Pulsa **Cargar correos** y captura el correo del acuerdo inicial. Las referencias y el formato deben coincidir con el issue.
-3. **Centro de decisiones:** cuando llegue el nuevo correo de un participante, pulsa **Buscar solicitudes**. Verás el acuerdo, la tarea y la nueva petición, junto con la propuesta de cambio.
-4. **Revisar propuesta:** comprueba las citas y el comentario. **Publicar comentario en GitHub** deja la propuesta pendiente de revisión humana; el equipo decide si modifica el alcance de la tarea.
+1. **Conexiones y datos:** autoriza el Gmail receptor y comprueba GitHub.
+2. **Proyectos → Nuevo proyecto:** nombre, repositorio, fecha y hora UTC y etiqueta opcional. No hace falta un issue inicial.
+3. **Configuración del proyecto → Participantes:** añade los correos exactos y dominios de los remitentes. La etiqueta vacía permite filtrar solo por participantes y fecha.
+4. **Correos → Sincronizar correo:** descarga los mensajes que coincidan y guarda sus textos para el modelo.
+5. **Analizar correos:** compara los nuevos mensajes con los issues abiertos. La aplicación abre **Propuestas**.
+6. **Revisar propuesta:** comprueba motivo, citas y descripción completa; aprueba para crear o actualizar el issue, o rechaza. La decisión aparece en **Historial** y **Actividad**.
+7. Envía otra respuesta en el hilo, sincroniza y analiza otra vez. El agente recibe el contexto anterior y el issue vinculado.
 
-El correo exacto tiene prioridad sobre el dominio entre todos los proyectos. Añade los subdominios por separado. Si un mensaje coincide con varios proyectos, asígnalo en **Conexiones → Correos por asignar** antes de analizarlo.
+El sidebar conserva el proyecto en las rutas. **EN / ES** cambia la interfaz; las fuentes mantienen su texto original. Los filtros se combinan dentro del proyecto. Un dominio coincide completo y necesita filtros separados para sus subdominios; los filtros de otro proyecto no cambian esta selección.
 
-**EN / ES** cambia el idioma de la interfaz. **Fuentes de contexto** permite leer los documentos completos. **Observar Gmail** consulta cada 30 segundos mientras permanezcas en la vista; cada publicación requiere tu revisión.
+## Seguimiento y datos
 
-## Estado local
+En **Configuración del proyecto**, activa o pausa el seguimiento automático y elige su intervalo. Funciona mientras el servidor esté encendido, aunque cierres el navegador. Prepara propuestas sin aprobarlas. Las operaciones se ejecutan una a una.
 
-SQLite conserva proyectos, fechas de inicio, etiquetas opcionales, filtros, asignaciones, acuerdos, propuestas y publicaciones en `.private/company-brain.sqlite`. La autorización de Gmail está en `.private/gmail-token.json`; los diagnósticos están en `output/<proyecto>/`. Al recargar la página o reiniciar el servidor, se conserva el estado.
+SQLite conserva configuración, mensajes, propuestas, decisiones y actividad en `.private/company-brain.sqlite`. OAuth se guarda en `.private/gmail-token.json`. Puedes cerrar la página o reiniciar el servidor sin perder lo pendiente.
 
-Para respaldarlo, detén la demo y copia `.private/`; guarda `.env` por separado. Estos archivos están excluidos de Git y los archivos privados y diagnósticos no se sirven como archivos web. Una vez capturado el acuerdo, el destino y las referencias quedan fijos; para otro alcance, crea un proyecto nuevo.
+**Conexiones y datos → Reiniciar datos locales** permite empezar de cero con confirmación. Borra únicamente el estado local de la demo; conserva `.env`, OAuth y los mensajes e issues originales. **Eliminar proyecto** borra solo el estado de ese proyecto. Para un respaldo, detén el servidor y copia `.private/`; guarda `.env` por separado.
 
 ## Comandos útiles
 
 | Comando | Resultado |
 |---|---|
-| `npm start` | UI local con datos reales. |
+| `npm start` | UI local con conexiones reales. |
 | `npm run dev` | Reinicia el servidor al cambiar su código. |
-| `npm run preview` | La misma UI y conexiones que `start`. |
-| `npm test` | Pruebas con APIs simuladas, sin acceder a tus cuentas. |
-| `npm run test:fixture` | Prueba aislada del recorrido por terminal, sin publicación. |
-| `PORT=4174 npm start` | Arranca en otro puerto si el 4173 está ocupado. |
+| `npm run preview` | Misma UI que `start`. |
+| `npm test` | Pruebas aisladas, sin acceder a tus cuentas. |
+| `PORT=4174 npm start` | Otro puerto para el servidor. |
 
-Los datos de `fixtures/` se utilizan solo en pruebas, sin sustituir los datos de la UI. Al iniciar con una base vacía, crea tu primer proyecto desde el formulario.
+Los comandos por terminal y sus fixtures pertenecen al ejemplo original acotado a CSV/PDF. La UI usa el flujo por proyectos, varias tareas y aprobación de creaciones y actualizaciones; no carga esos fixtures.
 
-[Tutorial completo](../README.md) · [Resolver problemas](../README.md#si-algo-no-funciona) · [Detalle de conexiones](../docs/conectar-cuentas.md) · [Comandos por terminal](../docs/scripts.md)
+[Tutorial completo](../README.md) · [Resolver problemas](../README.md#si-algo-no-funciona) · [Conectar cuentas](../docs/conectar-cuentas.md) · [Ejemplo por terminal](../docs/scripts.md)

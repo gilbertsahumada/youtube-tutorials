@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import { ROOT, loadEnv } from "./common.mjs";
 import { createStudio } from "./studio.mjs";
 
-const assets = { "/": ["index.html", "text/html"], "/app.js": ["app.js", "text/javascript"], "/http.js": ["http.js", "text/javascript"], "/i18n.js": ["i18n.js", "text/javascript"], "/style.css": ["style.css", "text/css"], "/favicon.svg": ["favicon.svg", "image/svg+xml"] };
+const assets = { "/": ["index.html", "text/html"], "/app.js": ["app.js", "text/javascript"], "/http.js": ["http.js", "text/javascript"], "/i18n.js": ["i18n.js", "text/javascript"], "/workflow-i18n.js": ["workflow-i18n.js", "text/javascript"], "/router.js": ["router.js", "text/javascript"], "/style.css": ["style.css", "text/css"], "/favicon.svg": ["favicon.svg", "image/svg+xml"] };
 
 export function createDemoServer({ studio = createStudio(), publicRoot = resolve(ROOT, "web") } = {}) {
   const token = randomBytes(32).toString("hex");
@@ -32,14 +32,16 @@ export function createDemoServer({ studio = createStudio(), publicRoot = resolve
       if (req.method === "GET" && url.pathname === "/api/bootstrap") {
         const projectId = url.searchParams.get("projectId");
         const config = await studio.config(projectId);
-        if (!config.ready) return send(503, { token, workspace: null, config, error: config.error });
-        try { return send(200, { token, ...await studio.snapshot(projectId), config }); }
-        catch (error) { return send(400, { token, workspace: null, config, error: studio.errorMessage(error) }); }
+        try { return send(config.environmentReady ? 200 : 503, { token, ...await studio.snapshot(projectId), config, error: config.error }); }
+        catch (error) { return send(error.status || 400, { token, config, error: studio.errorMessage(error) }); }
       }
       const supplied = Buffer.from(String(req.headers["x-company-brain-token"] || ""));
       const expected = Buffer.from(token);
       if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return send(403, { error: "Recarga la página para recuperar la sesión local." });
       if (req.method === "GET" && url.pathname === "/api/config") return send(200, await studio.config(url.searchParams.get("projectId")));
+      if (req.method === "GET" && url.pathname === "/api/projects/snapshot") return send(200, await studio.snapshot(url.searchParams.get("projectId")));
+      if (req.method === "GET" && url.pathname === "/api/repositories") return send(200, { repositories: await studio.repositories() });
+      if (req.method === "GET" && url.pathname === "/api/proposals/detail") return send(200, await studio.proposalDetail(url.searchParams.get("id"), url.searchParams.get("projectId")));
       if (url.pathname === "/api/config") return send(405, { error: "La configuración se carga desde el entorno. Edita .env y reinicia el servidor." });
       if (req.method !== "POST" || req.headers["content-type"]?.split(";")[0] !== "application/json") return send(405, { error: "Solicitud no admitida." });
       let raw = "";
@@ -49,15 +51,17 @@ export function createDemoServer({ studio = createStudio(), publicRoot = resolve
       try { body = JSON.parse(raw || "{}"); } catch { return send(400, { error: "Solicitud inválida." }); }
       if (!body || typeof body !== "object" || Array.isArray(body)) return send(400, { error: "Solicitud inválida." });
       const routes = {
-        "/api/inbox": () => studio.inbox(body.projectId),
-        "/api/baseline": () => studio.capture(body.id, body.projectId),
-        "/api/run": () => studio.run(body.mode, body.projectId),
-        "/api/publish": () => studio.publish(body.key, body.projectId),
+        "/api/mail/sync": () => studio.sync(body.projectId),
+        "/api/agent/analyze": () => studio.analyze(body.projectId),
+        "/api/proposals/approve": () => studio.approve(body.proposalId, body.projectId),
+        "/api/proposals/reject": () => studio.reject(body.proposalId, body.projectId),
         "/api/projects": () => studio.saveProject(body),
         "/api/projects/select": () => studio.selectProject(body.projectId),
+        "/api/projects/automation": () => studio.automation(body.projectId, body.enabled, body.pollSeconds),
+        "/api/projects/delete": () => studio.deleteProject(body.projectId, body.confirmation),
+        "/api/data/reset": () => studio.reset(body.confirmation),
         "/api/filters": () => studio.saveFilter(body),
         "/api/filters/remove": () => studio.removeFilter(body.id, body.projectId),
-        "/api/inbox/assign": () => studio.assign(body.id, body.projectId),
         "/api/gmail/login": () => studio.login(),
         "/api/github/check": () => studio.github(),
       };

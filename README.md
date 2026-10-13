@@ -17,7 +17,7 @@ videos/
   harness-engineering/            → demo comparativa sin harness y con harness
   loop-engineering/               → un loop que arregla una feature y se detiene solo
   graph-engineering/              → un grafo de loops que se refutan entre sí, con ancla externa
-  company-brain/                  → demo visual: correo + tarea + solicitud → propuesta con evidencia
+  company-brain/                  → proyectos: sincronizar correos → propuestas → aprobar issues
   pi/                             → introducción a Pi, skills, extensiones y repository onboarding
   pi-pr-evidence/                 → revisión read-only de Pull Requests con Pi y GitHub Actions
 ```
@@ -58,7 +58,7 @@ Demos con recorrido ejecutable, y qué hace cada una:
 | [`harness-engineering`](videos/harness-engineering) | el mismo mensaje dos veces, con y sin harness | un evaluador independiente puntúa las dos: sin harness el marcador no se mueve, con harness `6/6` |
 | [`loop-engineering`](videos/loop-engineering) | `node loop-fix.mjs` | un loop que arregla una feature vuelta a vuelta y se detiene solo |
 | [`graph-engineering`](videos/graph-engineering) | `node review-graph.mjs` | lentes en paralelo, verificación adversarial y ancla externa |
-| [`company-brain`](videos/company-brain) | `npm start` desde `demo/` y el recorrido en la interfaz | crea proyectos y filtros por correo o dominio; conecta tus cuentas desde el entorno y revisa propuestas antes de publicar |
+| [`company-brain`](videos/company-brain) | `npm start` desde `demo/` y el recorrido en la interfaz | configura proyectos y participantes, sincroniza Gmail y aprueba propuestas para crear o actualizar issues; seguimiento automático opcional |
 
 Los números que verás publicados salen de ejecuciones registradas y están marcados como tales. La generación es probabilística: **tu corrida dará algo distinto**, y esa es justamente la razón de que cada demo traiga su propio evaluador.
 

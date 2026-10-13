@@ -1,80 +1,63 @@
-# Conectar tus cuentas
+# Conectar las cuentas de la demo
 
-Desde `demo/`, copia `.env.example` a `.env` si todavía no existe. Completa las conexiones y ejecuta `npm start` con **Node.js ≥22.13**. La UI permite guardar proyectos y filtros, y muestra el estado de las conexiones. Las credenciales se configuran exclusivamente en el entorno.
+La [guía completa](../README.md#paso-a-paso) incluye una conversación para probar la demo de principio a fin. Esta página reúne la configuración de las integraciones.
 
-## Variables necesarias
+Desde `demo/`, crea `.env` con `cp -n .env.example .env`, completa estas cinco variables y arranca con `npm start` usando **Node.js ≥22.13**:
 
-| Variable | Qué debes configurar |
+| Variable | Configuración |
 |---|---|
-| `GOOGLE_CLIENT_ID` | ID del cliente OAuth de escritorio de Google |
-| `GOOGLE_CLIENT_SECRET` | Secreto de ese cliente OAuth |
-| `MODEL_BASE_URL` | URL HTTPS de una API compatible con Chat Completions, sin `/chat/completions` |
-| `MODEL_ID` | Identificador de un modelo disponible en tu cuenta |
-| `MODEL_API_KEY` | Clave de API del proveedor indicado en la URL |
+| `GOOGLE_CLIENT_ID` | ID del cliente OAuth de escritorio de Google. |
+| `GOOGLE_CLIENT_SECRET` | Secreto del mismo cliente. |
+| `MODEL_BASE_URL` | URL base HTTPS compatible con Chat Completions, sin `/chat/completions`. |
+| `MODEL_ID` | Modelo disponible en tu proveedor y cuenta. |
+| `MODEL_API_KEY` | Clave de API del proveedor de esa URL. |
 
-Estas cinco variables son toda la configuración de `.env` para la UI. Puedes declararlas en el entorno del proceso en lugar de usar `.env`. Tras cambiarlas, reinicia el servidor. Una configuración incompleta o inválida muestra un error; nunca carga datos de ejemplo. Puedes crear proyectos y guardar filtros mientras completas las conexiones.
+Puedes usar el entorno del proceso en lugar de `.env`. Reinicia el servidor al cambiarlo. La UI muestra qué falta y permite guardar proyectos; no pide secretos ni sustituye las conexiones por datos de ejemplo.
 
-## Gmail y GitHub
+## Gmail
 
-1. En [Google Cloud](https://console.cloud.google.com/), activa **Gmail API**.
-2. En Google Auth Platform, configura audiencia **External**, modo **Testing**, y añade la cuenta receptora como usuario de prueba.
-3. Incluye `https://www.googleapis.com/auth/gmail.readonly` en los permisos.
-4. Crea un cliente OAuth de tipo **Aplicación de escritorio** y copia su Client ID y Client secret a `.env`.
-5. Arranca el servidor. En **Conexiones → Conectar Gmail → Abrir autorización de Google**, autoriza la cuenta receptora y vuelve a la demo.
+1. En [Google Cloud](https://console.cloud.google.com/), habilita **Gmail API**.
+2. Configura la aplicación en Google Auth Platform. Para una cuenta personal de prueba, usa audiencia **External**, modo **Testing** y añade el **Gmail receptor** como usuario de prueba.
+3. Incluye el permiso `https://www.googleapis.com/auth/gmail.readonly`.
+4. Crea un cliente OAuth de tipo **Aplicación de escritorio** y copia su ID y secreto a `.env`.
+5. En la demo, abre **Conexiones y datos → Conectar Gmail → Abrir autorización de Google** y autoriza el receptor.
 
-El token OAuth queda en `.private/gmail-token.json`. Gmail se consulta por los participantes y la fecha del proyecto seleccionado. La etiqueta es opcional. Solo se utiliza texto plano, sin adjuntos, y el servidor vuelve a comprobar los remitentes y la fecha.
+[Configuración oficial de Gmail](https://developers.google.com/workspace/gmail/api/quickstart/nodejs) · [Consentimiento OAuth](https://developers.google.com/workspace/guides/configure-oauth-consent) · [Permisos](https://developers.google.com/workspace/gmail/api/auth/scopes).
 
-Inicia sesión con [GitHub CLI](https://cli.github.com/):
+La autorización se guarda en `.private/gmail-token.json`. Si la renovación falla, pulsa **Volver a autorizar Gmail**. Que el token esté guardado no garantiza que siga siendo válido.
+
+Cada proyecto define los **remitentes**, la **fecha y hora UTC** y una **etiqueta opcional**. La cuenta autorizada es la receptora; el correo de un participante corresponde a quien envía el mensaje. Sin etiqueta se busca por participantes y fecha. Con etiqueta debe existir y estar aplicada al mensaje. [Búsquedas de Gmail API](https://developers.google.com/workspace/gmail/api/guides/filtering).
+
+Se utiliza texto plano, sin adjuntos ni HTML, hasta 500 mensajes por consulta y 20.000 caracteres por mensaje. El servidor vuelve a validar fecha y remitente antes de guardarlo.
+
+## GitHub
+
+Autoriza GitHub CLI con la cuenta que leerá el repositorio y creará o editará issues:
 
 ```bash
 gh auth login
 ```
 
-En **Conexiones → Comprobar acceso**, verifica esa sesión. El proveedor de IA recibe los correos y la tarea para contrastar sus fuentes.
+En **Conexiones y datos → Comprobar GitHub** se verifica la cuenta. En el formulario del proyecto puedes cargar sus repositorios o escribir `owner/repo`. Si tu entorno ya contiene `GITHUB_REPO`, el formulario lo usa como valor inicial; la configuración guardada del proyecto es el destino efectivo.
 
-## Proyectos y filtros
+El análisis consulta los issues abiertos y excluye las pull requests. La aprobación vuelve a consultar el estado antes de crear o actualizar un issue. No necesitas guardar un número de issue en el proyecto. [Autorización de gh](https://cli.github.com/manual/gh_auth_login) · [API de issues](https://docs.github.com/en/rest/issues/issues).
 
-En **Proyectos y filtros**, guarda el nombre, repositorio (`owner/repo`), número del issue, referencias del proyecto, entrega y requisito, y la fecha **Leer correos desde (UTC)**. Por defecto aparece el día actual; si el acuerdo ya existe, elige ese día o uno anterior. La fecha incluye mensajes desde las 00:00 UTC y se guarda en SQLite. Usa letras minúsculas, números y guiones para esas referencias. El issue debe estar abierto y contener las referencias del formulario y una única línea de formato actual, por ejemplo:
+## Modelo
 
-```text
-Proyecto: mi-proyecto
-Entrega: entrega-1
-Requisito: exportar-reportes
-Formato actual: CSV
-```
+La URL, el identificador del modelo y la clave deben corresponder a la misma API compatible con Chat Completions. El servidor añade `/chat/completions` a `MODEL_BASE_URL` y solicita JSON con el resumen y las propuestas.
 
-Los correos también deben identificar ese proyecto, entrega y requisito, y acordar o solicitar CSV o PDF. Cada proyecto tiene su propio issue y acuerdo inicial. Una vez capturado, su destino y referencias se conservan; para otro alcance, crea un proyecto.
+El modelo recibe los mensajes nuevos, contexto previo del mismo hilo, issues abiertos, vínculos de conversaciones y propuestas o decisiones relevantes. No dispone de herramientas para escribir en GitHub. La aplicación valida las citas y los cambios antes de mostrarlos para aprobación.
 
-Añade los participantes con un **correo exacto** o un **dominio completo**, y selecciona a qué proyecto pertenece cada filtro:
+Un error de autenticación, límite del proveedor o JSON inválido se muestra en la UI. Los correos de un análisis fallido siguen disponibles para reintentar; no se crean resultados de ejemplo.
 
-- Los correos exactos tienen prioridad sobre los dominios en todos los proyectos.
-- Un dominio coincide completo: `empresa.com` no incluye `sub.empresa.com` ni `empresa.com.otro.com`. Añade los subdominios por separado.
-- Si varios proyectos coinciden, **Conexiones → Cargar correos** muestra **Correos por asignar**. Elige su destino antes de capturarlos o analizarlos.
+## Configuración del proyecto
 
-**Etiqueta de Gmail (opcional):** déjala vacía para buscar directamente por los correos y dominios. Si eliges una, introduce el nombre exacto de una etiqueta existente y aplícala a los mensajes que quieres consultar, incluido el acuerdo inicial.
+Nombre, repositorio, fecha con hora, etiqueta y participantes se guardan en SQLite. No necesitas `GMAIL_LABEL`, `GMAIL_AFTER`, `GMAIL_INITIAL_MESSAGE_ID`, `GITHUB_ISSUE_NUMBER` ni `IMPORT_LEGACY_PROJECT` para la UI.
 
-Puedes editar la fecha y la etiqueta, añadir o eliminar filtros y cambiar el proyecto activo sin reiniciar. La fecha no puede dejar fuera el correo del acuerdo capturado. La UI no requiere `GMAIL_LABEL` ni `GMAIL_AFTER` en el entorno.
+Los filtros exactos y por dominio se combinan dentro de cada proyecto; un mensaje puede estar disponible en varios proyectos si coincide con sus filtros. Cambiar el alcance limpia los mensajes locales y deja obsoletas las propuestas pendientes. Vuelve a sincronizar y analizar.
 
-## Capturar, analizar y revisar
+**Sincronizar correo** solo descarga mensajes; **Analizar correos** prepara propuestas; **Aprobar** crea o actualiza el issue. El seguimiento automático realiza las dos primeras acciones desde el servidor mientras esté encendido. Cada escritura sigue requiriendo aprobación.
 
-1. Selecciona el proyecto. En **Conexiones**, pulsa **Cargar correos** y captura el acuerdo inicial. Su ID se guarda en SQLite al seleccionarlo. El modelo valida que correo e issue coincidan en el formato.
-2. Cuando llegue una solicitud de un participante, pulsa **Buscar solicitudes**.
-3. En **Revisar propuesta**, comprueba los extractos y el comentario. **Publicar comentario en GitHub** escribe solo ese comentario y evita duplicarlo.
+**Reiniciar datos locales** borra el estado de SQLite con confirmación y conserva las conexiones y los datos externos. Para respaldar la demo, detén el servidor y copia `.private/`; conserva `.env` por separado. Los datos privados están excluidos de Git y no se sirven como archivos web.
 
-**Observar Gmail** prepara propuestas cada 30 segundos mientras la página está abierta. Cambiar el proyecto o navegar a otra vista detiene la observación. Cada publicación requiere su botón de revisión.
-
-SQLite guarda proyectos, fechas de inicio, etiquetas opcionales, filtros, asignaciones, acuerdos, propuestas y publicaciones en `.private/company-brain.sqlite`. Al reiniciar o recargar la página, las propuestas pendientes siguen disponibles. Para conservar los datos, respalda `.private/`; las credenciales de `.env` y la sesión de `gh` se mantienen por separado. La base y los diagnósticos de `output/<proyecto>/` no se sirven al navegador ni se incluyen en Git.
-
-Al iniciar con una base vacía, crea tu primer proyecto desde **Proyectos y filtros**. Los proyectos guardados en SQLite vuelven a aparecer al reiniciar.
-
-## Si algo no aparece
-
-| Problema | Qué revisar |
-|---|---|
-| Variables faltantes o inválidas | Completa los campos indicados en el entorno o `.env` y reinicia. |
-| Sin correos | Cuenta receptora, filtros y fecha del proyecto, etiqueta aplicada solo si elegiste una, y correos pendientes de asignar. |
-| Google bloquea el acceso | Usuario de prueba, Gmail API activa y cliente OAuth de escritorio. |
-| GitHub falla | Sesión de `gh`, acceso al repositorio y número de un issue abierto. |
-| Evidencia rechazada | El extracto debe coincidir literalmente con el correo, mencionar el formato y tener al menos 20 caracteres. Consulta `output/<proyecto>/initial-context.json`. |
-| El issue cambió | Busca solicitudes de nuevo antes de publicar. |
-| Otra instancia en curso | Detén el otro servidor o script; ambos usan un lock local. |
+[Solucionar errores de conexiones y propuestas](../README.md#si-algo-no-funciona).
