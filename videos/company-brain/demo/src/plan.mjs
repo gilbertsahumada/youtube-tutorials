@@ -1,18 +1,13 @@
+import { safeText } from "./domain/text.mjs";
+export { safeText };
 import { createHash } from "node:crypto";
 import { matchesSender } from "./filters.mjs";
 
-export const messageKey = (id) =>
-  createHash("sha256").update(id).digest("hex").slice(0, 20);
+export const messageKey = (id) => createHash("sha256").update(id).digest("hex").slice(0, 20);
 export const issueFingerprint = (issue) =>
-  messageKey(
-    JSON.stringify([issue.number, issue.title, issue.body, issue.state]),
-  );
+  messageKey(JSON.stringify([issue.number, issue.title, issue.body, issue.state]));
 export function validateIssue(issue, project) {
-  if (
-    !Number.isSafeInteger(issue.number) ||
-    issue.number < 1 ||
-    issue.pull_request
-  )
+  if (!Number.isSafeInteger(issue.number) || issue.number < 1 || issue.pull_request)
     throw Error("Se esperaba un issue válido, no un PR");
   if (issue.state !== "open") throw Error("El issue no está abierto");
   const lines = (issue.body || "").split("\n").map((s) => s.trim());
@@ -21,8 +16,7 @@ export function validateIssue(issue, project) {
     `Entrega: ${project.delivery}`,
     `Requisito: ${project.requirement}`,
   ])
-    if (!lines.includes(line))
-      throw Error(`Issue no relacionado: falta ${line}`);
+    if (!lines.includes(line)) throw Error(`Issue no relacionado: falta ${line}`);
   const formats = lines
     .filter((s) => s.startsWith("Formato actual: "))
     .map((s) => s.slice("Formato actual: ".length));
@@ -31,24 +25,18 @@ export function validateIssue(issue, project) {
   return formats[0];
 }
 function evidence(text, quote, format) {
-  if (typeof quote !== "string")
-    throw Error("La evidencia debe ser una cadena de texto");
+  if (typeof quote !== "string") throw Error("La evidencia debe ser una cadena de texto");
   if (quote.length < 20)
-    throw Error(
-      `La evidencia tiene ${quote.length} caracteres; debe tener al menos 20`,
-    );
+    throw Error(`La evidencia tiene ${quote.length} caracteres; debe tener al menos 20`);
   if (!text.includes(quote))
     throw Error(
       "La evidencia no coincide literalmente con el correo (incluidos espacios y saltos de línea)",
     );
-  if (!quote.includes(format))
-    throw Error(`La evidencia debe mencionar el formato ${format}`);
+  if (!quote.includes(format)) throw Error(`La evidencia debe mencionar el formato ${format}`);
 }
 function scope(analysis, project, email, sender) {
-  if (!matchesSender(email.from, sender))
-    throw Error("Remitente fuera de la allowlist");
-  if (!Number.isFinite(Date.parse(email.date)))
-    throw Error("Fecha de correo inválida");
+  if (!matchesSender(email.from, sender)) throw Error("Remitente fuera de la allowlist");
+  if (!Number.isFinite(Date.parse(email.date))) throw Error("Fecha de correo inválida");
   for (const [key, expected] of [
     ["project", project.id],
     ["delivery", project.delivery],
@@ -58,14 +46,7 @@ function scope(analysis, project, email, sender) {
       throw Error(`Contexto incorrecto: ${key}`);
   }
 }
-export function createBaseline({
-  repo,
-  project,
-  email,
-  issue,
-  analysis,
-  sender,
-}) {
+export function createBaseline({ repo, project, email, issue, analysis, sender }) {
   scope(analysis, project, email, sender);
   const format = validateIssue(issue, project);
   if (analysis.initialFormat !== format)
@@ -89,16 +70,7 @@ export function createBaseline({
   };
 }
 // Render evidence as text, not instructions, links, HTML or notifications.
-export function safeText(text) {
-  return String(text)
-    .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/[\\`*_{}[\]()#!|]/g, "\\$&")
-    .replace(/@/g, "&#64;")
-    .replace(/:/g, "&#58;");
-}
+
 const quote = (text) =>
   safeText(text)
     .split("\n")
@@ -119,11 +91,7 @@ export function buildPlan({ baseline, email, issue, analysis, sender }) {
     throw Error("Respuesta inválida: changeRequested");
   if (analysis.initialFormat !== baseline.initialFormat)
     throw Error("El modelo contradice el formato inicial");
-  evidence(
-    baseline.initialEmail.text,
-    analysis.initialEvidence,
-    baseline.initialFormat,
-  );
+  evidence(baseline.initialEmail.text, analysis.initialEvidence, baseline.initialFormat);
   if (!analysis.changeRequested)
     return {
       action: "skip",
@@ -190,36 +158,23 @@ export async function classify(context, env = process.env, api = fetch) {
   for (const key of ["MODEL_BASE_URL", "MODEL_ID", "MODEL_API_KEY"])
     if (!env[key]) throw Error(`Falta ${key}`);
   const url = new URL(env.MODEL_BASE_URL);
-  if (
-    url.protocol !== "https:" ||
-    url.username ||
-    url.password ||
-    url.search ||
-    url.hash
-  )
-    throw Error(
-      "MODEL_BASE_URL debe usar HTTPS sin credenciales ni parámetros",
-    );
-  const response = await api(
-    `${url.href.replace(/\/$/, "")}/chat/completions`,
-    {
-      method: "POST",
-      signal: AbortSignal.timeout(60000),
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${env.MODEL_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: env.MODEL_ID,
-        temperature: 0,
-        messages: buildMessages(context),
-      }),
+  if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash)
+    throw Error("MODEL_BASE_URL debe usar HTTPS sin credenciales ni parámetros");
+  const response = await api(`${url.href.replace(/\/$/, "")}/chat/completions`, {
+    method: "POST",
+    signal: AbortSignal.timeout(60000),
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${env.MODEL_API_KEY}`,
     },
-  );
+    body: JSON.stringify({
+      model: env.MODEL_ID,
+      temperature: 0,
+      messages: buildMessages(context),
+    }),
+  });
   if (!response.ok)
-    throw Error(
-      `El modelo respondió HTTP ${response.status}; revisa endpoint y credenciales`,
-    );
+    throw Error(`El modelo respondió HTTP ${response.status}; revisa endpoint y credenciales`);
   const result = await response.json();
   try {
     return JSON.parse(result.choices?.[0]?.message?.content);

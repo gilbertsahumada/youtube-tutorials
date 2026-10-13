@@ -11,26 +11,20 @@ test("fixture funciona sin credenciales y nunca publica aunque PUBLISH=true", as
       await cp(new URL("../" + name, import.meta.url), join(root, name), {
         recursive: true,
       });
-    const result = spawnSync(
-      process.execPath,
-      [join(root, "src/main.mjs"), "--fixture"],
-      {
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          PUBLISH: "true",
-          MODEL_API_KEY: "",
-          GOOGLE_CLIENT_ID: "",
-          GOOGLE_CLIENT_SECRET: "",
-          GITHUB_REPO: "invalid",
-        },
+    const result = spawnSync(process.execPath, [join(root, "src/main.mjs"), "--fixture"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PUBLISH: "true",
+        MODEL_API_KEY: "",
+        GOOGLE_CLIENT_ID: "",
+        GOOGLE_CLIENT_SECRET: "",
+        GITHUB_REPO: "invalid",
       },
-    );
+    });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /No se publicó nada/);
-    const output = JSON.parse(
-      await readFile(join(root, "output/fixture.json"), "utf8"),
-    );
+    const output = JSON.parse(await readFile(join(root, "output/fixture.json"), "utf8"));
     assert.equal(output.plan.action, "comment");
     assert.ok(!("files" in output.plan));
     assert.match(

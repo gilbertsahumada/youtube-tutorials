@@ -3,9 +3,7 @@ import { matchesSender } from "./filters.mjs";
 
 export function assertBaseline(baseline, repo, issueNumber) {
   if (baseline?.schemaVersion !== 2)
-    throw Error(
-      "Falta una captura inicial compatible; ejecuta npm run baseline",
-    );
+    throw Error("Falta una captura inicial compatible; ejecuta npm run baseline");
   if (baseline.repo !== repo || baseline.issueNumber !== issueNumber)
     throw Error("La captura inicial pertenece a otro repositorio o issue");
 }
@@ -51,8 +49,7 @@ export async function processEmails({
           id: comment.id,
           url: comment.html_url,
         };
-      } else
-        state.processed[email.id] = { action: "skip", reason: plan.reason };
+      } else state.processed[email.id] = { action: "skip", reason: plan.reason };
       await persist(state);
     }
   }
