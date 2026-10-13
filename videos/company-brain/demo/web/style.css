@@ -996,6 +996,31 @@ main {
   grid-column: 1/-1;
 }
 
+.connection-grid .section-heading {
+  flex-wrap: wrap;
+}
+
+.connection-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.source-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.source-icon svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
 .connection-grid .button {
   margin-right: 8px;
   margin-top: 5px;
