@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
-import { issueDigest, issueVersion } from "./agent.mjs";
-import { safeText } from "./plan.mjs";
+import { issueDigest, issueVersion } from "./domain/issues.mjs";
+import { safeText } from "./domain/text.mjs";
 
 export function githubApi(path, { method = "GET", body } = {}) {
   return new Promise((resolve, reject) => {
@@ -50,6 +50,7 @@ const repoName = (repo) => {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo || "")) throw Error("Repositorio inválido.");
   return repo;
 };
+/** @returns {import("./contracts.mjs").Issue} Issue normalizado, excluyendo pull requests. */
 export function normalizeIssue(issue) {
   if (
     !issue ||
@@ -105,6 +106,7 @@ export async function getIssue(repo, number, api = githubApi) {
 }
 const stale = (message) => Object.assign(Error(message), { status: 409, stale: true });
 export function writeBody(proposal) {
+  // El marcador permite recuperar una publicación cuyo resultado no llegó al servidor.
   const marker = "<!-- company-brain-proposal:" + proposal.id + " -->";
   const previousMarkers =
     proposal.issueSnapshot?.body.match(/<!-- company-brain-proposal:[a-f0-9-]+ -->/g) || [];
@@ -133,6 +135,11 @@ export function writeBody(proposal) {
   if (result.length > 60000) throw Error("El issue supera el tamaño admitido.");
   return result;
 }
+/**
+ * Comprueba la versión aprobada y recupera escrituras previas antes de publicar.
+ * @param {import("./contracts.mjs").Proposal} proposal
+ * @returns {Promise<import("./contracts.mjs").Issue>}
+ */
 export async function applyProposal(proposal, api = githubApi) {
   if (
     !/^[a-f0-9-]{36}$/.test(proposal.id) ||

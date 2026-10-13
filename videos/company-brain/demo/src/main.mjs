@@ -122,7 +122,7 @@ async function real() {
     const issue = readIssue();
     const context = { project, initialEmail: email, issue, requestEmail: null };
     const analysis = await classify(context);
-    // Preserve the model result even when deterministic validation rejects it.
+    // Conservamos el resultado del modelo incluso si la validación determinista lo rechaza.
     await saveJson(resolve(ROOT, "output/initial-context.json"), {
       context,
       analysis,

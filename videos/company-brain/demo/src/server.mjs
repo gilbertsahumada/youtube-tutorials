@@ -1,3 +1,4 @@
+import { publicAssets as assets } from "./public-assets.mjs";
 import { createServer } from "node:http";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -5,17 +6,6 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { ROOT, loadEnv } from "./common.mjs";
 import { createStudio } from "./studio.mjs";
-
-const assets = {
-  "/": ["index.html", "text/html"],
-  "/app.js": ["app.js", "text/javascript"],
-  "/http.js": ["http.js", "text/javascript"],
-  "/i18n.js": ["i18n.js", "text/javascript"],
-  "/workflow-i18n.js": ["workflow-i18n.js", "text/javascript"],
-  "/router.js": ["router.js", "text/javascript"],
-  "/style.css": ["style.css", "text/css"],
-  "/favicon.svg": ["favicon.svg", "image/svg+xml"],
-};
 
 export function createDemoServer({
   studio = createStudio(),
@@ -130,7 +120,7 @@ export function createDemoServer({
       if (!routes[url.pathname]) return send(404, { error: "Acción no encontrada." });
       send(200, await routes[url.pathname]());
     } catch (error) {
-      // Integration errors name the failing operation; credentials never enter responses.
+      // Los errores identifican la operación fallida; las respuestas excluyen credenciales.
       send(error.status || 400, { error: studio.errorMessage(error) });
     }
   });

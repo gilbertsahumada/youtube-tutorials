@@ -29,7 +29,7 @@ export function readIssue(env = process.env, api = gh) {
   const { title, body, state, html_url } = issue;
   return { number, title, body: body || "", state, html_url };
 }
-// The only write supported by this module is POST to the configured issue's comments.
+// El ejemplo por terminal solo publica comentarios en el issue configurado.
 export function publishComment(plan, env = process.env, api = gh) {
   const repo = repository(env),
     number = Number(env.GITHUB_ISSUE_NUMBER);

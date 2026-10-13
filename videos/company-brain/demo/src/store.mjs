@@ -1,138 +1,22 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdir, chmod } from "node:fs/promises";
 import { resolve } from "node:path";
-import { randomUUID, createHash } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { normalizeFilter, matchesSender } from "./filters.mjs";
-import { normalizeAfter, normalizeLabel } from "./mail-settings.mjs";
+import { digest } from "./domain/hash.mjs";
+import { validateProject } from "./domain/project.mjs";
+import { initializeSchema } from "./db/schema.mjs";
 
-export const digest = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
-const projectFields = [
-  "id",
-  "name",
-  "repository",
-  "gmailAfter",
-  "gmailLabel",
-  "autoEnabled",
-  "pollSeconds",
-];
-export function validateProject(input) {
-  if (
-    !input ||
-    typeof input !== "object" ||
-    Object.keys(input).some((key) => !projectFields.includes(key))
-  )
-    throw Error("Campo de proyecto inválido.");
-  if (
-    typeof input.name !== "string" ||
-    !input.name.trim() ||
-    input.name.length > 120 ||
-    /[\r\n\0]/.test(input.name)
-  )
-    throw Error("Nombre de proyecto inválido.");
-  if (
-    typeof input.repository !== "string" ||
-    !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(input.repository)
-  )
-    throw Error("El repositorio debe ser owner/repo.");
-  const slug =
-    input.name
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 55) || "proyecto";
-  const id = input.id ?? slug + "-" + randomUUID().slice(0, 8);
-  if (typeof id !== "string" || !/^[a-z0-9][a-z0-9_-]{0,79}$/.test(id))
-    throw Error("Identificador de proyecto inválido.");
-  const autoEnabled = input.autoEnabled ?? false;
-  const pollSeconds = input.pollSeconds ?? 60;
-  if (typeof autoEnabled !== "boolean") throw Error("Seguimiento automático inválido.");
-  if (!Number.isInteger(pollSeconds) || pollSeconds < 30 || pollSeconds > 3600)
-    throw Error("El intervalo debe estar entre 30 y 3600 segundos.");
-  return {
-    id,
-    name: input.name.trim(),
-    repository: input.repository,
-    gmailAfter: normalizeAfter(input.gmailAfter ?? new Date().toISOString()),
-    gmailLabel: normalizeLabel(input.gmailLabel),
-    autoEnabled,
-    pollSeconds,
-  };
-}
+export { digest, validateProject };
 
+/** Abre la persistencia privada del proyecto; todas las escrituras compuestas son atómicas. */
 export async function createStore(root) {
   const directory = resolve(root, ".private");
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const path = resolve(directory, "company-brain.sqlite");
   const db = new DatabaseSync(path);
   await chmod(path, 0o600);
-  db.exec("PRAGMA busy_timeout=5000; PRAGMA foreign_keys=OFF;");
-  const version = db.prepare("PRAGMA user_version").get().user_version;
-  if (version > 3) {
-    db.close();
-    throw Error("La base local requiere una versión más reciente de la demo.");
-  }
-  const hasProjects = Boolean(
-    db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='projects'").get(),
-  );
-  const transaction = (action) => {
-    db.exec("BEGIN IMMEDIATE");
-    try {
-      const result = action();
-      db.exec("COMMIT");
-      return result;
-    } catch (error) {
-      db.exec("ROLLBACK");
-      throw error;
-    }
-  };
-  if (version < 3) {
-    try {
-      transaction(() => {
-        db.exec(
-          "CREATE TABLE projects_next (id TEXT PRIMARY KEY, name TEXT NOT NULL, repository TEXT NOT NULL, gmail_after TEXT NOT NULL, gmail_label TEXT NOT NULL DEFAULT '', auto_enabled INTEGER NOT NULL DEFAULT 0, poll_seconds INTEGER NOT NULL DEFAULT 60) STRICT;",
-        );
-        if (hasProjects) {
-          const columns = db
-            .prepare("PRAGMA table_info(projects)")
-            .all()
-            .map((row) => row.name);
-          const insert = db.prepare(
-            "INSERT INTO projects_next(id,name,repository,gmail_after,gmail_label) VALUES(?,?,?,?,?)",
-          );
-          for (const row of db.prepare("SELECT * FROM projects").all()) {
-            let after = new Date().toISOString();
-            if (columns.includes("gmail_after") && row.gmail_after)
-              after = normalizeAfter(row.gmail_after);
-            else if (db.prepare("SELECT name FROM sqlite_master WHERE name='baselines'").get()) {
-              const saved = db.prepare("SELECT data FROM baselines WHERE project_id=?").get(row.id);
-              const date = saved && JSON.parse(saved.data).initialEmail?.date;
-              if (date) after = normalizeAfter(date);
-            }
-            insert.run(row.id, row.name, row.repository, after, row.gmail_label || "");
-          }
-          db.exec("DROP TABLE projects;");
-        }
-        db.exec("ALTER TABLE projects_next RENAME TO projects; PRAGMA user_version=3;");
-      });
-    } catch (error) {
-      db.close();
-      throw error;
-    }
-  }
-  db.exec("PRAGMA foreign_keys=ON;");
-  db.exec(
-    "CREATE TABLE IF NOT EXISTS sender_filters (id INTEGER PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), kind TEXT NOT NULL CHECK(kind IN ('email','domain')), value TEXT NOT NULL, UNIQUE(project_id,kind,value)) STRICT;" +
-      "CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT;" +
-      "CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), title TEXT NOT NULL, detail TEXT NOT NULL, date TEXT NOT NULL) STRICT;" +
-      "CREATE TABLE IF NOT EXISTS synced_mail (project_id TEXT NOT NULL REFERENCES projects(id), email_id TEXT NOT NULL, data TEXT NOT NULL, hash TEXT NOT NULL, analyzed_hash TEXT, synced_at TEXT NOT NULL, PRIMARY KEY(project_id,email_id)) STRICT;" +
-      "CREATE TABLE IF NOT EXISTS proposals (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), generation_key TEXT NOT NULL UNIQUE, data TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('pending','approved','rejected','stale')), result TEXT, error TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL) STRICT;" +
-      "CREATE TABLE IF NOT EXISTS project_runtime (project_id TEXT PRIMARY KEY REFERENCES projects(id), data TEXT NOT NULL) STRICT;" +
-      "CREATE TABLE IF NOT EXISTS issue_links (project_id TEXT NOT NULL REFERENCES projects(id), thread_id TEXT NOT NULL, issue_number INTEGER NOT NULL, PRIMARY KEY(project_id,thread_id)) STRICT;" +
-      "CREATE INDEX IF NOT EXISTS proposals_project_status ON proposals(project_id,status);" +
-      "CREATE INDEX IF NOT EXISTS synced_mail_project ON synced_mail(project_id);",
-  );
+  const transaction = initializeSchema(db);
   const decode = (row) =>
     row && {
       id: row.id,
@@ -374,6 +258,7 @@ export async function createStore(root) {
         ).run(id, emailId);
     },
     saveProposal(data) {
+      // La clave conserva una propuesta pendiente en reintentos; una versión obsoleta permite otra.
       const existing = db
         .prepare("SELECT id,status FROM proposals WHERE generation_key=?")
         .get(data.generationKey);

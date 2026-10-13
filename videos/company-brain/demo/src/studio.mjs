@@ -1,6 +1,7 @@
 import { open, unlink } from "node:fs/promises";
 import { resolve } from "node:path";
-import { spawn } from "node:child_process";
+import { createScheduler } from "./services/scheduler.mjs";
+import { createGmailConnection } from "./services/gmail-connection.mjs";
 import { ROOT, readJson } from "./common.mjs";
 import { getEmails } from "./gmail.mjs";
 import { environmentStatus } from "./environment.mjs";
@@ -37,10 +38,24 @@ export function createStudio({
     initializing,
     busy = null,
     inFlight,
-    timer,
-    closing = false,
-    loginProcess;
-  let oauth = { status: "idle" };
+    closing = false;
+  const connection = createGmailConnection({ root, env, formatError: errorMessage });
+  const monitor = createScheduler({
+    projects: () => store.projects(),
+    runtime: (id) => store.runtime(id),
+    unavailable: () => closing || Boolean(busy),
+    now,
+    runProject: (project) =>
+      locked("automatic", project.id, async () => {
+        store.setRuntime(project.id, { lastAutoAttempt: now() });
+        try {
+          await syncProject(project);
+          await analyzeProject(project);
+        } catch (problem) {
+          await recordFailure(project, problem);
+        }
+      }),
+  });
   const api = {
     emails: (project) =>
       getEmails({
@@ -63,8 +78,7 @@ export function createStudio({
       initializing = createStore(root).then((value) => {
         store = value;
         if (scheduler && !closing) {
-          timer = setInterval(() => autoTick().catch(() => {}), 10000);
-          timer.unref();
+          monitor.start();
         }
         return store;
       });
@@ -98,6 +112,7 @@ export function createStudio({
       if (env[key]) message = message.split(env[key]).join("[credencial]");
     return message.slice(0, 1500);
   }
+  // El mismo bloqueo protege acciones manuales, seguimiento y otras instancias de la demo.
   async function locked(operation, projectId, action) {
     if (closing) throw error("El servidor se está deteniendo.", 503);
     if (busy) throw error("Hay una operación en curso. Espera a que termine.", 423);
@@ -160,10 +175,7 @@ export function createStudio({
       selectedProjectId: store.selected(),
       busy,
       gmailConnected: Boolean(token?.refresh_token),
-      oauth: {
-        ...oauth,
-        ...(oauth.message ? { message: errorMessage(Error(oauth.message)) } : {}),
-      },
+      oauth: connection.snapshot(),
       defaultRepository: /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(env.GITHUB_REPO || "")
         ? env.GITHUB_REPO
         : "",
@@ -194,6 +206,7 @@ export function createStudio({
     );
     return result;
   }
+  // Un análisis prepara propuestas y evidencia; nunca publica cambios en GitHub.
   async function analyzeProject(project) {
     requireEnvironment(["MODEL_BASE_URL", "MODEL_ID", "MODEL_API_KEY"]);
     requireFilters(project);
@@ -337,6 +350,7 @@ export function createStudio({
       }
     });
   }
+  /** Publica solo tras comprobar que la propuesta y sus fuentes siguen vigentes. */
   async function approve(id, projectId) {
     const project = await requireProject(projectId);
     return locked("approve", project.id, async () => {
@@ -392,64 +406,11 @@ export function createStudio({
   async function autoTick() {
     if (closing || busy) return;
     await database();
-    for (const project of store.projects().filter((project) => project.autoEnabled)) {
-      if (closing || busy) return;
-      const runtime = store.runtime(project.id);
-      const delay =
-        (runtime.error ? Math.max(project.pollSeconds, 300) : project.pollSeconds) * 1000;
-      if (runtime.lastAutoAttempt && now() - runtime.lastAutoAttempt < delay) continue;
-      try {
-        await locked("automatic", project.id, async () => {
-          store.setRuntime(project.id, { lastAutoAttempt: now() });
-          try {
-            await syncProject(project);
-            await analyzeProject(project);
-          } catch (problem) {
-            await recordFailure(project, problem);
-          }
-        });
-      } catch (problem) {
-        if (problem.status !== 423) throw problem;
-      }
-    }
+    return monitor.tick();
   }
   async function login() {
     requireEnvironment(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]);
-    if (loginProcess || busy) throw error("Hay una operación en curso. Espera a que termine.", 423);
-    oauth = { status: "starting" };
-    loginProcess = spawn(process.execPath, [local("src/gmail-login.mjs")], {
-      env: { ...process.env, ...env },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    const child = loginProcess;
-    let output = "",
-      errors = "";
-    child.stdout.on("data", (data) => {
-      output += data.toString();
-      const url = output.match(/https:\/\/accounts\.google\.com\/[^\s]+/);
-      if (url) oauth = { status: "waiting", url: url[0] };
-      if (output.includes("Refresh token guardado")) oauth = { status: "connected" };
-    });
-    child.stderr.on("data", (data) => {
-      errors += data.toString().slice(0, 1500);
-    });
-    child.on("error", () => {
-      oauth = {
-        status: "error",
-        message: "No se pudo iniciar la conexión. Revisa las credenciales de Google.",
-      };
-      loginProcess = null;
-    });
-    child.on("exit", () => {
-      if (oauth.status !== "connected")
-        oauth = {
-          status: "error",
-          message:
-            errors.trim().slice(0, 1000) || "La conexión no se completó. Inténtalo de nuevo.",
-        };
-      loginProcess = null;
-    });
-    return oauth;
+    return connection.start(Boolean(busy));
   }
   if (scheduler) database().catch(() => {});
   return {
@@ -512,8 +473,8 @@ export function createStudio({
     },
     close: async () => {
       closing = true;
-      clearInterval(timer);
-      loginProcess?.kill();
+      monitor.stop();
+      connection.close();
       if (inFlight) await inFlight.catch(() => {});
       if (initializing) {
         try {

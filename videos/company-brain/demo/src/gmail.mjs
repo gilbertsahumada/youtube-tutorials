@@ -54,6 +54,7 @@ export async function gmailClient(env = process.env, tokenPath = privatePath("gm
     return res.json();
   };
 }
+/** @returns {Promise<import("./contracts.mjs").Email[]>} Texto original filtrado por alcance del proyecto. */
 export async function getEmails({
   env = process.env,
   api,
@@ -67,7 +68,7 @@ export async function getEmails({
       ? [normalizeFilter("email", filters)]
       : (filters || []).map((rule) => normalizeFilter(rule.kind, rule.value));
   if (!rules.length) throw Error("Añade al menos un correo o dominio a este proyecto.");
-  // Quoted values cannot inject Gmail search operators. Quoted local parts are unsupported.
+  // Las comillas protegen la búsqueda; no admitimos direcciones con comillas en la parte local.
   if (rules.some((rule) => /["\\]/.test(rule.value))) throw Error("Correo inválido.");
   const since = Date.parse(normalizeAfter(after));
   const labelName = normalizeLabel(label);

@@ -1,3 +1,5 @@
+import { safeText } from "./domain/text.mjs";
+export { safeText };
 import { createHash } from "node:crypto";
 import { matchesSender } from "./filters.mjs";
 
@@ -68,19 +70,7 @@ export function createBaseline({ repo, project, email, issue, analysis, sender }
   };
 }
 // Render evidence as text, not instructions, links, HTML or notifications.
-export function safeText(text) {
-  return (
-    String(text)
-      // eslint-disable-next-line no-control-regex -- Eliminamos controles conservando saltos de línea de las citas.
-      .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/[\\`*_{}[\]()#!|]/g, "\\$&")
-      .replace(/@/g, "&#64;")
-      .replace(/:/g, "&#58;")
-  );
-}
+
 const quote = (text) =>
   safeText(text)
     .split("\n")
