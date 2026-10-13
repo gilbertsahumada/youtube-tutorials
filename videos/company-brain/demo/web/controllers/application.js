@@ -14,7 +14,8 @@ export function createApplicationController({
   const current = () => state.data?.project;
   const globallyBusy = () => state.busy || Boolean(state.config?.busy);
   const showNotice = createNotice(notice, () => state.language);
-  let poll;
+  let poll,
+    reviewId = 0;
   async function load({ quiet = false } = {}) {
     // Una respuesta de una ruta anterior no puede reemplazar la selección actual.
     const id = ++state.loadId,
@@ -87,6 +88,8 @@ export function createApplicationController({
   }
   function changeRoute(fetchData = true) {
     if (state.routeHash === location.hash) return;
+    // Invalida también la revisión si se sale y luego se vuelve a la misma ruta.
+    reviewId++;
     const previous = state.route,
       next = parseRoute(location.hash);
     state.routeHash = location.hash;
@@ -247,13 +250,15 @@ export function createApplicationController({
         render();
       }
       if (action === "review") {
+        const id = ++reviewId,
+          routeHash = location.hash;
         const proposal = await request(
           "/api/proposals/detail?projectId=" +
             encodeURIComponent(projectId) +
             "&id=" +
             encodeURIComponent(target.dataset.proposal),
         );
-        if (state.route.projectId === projectId) {
+        if (id === reviewId && location.hash === routeHash && state.route.projectId === projectId) {
           state.modal = { kind: "review", proposal };
           renderDialog();
         }

@@ -232,6 +232,63 @@ test("OAuth: estado incorrecto y rutas ajenas no autorizan ni cierran el callbac
   assert.equal(exchanges, 1);
 });
 
+test(
+  "OAuth: regresión TDD, un callback duplicado no interrumpe la autorización válida",
+  { timeout: 10000 },
+  async (t) => {
+    let exchanges = 0,
+      exchangeStarted,
+      releaseExchange;
+    const started = new Promise((resolve) => {
+      exchangeStarted = resolve;
+    });
+    const { session, events, tokenPath, callback } = await authorizationFixture(t, {
+      request: async (_endpoint, { signal }) => {
+        exchanges++;
+        // El código solo se puede canjear una vez; una segunda consulta simula invalid_grant.
+        if (exchanges > 1) return { ok: false, status: 400 };
+        exchangeStarted();
+        await new Promise((resolve, reject) => {
+          releaseExchange = resolve;
+          signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+        });
+        return { ok: true, json: async () => ({ refresh_token: "test-valid-refresh" }) };
+      },
+    });
+    const client = new AbortController();
+    const first = fetch(callback({ code: "same-code" }), { signal: client.signal });
+    // La limpieza puede cancelar la petición si falla una comprobación intermedia.
+    first.catch(() => {});
+    try {
+      await Promise.race([started, session.done]);
+      const duplicate = await fetch(callback({ code: "same-code" }), {
+        signal: AbortSignal.timeout(5000),
+      });
+      await duplicate.text();
+      releaseExchange();
+      const response = await first;
+      await response.text();
+      const outcome = await session.done.then(
+        () => null,
+        (problem) => problem,
+      );
+
+      assert.equal(response.status, 200, "La primera autorización válida debe completarse.");
+      assert.equal(exchanges, 1, "El código OAuth solo debe enviarse una vez al proveedor.");
+      assert.equal(outcome, null);
+      assert.deepEqual(JSON.parse(await readFile(tokenPath, "utf8")), {
+        refresh_token: "test-valid-refresh",
+      });
+      assert.equal(events.filter((event) => event.type === "connected").length, 1);
+      assert.equal(events.filter((event) => event.type === "error").length, 0);
+    } finally {
+      releaseExchange?.();
+      client.abort();
+      await first.catch(() => {});
+    }
+  },
+);
+
 test("OAuth: cancelación del consentimiento emite un error y no guarda autorización", async (t) => {
   const { session, events, tokenPath, callback } = await authorizationFixture(t);
   const response = await fetch(callback({ error: "access_denied" }));
