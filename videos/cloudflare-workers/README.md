@@ -10,7 +10,6 @@ El recorrido tiene tres etapas sobre el mismo proyecto: un Worker con una redire
 |---|---|
 | [demo](demo/README.md) | Proyecto final e instrucciones para ejecutarlo |
 | [etapas](etapas/README.md) | Las tres versiones TypeScript del handler |
-| [GUION.md](GUION.md) | Recorrido de grabación con comandos, código y explicaciones |
 | [CHULETA.md](CHULETA.md) | Comandos por etapa y terminal A o B |
 | [verificacion.json](verificacion.json) | Evidencia de la auditoría del recorrido y sus límites |
 
@@ -108,7 +107,7 @@ DEMO_ADMIN_TOKEN=$(node -e "console.log(require('node:crypto').randomBytes(32).t
 printf '%s' "$DEMO_ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN
 ```
 
-`secret put` publica una versión con el secret. `.dev.vars` es local y no se sube con `deploy`. El [guion](GUION.md) despliega primero la etapa básica, carga el secret y después publica el código final; aquí partimos directamente del código final.
+`secret put` publica una versión con el secret. `.dev.vars` es local y no se sube con `deploy`. La [chuleta](CHULETA.md) despliega primero la etapa básica, carga el secret y después publica el código final; aquí partimos directamente del código final.
 
 Copia la URL real de Wrangler y reemplaza el ejemplo, sin slash final:
 
@@ -133,7 +132,7 @@ Debes obtener `200`, `302` y `404` con el servidor local apagado. Mantén abiert
 
 ## Construir las tres etapas
 
-Para comenzar desde el inicializador oficial, sigue el [guion](GUION.md) o la [chuleta](CHULETA.md). Selecciona **Worker only** y **TypeScript**, conserva el mismo proyecto y reemplaza el handler:
+Para comenzar desde el inicializador oficial, sigue la [chuleta](CHULETA.md). Selecciona **Worker only** y **TypeScript**, conserva el mismo proyecto y reemplaza el handler:
 
 1. [Worker a mano](etapas/01-worker.ts): `fetch`, respuestas JSON y una redirección fija.
 2. [Hono](etapas/02-hono.ts): rutas y parámetros sobre el mismo Worker.

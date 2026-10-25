@@ -156,7 +156,7 @@ ADMIN_TOKEN="solo-para-ensayo-local"
 VARS
 ```
 
-**Editor:** reemplazar todo `src/index.ts` con [etapa 3 — Hono y D1 en TypeScript](etapas/03-hono-d1.ts). Guardar y explicar los cuatro bloques del guion.
+**Editor:** reemplazar todo `src/index.ts` con [etapa 3 — Hono y D1 en TypeScript](etapas/03-hono-d1.ts). Guardar y explicar los tipos, el middleware, la creación del enlace y la redirección.
 
 ### Terminal A
 
