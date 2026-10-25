@@ -10,7 +10,6 @@ El recorrido tiene tres etapas sobre el mismo proyecto: un Worker con una redire
 |---|---|
 | [demo](demo/README.md) | Proyecto final e instrucciones para ejecutarlo |
 | [etapas](etapas/README.md) | Las tres versiones TypeScript del handler |
-| [CHULETA.md](CHULETA.md) | Comandos por etapa y terminal A o B |
 | [verificacion.json](verificacion.json) | Evidencia de la auditoría del recorrido y sus límites |
 
 ## Requisitos
@@ -107,7 +106,7 @@ DEMO_ADMIN_TOKEN=$(node -e "console.log(require('node:crypto').randomBytes(32).t
 printf '%s' "$DEMO_ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN
 ```
 
-`secret put` publica una versión con el secret. `.dev.vars` es local y no se sube con `deploy`. La [chuleta](CHULETA.md) despliega primero la etapa básica, carga el secret y después publica el código final; aquí partimos directamente del código final.
+`secret put` publica una versión con el secret. `.dev.vars` es local y no se sube con `deploy`. Aquí partimos directamente del código final.
 
 Copia la URL real de Wrangler y reemplaza el ejemplo, sin slash final:
 
@@ -132,13 +131,13 @@ Debes obtener `200`, `302` y `404` con el servidor local apagado. Mantén abiert
 
 ## Construir las tres etapas
 
-Para comenzar desde el inicializador oficial, sigue la [chuleta](CHULETA.md). Selecciona **Worker only** y **TypeScript**, conserva el mismo proyecto y reemplaza el handler:
+Para comenzar con un proyecto nuevo, usa el [inicializador oficial](https://developers.cloudflare.com/workers/get-started/guide/), selecciona **Worker only** y **TypeScript** y conserva el mismo proyecto al avanzar entre las etapas:
 
 1. [Worker a mano](etapas/01-worker.ts): `fetch`, respuestas JSON y una redirección fija.
 2. [Hono](etapas/02-hono.ts): rutas y parámetros sobre el mismo Worker.
 3. [Hono con D1](etapas/03-hono-d1.ts): bindings tipados, consultas con parámetros, persistencia y Bearer Auth.
 
-El [README de etapas](etapas/README.md) explica cómo usarlas sobre el proyecto entregado. El guion prevé 22:30 de recorrido y 2:30 de margen; supone pegar bloques y recortar esperas. La duración oral requiere un ensayo.
+El [README de etapas](etapas/README.md) explica cómo usarlas sobre el proyecto entregado.
 
 ## Problemas frecuentes
 
@@ -158,7 +157,7 @@ El [README de etapas](etapas/README.md) explica cómo usarlas sobre el proyecto 
 
 El recorrido se auditó desde un proyecto nuevo de Create Cloudflare. Pasaron 78 comprobaciones con TypeScript 5.9.3, Wrangler 4.152.0 y Hono 4.13.13: tipos y empaquetado de las tres etapas, peticiones locales, D1 local y remoto, secrets, dos despliegues, duplicados y persistencia. La URL pública se verificó con los servidores locales detenidos. Los recursos remotos de ensayo se eliminaron al terminar.
 
-[verificacion.json](verificacion.json) conserva los resultados y los hashes del código comprobado. Es evidencia de esa corrida, no una prueba de carga ni una garantía sobre latencia o duración de grabación. Los lockfiles fijan las dependencias del proyecto entregado.
+[verificacion.json](verificacion.json) conserva los resultados y los hashes del código comprobado. Es evidencia de esa corrida, no una prueba de carga ni una garantía sobre latencia. Los lockfiles fijan las dependencias del proyecto entregado.
 
 ## Documentación oficial
 

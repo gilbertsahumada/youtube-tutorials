@@ -31,4 +31,4 @@ npm run dev
 
 En las dos primeras etapas solo el slug `workers` tiene un destino fijo. La tercera consulta D1 y necesita que crees el registro con la API; el contenido de las primeras etapas no se convierte automáticamente en un registro.
 
-Para mostrar la inicialización y agregar recursos progresivamente, sigue la [chuleta por terminal](../CHULETA.md).
+Consulta la [guía del tema](../README.md) para la instalación y configuración, y la [documentación de Cloudflare](https://developers.cloudflare.com/workers/get-started/guide/) para inicializar un proyecto nuevo.

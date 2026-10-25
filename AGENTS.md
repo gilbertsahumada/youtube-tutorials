@@ -8,7 +8,7 @@ Este repositorio publica los recursos de los videos de IA en Producción. Antes 
 - Reutiliza la carpeta del tema cuando una continuación comparte recursos. No crees otro repositorio de GitHub ni dupliques el tema para separar un video conceptual de su demo, salvo solicitud expresa.
 - Cada demo ejecutable en una subcarpeta incluye su propio `README.md` con requisitos, instalación, configuración y ejecución desde esa carpeta. Enlázalo desde el README del tema.
 - El README explica el resultado, requisitos y versiones mínimas, comandos en orden con su directorio, variables necesarias sin valores privados, cómo comprobar el resultado, problemas frecuentes y documentación oficial relevante. El código y los comandos deben coincidir con los archivos entregados.
-- Los guiones, timestamps, instrucciones de cámara y chuletas pueden vivir en `GUION.md` y `CHULETA.md`. No sustituyen al README público ni a las instrucciones para ejecutar la demo.
+- Los guiones, timestamps, instrucciones de cámara y chuletas de grabación se mantienen exclusivamente en Notion. No los agregues al repositorio ni al PR. El repositorio contiene el código, los README públicos y los recursos necesarios para reproducir la demo.
 - Actualiza el árbol y el índice de videos del README raíz. Conserva la numeración existente, agrega la siguiente disponible y escribe `Por agregar` cuando no haya una URL publicada confirmada.
 - Escribe los recursos para lectores en español claro. Respeta las restricciones de lenguaje y herramientas del tutorial; la demo de Cloudflare Workers usa TypeScript en las tres etapas.
 

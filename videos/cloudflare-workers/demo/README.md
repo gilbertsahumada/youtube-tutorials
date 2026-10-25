@@ -53,4 +53,4 @@ Esperado: `201` al crear y `302` al consultar. Abre `http://localhost:8787/worke
 | `npm run db:remote` | Aplica el esquema a D1 en Cloudflare; requiere acceso a la cuenta |
 | `npm run deploy` | Publica el Worker en la cuenta autenticada |
 
-La [guía del tema](../README.md) explica el despliegue, el secret remoto, las respuestas de error y la diferencia entre datos locales y remotos. Usa la [chuleta](../CHULETA.md) para grabar las tres etapas y consulta la [documentación de Wrangler](https://developers.cloudflare.com/workers/wrangler/) para sus comandos.
+La [guía del tema](../README.md) explica el despliegue, el secret remoto, las respuestas de error y la diferencia entre datos locales y remotos. Consulta la [documentación de Wrangler](https://developers.cloudflare.com/workers/wrangler/) para sus comandos.

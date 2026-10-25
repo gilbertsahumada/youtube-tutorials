@@ -249,20 +249,6 @@
     "https GET /notion-audit: 302",
     "public API works after local shutdown"
   ],
-  "timing": {
-    "spoken_words": 883,
-    "speech_minutes_at_120_wpm": 7.36,
-    "speech_minutes_at_140_wpm": 6.31,
-    "planned_content_seconds": 1350,
-    "buffer_seconds": 150,
-    "oral_rehearsal_completed": false,
-    "conditions": [
-      "Paste complete code blocks",
-      "Read only Narración paragraphs",
-      "Trim installation, OAuth and deployment waits",
-      "Documentation pages are references, not all opened live"
-    ]
-  },
   "sources": [
     "etapas/01-worker.ts",
     "etapas/02-hono.ts",
