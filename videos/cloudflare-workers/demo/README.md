@@ -46,6 +46,14 @@ curl -i http://localhost:8787/workers
 
 Esperado: `201` al crear y `302` al consultar. Abre `http://localhost:8787/workers` en el navegador para seguir el destino. Si repites el slug, obtendrás `409`; elige otro.
 
+## Inspeccionar D1 con Local Explorer
+
+Con `npm run dev` activo, abre [http://localhost:8787/cdn-cgi/local/explorer](http://localhost:8787/cdn-cgi/local/explorer). En **D1**, selecciona la base del binding **`DB`** y abre la tabla **`links`** en SQL Studio. Después del POST anterior, debes encontrar `workers` y su URL de destino. Puedes consultar los datos mediante el explorador de tablas o el editor SQL.
+
+Local Explorer es el panel de desarrollo de Wrangler. La raíz `http://localhost:8787/` corresponde a nuestra aplicación y devuelve JSON. Esta configuración usa D1 local, cuyos datos se conservan al reiniciar en `.wrangler/state` y se eliminan si borras ese estado.
+
+`npm run deploy` publica el código en Cloudflare. La URL pública utiliza la base remota; ni el esquema ni los enlaces locales se copian con el despliegue. La [guía completa](../README.md) explica cómo preparar y comprobar esa versión. Consulta también la [documentación de Local Explorer](https://developers.cloudflare.com/workers/local-development/local-explorer/).
+
 ## Scripts
 
 | Comando | Resultado |
