@@ -1,0 +1,359 @@
+{
+  "checked_at": "2026-10-24T20:42:15.240674-05:00",
+  "status": "passed",
+  "check_count": 78,
+  "versions": {
+    "node": "22.19.0",
+    "create-cloudflare": "2.74.3",
+    "wrangler": "4.152.0",
+    "typescript": "5.9.3",
+    "hono": "4.13.13"
+  },
+  "source_sha256": {
+    "etapa-1": "8e7a00ed729a02e3863b84550d6e3a3b7644aceb09f6f925ae2fc0aeb2359f67",
+    "etapa-2": "f28a428fb12dce53a1bc6c01f0fc673820e2a55e2f5793af5feeaaca1dcb000d",
+    "etapa-3": "6bab5d2c276460f8e3eed84ceca244cb399b7e3d757c01ace714bb091ae2246e"
+  },
+  "scope": [
+    "Fresh official C3 TypeScript project",
+    "Type checking and deployment bundles for all 3 stages",
+    "Local HTTP and D1, validation, auth, duplicates, restart persistence",
+    "First and final public deploys",
+    "Remote D1 schema and records",
+    "Remote secret configuration",
+    "Public redirect with local processes stopped"
+  ],
+  "cleanup": {
+    "worker": "deleted",
+    "database": "deleted"
+  },
+  "commands": [
+    {
+      "step": "01-create-cloudflare",
+      "seconds": 26.5,
+      "exit_code": 0
+    },
+    {
+      "step": "02-install-wrangler",
+      "seconds": 1.34,
+      "exit_code": 0
+    },
+    {
+      "step": "03-set-typegen",
+      "seconds": 0.11,
+      "exit_code": 0
+    },
+    {
+      "step": "04-set-typecheck",
+      "seconds": 0.11,
+      "exit_code": 0
+    },
+    {
+      "step": "05-generate-types",
+      "seconds": 0.68,
+      "exit_code": 0
+    },
+    {
+      "step": "06-stage1-types",
+      "seconds": 1.56,
+      "exit_code": 0
+    },
+    {
+      "step": "07-stage1-dry-run",
+      "seconds": 0.68,
+      "exit_code": 0
+    },
+    {
+      "step": "stage1-start",
+      "seconds": 0.88,
+      "exit_code": 0
+    },
+    {
+      "step": "08-stage1-deploy",
+      "seconds": 4.9,
+      "exit_code": 0
+    },
+    {
+      "step": "09-install-hono",
+      "seconds": 1.24,
+      "exit_code": 0
+    },
+    {
+      "step": "10-stage2-types",
+      "seconds": 1.19,
+      "exit_code": 0
+    },
+    {
+      "step": "11-stage2-dry-run",
+      "seconds": 0.7,
+      "exit_code": 0
+    },
+    {
+      "step": "stage2-start",
+      "seconds": 0.91,
+      "exit_code": 0
+    },
+    {
+      "step": "12-create-d1",
+      "seconds": 1.96,
+      "exit_code": 0
+    },
+    {
+      "step": "13-d1-local-schema",
+      "seconds": 0.68,
+      "exit_code": 0
+    },
+    {
+      "step": "14-stage3-types",
+      "seconds": 1.17,
+      "exit_code": 0
+    },
+    {
+      "step": "15-stage3-dry-run",
+      "seconds": 0.68,
+      "exit_code": 0
+    },
+    {
+      "step": "stage3-start",
+      "seconds": 0.87,
+      "exit_code": 0
+    },
+    {
+      "step": "16-d1-local-select",
+      "seconds": 0.67,
+      "exit_code": 0
+    },
+    {
+      "step": "stage3-restart-start",
+      "seconds": 0.9,
+      "exit_code": 0
+    },
+    {
+      "step": "stage3-no-secret-start",
+      "seconds": 0.88,
+      "exit_code": 0
+    },
+    {
+      "step": "17-d1-remote-schema",
+      "seconds": 4.4,
+      "exit_code": 0
+    },
+    {
+      "step": "18-secret-put",
+      "seconds": 1.77,
+      "exit_code": 0
+    },
+    {
+      "step": "19-final-typecheck",
+      "seconds": 1.16,
+      "exit_code": 0
+    },
+    {
+      "step": "20-final-deploy",
+      "seconds": 6.83,
+      "exit_code": 0
+    },
+    {
+      "step": "21-d1-remote-select",
+      "seconds": 1.45,
+      "exit_code": 0
+    },
+    {
+      "step": "cleanup-worker",
+      "seconds": 2.56,
+      "exit_code": 0
+    },
+    {
+      "step": "cleanup-d1",
+      "seconds": 1.49,
+      "exit_code": 0
+    }
+  ],
+  "checks": [
+    "http GET /health: 200",
+    "http GET /workers: 302",
+    "redirect target http://127.0.0.1:63809",
+    "http GET /no-existe: 404",
+    "https GET /health: 200",
+    "https GET /workers: 302",
+    "redirect target https://acortador-audit-24a788fcc7.gilbertsahumada.workers.dev",
+    "https GET /no-existe: 404",
+    "http GET /health: 200",
+    "http GET /workers: 302",
+    "redirect target http://127.0.0.1:63809",
+    "http GET /no-existe: 404",
+    "D1 binding auto configured",
+    "http POST /api/links: 401",
+    "http POST /api/links: 401",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 400",
+    "http POST /api/links: 201",
+    "shortUrl matches actual origin http://127.0.0.1:63809",
+    "http GET /health: 200",
+    "http GET /workers: 302",
+    "redirect target http://127.0.0.1:63809",
+    "http GET /no-existe: 404",
+    "http POST /api/links: 409",
+    "duplicate does not overwrite http://127.0.0.1:63809",
+    "http POST /api/links: 201",
+    "http GET /notion-audit: 302",
+    "custom persisted target http://127.0.0.1:63809",
+    "http POST /api/links: 201",
+    "generated slug length http://127.0.0.1:63809",
+    "http GET /296b590d: 302",
+    "generated redirect target http://127.0.0.1:63809",
+    "SQL local contains created record",
+    "http GET /notion-audit: 302",
+    "D1 survives dev restart",
+    "http POST /api/links: 503",
+    "https POST /api/links: 401",
+    "https POST /api/links: 401",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 400",
+    "https POST /api/links: 201",
+    "shortUrl matches actual origin https://acortador-audit-24a788fcc7.gilbertsahumada.workers.dev",
+    "https GET /health: 200",
+    "https GET /workers: 302",
+    "redirect target https://acortador-audit-24a788fcc7.gilbertsahumada.workers.dev",
+    "https GET /no-existe: 404",
+    "https POST /api/links: 409",
+    "duplicate does not overwrite https://acortador-audit-24a788fcc7.gilbertsahumada.workers.dev",
+    "https POST /api/links: 201",
+    "https GET /notion-audit: 302",
+    "custom persisted target https://acortador-audit-24a788fcc7.gilbertsahumada.workers.dev",
+    "https POST /api/links: 201",
+    "generated slug length https://acortador-audit-24a788fcc7.gilbertsahumada.workers.dev",
+    "https GET /7c931a64: 302",
+    "generated redirect target https://acortador-audit-24a788fcc7.gilbertsahumada.workers.dev",
+    "SQL remote contains created record",
+    "https GET /notion-audit: 302",
+    "public API works after local shutdown"
+  ],
+  "sources": [
+    "etapas/01-worker.ts",
+    "etapas/02-hono.ts",
+    "etapas/03-hono-d1.ts"
+  ],
+  "readme_validation": {
+    "checked_at": "2026-10-24T22:19:01.410342-05:00",
+    "status": "passed",
+    "check_count": 40,
+    "readme_sha256": "ff660e8cf651b4ad467cae6de16ba66d13d5a4cdc597c14dacff0ed94a290b74",
+    "scope": [
+      "Fresh C3 TypeScript project",
+      "Stage source extracted from README",
+      "Type checking for all three examples",
+      "Local HTTP, authentication, validation and redirects",
+      "Local D1 schema, SQL and restart persistence",
+      "Deployment bundle without publishing"
+    ],
+    "remote_resources_created": false,
+    "commands": [
+      {
+        "step": "create-cloudflare",
+        "seconds": 25.4,
+        "exit_code": 0
+      },
+      {
+        "step": "install-tested-tools",
+        "seconds": 1.28,
+        "exit_code": 0
+      },
+      {
+        "step": "set-typegen",
+        "seconds": 0.1,
+        "exit_code": 0
+      },
+      {
+        "step": "set-typecheck",
+        "seconds": 0.1,
+        "exit_code": 0
+      },
+      {
+        "step": "generate-types",
+        "seconds": 0.61,
+        "exit_code": 0
+      },
+      {
+        "step": "stage1-typecheck",
+        "seconds": 1.53,
+        "exit_code": 0
+      },
+      {
+        "step": "stage1-start",
+        "seconds": 0.89,
+        "exit_code": 0
+      },
+      {
+        "step": "install-hono",
+        "seconds": 1.29,
+        "exit_code": 0
+      },
+      {
+        "step": "stage2-typecheck",
+        "seconds": 1.14,
+        "exit_code": 0
+      },
+      {
+        "step": "stage2-start",
+        "seconds": 0.87,
+        "exit_code": 0
+      },
+      {
+        "step": "regenerate-d1-types",
+        "seconds": 0.61,
+        "exit_code": 0
+      },
+      {
+        "step": "apply-local-schema",
+        "seconds": 0.66,
+        "exit_code": 0
+      },
+      {
+        "step": "stage3-typecheck",
+        "seconds": 1.15,
+        "exit_code": 0
+      },
+      {
+        "step": "stage3-bundle",
+        "seconds": 0.67,
+        "exit_code": 0
+      },
+      {
+        "step": "stage3-start",
+        "seconds": 0.87,
+        "exit_code": 0
+      },
+      {
+        "step": "stage3-restart-start",
+        "seconds": 0.89,
+        "exit_code": 0
+      },
+      {
+        "step": "select-local-records",
+        "seconds": 0.68,
+        "exit_code": 0
+      }
+    ]
+  }
+}

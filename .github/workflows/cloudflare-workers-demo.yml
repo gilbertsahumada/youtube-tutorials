@@ -1,0 +1,37 @@
+name: Cloudflare Workers demo
+
+on:
+  pull_request:
+    paths:
+      - "videos/cloudflare-workers/**"
+      - ".github/workflows/cloudflare-workers-demo.yml"
+  push:
+    branches: [main]
+    paths:
+      - "videos/cloudflare-workers/**"
+      - ".github/workflows/cloudflare-workers-demo.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck-and-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: videos/cloudflare-workers/demo
+    env:
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: videos/cloudflare-workers/demo/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run deploy -- --dry-run
