@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agregar recursos de un video"
+  short_description: "Agregar demos con README e índice del repositorio"
+  default_prompt: "Usa $add-video-resource para agregar este tutorial al repositorio con su README, demo, índice y validación."
