@@ -31,4 +31,4 @@ npm run dev
 
 En las dos primeras etapas solo el slug `workers` tiene un destino fijo. La tercera consulta D1 y necesita que crees el registro con la API; el contenido de las primeras etapas no se convierte automáticamente en un registro.
 
-Consulta la [guía del tema](../README.md) para la instalación y configuración, y la [documentación de Cloudflare](https://developers.cloudflare.com/workers/get-started/guide/) para inicializar un proyecto nuevo.
+La [guía del tema](../README.md) desarrolla los tres ejemplos desde la inicialización: incluye comandos, código completo, configuración y comprobaciones de cada etapa. Para construir el proyecto progresivamente, sigue ese recorrido; este archivo solo explica cómo intercambiar las versiones sobre la demo final.
