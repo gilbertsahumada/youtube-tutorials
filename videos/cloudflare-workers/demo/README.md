@@ -18,11 +18,14 @@ npx wrangler login
 npx wrangler whoami
 npx wrangler d1 create acortador-db --binding DB --update-config
 npm run db:local
+npm run cf-typegen
 npm run typecheck
 npm run dev
 ```
 
 Si ya estás dentro de `demo/`, omite el primer `cd`. El comando de creación configura el binding `DB` con un ID real en `wrangler.jsonc`. Si existe una base con ese nombre en tu cuenta, elige otro y actualiza los comandos y `database_name`, o configura el ID de la base que quieres reutilizar.
+
+`cf-typegen` genera `worker-configuration.d.ts`; no crea D1, no aplica el esquema ni despliega. Ejecútalo después de configurar D1 y cuando cambien los bindings. Conserva el nombre `Env` del scaffold y no edites los tipos generados a mano.
 
 El token de `.dev.vars.example` es público y solo sirve para ensayo local. `.dev.vars`, el estado de Wrangler y los tipos generados se excluyen de Git.
 
@@ -48,7 +51,8 @@ Esperado: `201` al crear y `302` al consultar. Abre `http://localhost:8787/worke
 | Comando | Resultado |
 |---|---|
 | `npm run dev` | Servidor local en el puerto 8787 |
-| `npm run typecheck` | Genera tipos de Wrangler y comprueba TypeScript sin emitir archivos |
+| `npm run cf-typegen` | Ejecuta `wrangler types` y actualiza `Env` según la configuración y los bindings |
+| `npm run typecheck` | Comprueba TypeScript sin emitir archivos |
 | `npm run db:local` | Aplica el esquema inicial a D1 local |
 | `npm run db:remote` | Aplica el esquema a D1 en Cloudflare; requiere acceso a la cuenta |
 | `npm run deploy` | Publica el Worker en la cuenta autenticada |

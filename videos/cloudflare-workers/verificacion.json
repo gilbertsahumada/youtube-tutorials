@@ -255,105 +255,210 @@
     "etapas/03-hono-d1.ts"
   ],
   "readme_validation": {
-    "checked_at": "2026-10-24T22:19:01.410342-05:00",
+    "checked_at": "2026-10-25T16:24:28.359808-05:00",
     "status": "passed",
-    "check_count": 40,
-    "readme_sha256": "ff660e8cf651b4ad467cae6de16ba66d13d5a4cdc597c14dacff0ed94a290b74",
+    "check_count": 41,
+    "readme_sha256": "4478228850ad0c04a564337f9c74f538f06690c5665621654cb2d98a41644611",
+    "source_sha256": {
+      "01-worker.ts": "d7d5b61718d523aeceed9e1baf0eecc8b505401dfdc2828c38f52a599147af21",
+      "02-hono.ts": "f28a428fb12dce53a1bc6c01f0fc673820e2a55e2f5793af5feeaaca1dcb000d",
+      "03-hono-d1.ts": "32376381a0f48f2917ff002558cd5ecaafd43881f73a67fded1931f8dad1dae1"
+    },
     "scope": [
-      "Fresh C3 TypeScript project",
+      "Fresh C3 TypeScript scaffold retains Env with no initial type generation command",
       "Stage source extracted from README",
-      "Type checking for all three examples",
-      "Local HTTP, authentication, validation and redirects",
-      "Local D1 schema, SQL and restart persistence",
+      "Separate typecheck (tsc --noEmit) and cf-typegen (wrangler types)",
+      "Type generation introduced after configuring D1",
+      "Type checking and HTTP for all three examples",
+      "Local D1 schema, authentication, validation, SQL and restart persistence",
       "Deployment bundle without publishing"
     ],
     "remote_resources_created": false,
     "commands": [
       {
         "step": "create-cloudflare",
-        "seconds": 25.4,
+        "seconds": 28.57,
         "exit_code": 0
       },
       {
         "step": "install-tested-tools",
-        "seconds": 1.28,
-        "exit_code": 0
-      },
-      {
-        "step": "set-typegen",
-        "seconds": 0.1,
+        "seconds": 2.02,
         "exit_code": 0
       },
       {
         "step": "set-typecheck",
-        "seconds": 0.1,
-        "exit_code": 0
-      },
-      {
-        "step": "generate-types",
-        "seconds": 0.61,
+        "seconds": 0.15,
         "exit_code": 0
       },
       {
         "step": "stage1-typecheck",
-        "seconds": 1.53,
+        "seconds": 1.19,
         "exit_code": 0
       },
       {
         "step": "stage1-start",
-        "seconds": 0.89,
+        "seconds": 1.51,
         "exit_code": 0
       },
       {
         "step": "install-hono",
-        "seconds": 1.29,
+        "seconds": 2.49,
         "exit_code": 0
       },
       {
         "step": "stage2-typecheck",
-        "seconds": 1.14,
+        "seconds": 0.97,
         "exit_code": 0
       },
       {
         "step": "stage2-start",
-        "seconds": 0.87,
+        "seconds": 1.72,
+        "exit_code": 0
+      },
+      {
+        "step": "set-typegen",
+        "seconds": 0.27,
         "exit_code": 0
       },
       {
         "step": "regenerate-d1-types",
-        "seconds": 0.61,
+        "seconds": 1.19,
         "exit_code": 0
       },
       {
         "step": "apply-local-schema",
-        "seconds": 0.66,
+        "seconds": 1.38,
         "exit_code": 0
       },
       {
         "step": "stage3-typecheck",
-        "seconds": 1.15,
+        "seconds": 1.28,
         "exit_code": 0
       },
       {
         "step": "stage3-bundle",
-        "seconds": 0.67,
+        "seconds": 1.43,
         "exit_code": 0
       },
       {
         "step": "stage3-start",
-        "seconds": 0.87,
+        "seconds": 1.96,
         "exit_code": 0
       },
       {
         "step": "stage3-restart-start",
-        "seconds": 0.89,
+        "seconds": 1.66,
         "exit_code": 0
       },
       {
         "step": "select-local-records",
-        "seconds": 0.68,
+        "seconds": 1.35,
         "exit_code": 0
       }
     ]
-  }
+  },
+  "previous_readme_validations": [
+    {
+      "checked_at": "2026-10-24T22:19:01.410342-05:00",
+      "status": "passed",
+      "check_count": 40,
+      "readme_sha256": "ff660e8cf651b4ad467cae6de16ba66d13d5a4cdc597c14dacff0ed94a290b74",
+      "scope": [
+        "Fresh C3 TypeScript project",
+        "Stage source extracted from README",
+        "Type checking for all three examples",
+        "Local HTTP, authentication, validation and redirects",
+        "Local D1 schema, SQL and restart persistence",
+        "Deployment bundle without publishing"
+      ],
+      "remote_resources_created": false,
+      "commands": [
+        {
+          "step": "create-cloudflare",
+          "seconds": 25.4,
+          "exit_code": 0
+        },
+        {
+          "step": "install-tested-tools",
+          "seconds": 1.28,
+          "exit_code": 0
+        },
+        {
+          "step": "set-typegen",
+          "seconds": 0.1,
+          "exit_code": 0
+        },
+        {
+          "step": "set-typecheck",
+          "seconds": 0.1,
+          "exit_code": 0
+        },
+        {
+          "step": "generate-types",
+          "seconds": 0.61,
+          "exit_code": 0
+        },
+        {
+          "step": "stage1-typecheck",
+          "seconds": 1.53,
+          "exit_code": 0
+        },
+        {
+          "step": "stage1-start",
+          "seconds": 0.89,
+          "exit_code": 0
+        },
+        {
+          "step": "install-hono",
+          "seconds": 1.29,
+          "exit_code": 0
+        },
+        {
+          "step": "stage2-typecheck",
+          "seconds": 1.14,
+          "exit_code": 0
+        },
+        {
+          "step": "stage2-start",
+          "seconds": 0.87,
+          "exit_code": 0
+        },
+        {
+          "step": "regenerate-d1-types",
+          "seconds": 0.61,
+          "exit_code": 0
+        },
+        {
+          "step": "apply-local-schema",
+          "seconds": 0.66,
+          "exit_code": 0
+        },
+        {
+          "step": "stage3-typecheck",
+          "seconds": 1.15,
+          "exit_code": 0
+        },
+        {
+          "step": "stage3-bundle",
+          "seconds": 0.67,
+          "exit_code": 0
+        },
+        {
+          "step": "stage3-start",
+          "seconds": 0.87,
+          "exit_code": 0
+        },
+        {
+          "step": "stage3-restart-start",
+          "seconds": 0.89,
+          "exit_code": 0
+        },
+        {
+          "step": "select-local-records",
+          "seconds": 0.68,
+          "exit_code": 0
+        }
+      ]
+    }
+  ]
 }
