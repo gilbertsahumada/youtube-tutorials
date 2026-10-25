@@ -33,5 +33,6 @@ jobs:
           cache: npm
           cache-dependency-path: videos/cloudflare-workers/demo/package-lock.json
       - run: npm ci
+      - run: npm run cf-typegen
       - run: npm run typecheck
       - run: npm run deploy -- --dry-run

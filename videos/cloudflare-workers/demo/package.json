@@ -11,8 +11,8 @@
     "deploy": "wrangler deploy",
     "db:local": "wrangler d1 execute acortador-db --local --file=schema.sql",
     "db:remote": "wrangler d1 execute acortador-db --remote --file=schema.sql",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    "typecheck": "npm run cf-typegen && tsc --noEmit"
+    "cf-typegen": "wrangler types",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "hono": "^4.13.13"
