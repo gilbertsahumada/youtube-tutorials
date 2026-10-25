@@ -2,6 +2,16 @@
 
 Este tutorial permite construir y probar **tres ejemplos en TypeScript**, en orden y sobre el mismo proyecto. Incluye la inicialización, los archivos completos, los comandos y el resultado que debes comprobar en cada etapa. Puedes seguirlo sin ver el video y sin abrir Notion.
 
+Un **acortador de enlaces** guarda una URL de destino asociada a un alias, llamado `slug`. Por ejemplo, guardamos `workers → https://developers.cloudflare.com/workers/` y compartimos `https://TU-WORKER.workers.dev/workers`. Al abrir ese enlace, el navegador llama al Worker, el Worker busca el destino y responde con una redirección `302`; el navegador abre la página original.
+
+Construiremos **un solo proyecto que evoluciona en tres etapas**:
+
+1. **Worker a mano:** `/workers` lleva a un destino fijo escrito en TypeScript; `/health` permite comprobar que responde. Todavía no podemos guardar enlaces nuevos.
+2. **Hono:** conserva ese comportamiento, pero organiza las rutas y obtiene el alias desde `/:slug`. El destino sigue escrito en el código.
+3. **Hono y D1:** `POST /api/links` recibe una URL y un alias opcional, guarda la relación en D1 y devuelve el enlace corto. `GET /:slug` consulta la base y redirige. Crear enlaces requiere un token; abrirlos es público.
+
+La demo se utiliza mediante peticiones HTTP y enlaces en el navegador. Local Explorer es la interfaz de desarrollo que aporta Wrangler para inspeccionar los recursos; nuestra aplicación responde con JSON y redirecciones.
+
 | Ejemplo | Qué construyes | Qué puedes comprobar |
 |---|---|---|
 | [1. Worker a mano](#ejemplo-1-worker-a-mano) | Un handler HTTP con una redirección fija | JSON, `302` y rutas inexistentes |
@@ -9,6 +19,20 @@ Este tutorial permite construir y probar **tres ejemplos en TypeScript**, en ord
 | [3. Enlaces con D1](#ejemplo-3-enlaces-con-d1) | Una API que crea y consulta enlaces guardados | Persistencia, token, validación y redirección |
 
 Si solo quieres ejecutar la versión terminada que viene en el repositorio, sigue el [README de demo](demo/README.md). La ruta principal de este documento empieza con un proyecto nuevo. Las [versiones de referencia](etapas/README.md) contienen el mismo código que aparece abajo.
+
+## Desarrollo local y despliegue
+
+Probamos cada etapa en nuestra máquina con Wrangler y después publicamos el código en Cloudflare. La copia local y la desplegada tienen direcciones y datos independientes:
+
+| Acción o dirección | Para qué sirve |
+|---|---|
+| `npm run dev` | Ejecuta `wrangler dev`, inicia el Worker local y recarga el código al guardar |
+| `http://localhost:8787/` | Es nuestra aplicación local; la raíz devuelve JSON |
+| `http://localhost:8787/cdn-cgi/local/explorer` | Abre Local Explorer para inspeccionar los recursos locales, incluida D1 cuando la configuremos |
+| `npm run deploy` | Publica el código actual en Cloudflare y devuelve una URL pública |
+| `https://TU-WORKER.workers.dev/` | Es la aplicación desplegada; sigue funcionando con el servidor local apagado |
+
+Guardar un archivo no actualiza la versión desplegada. En esta demo, D1 local guarda su estado en `.wrangler/state`; reiniciar el servidor conserva los registros, pero borrar ese directorio elimina esos datos locales. `deploy` tampoco copia a Cloudflare la tabla ni los registros locales: prepararemos el esquema y crearemos los enlaces remotos por separado. Local Explorer muestra la base local de esta configuración; el panel de Cloudflare permite consultar la base remota.
 
 ## Requisitos y organización
 
@@ -33,6 +57,8 @@ npm --version
 Después de entrar al proyecto, ambas terminales permanecen en su raíz, donde están `package.json` y `wrangler.jsonc`. Cuando A ejecute `npm run dev`, déjala abierta; los comandos siguientes se ejecutan en B hasta que se indique lo contrario.
 
 ## Ejemplo 1 Worker a mano
+
+El objetivo es abrir `/workers` y llegar a la documentación de Cloudflare. El destino estará fijo en el handler; usaremos `/health` para comprobar que la aplicación responde antes de probar la redirección.
 
 ### Inicializar el proyecto TypeScript
 
@@ -152,6 +178,18 @@ curl -i http://localhost:8787/no-existe
 
 Abre `http://localhost:8787/workers` en el navegador para seguir la redirección. `curl` sin `-L` permite ver el `302` sin seguirlo. Hasta aquí la aplicación corre en tu máquina.
 
+### Abrir Local Explorer
+
+Con `npm run dev` todavía ejecutándose en **A**, abre en el navegador:
+
+[http://localhost:8787/cdn-cgi/local/explorer](http://localhost:8787/cdn-cgi/local/explorer)
+
+Wrangler proporciona este panel junto al servidor local. Detecta los bindings configurados y permite inspeccionar los recursos y las peticiones del Worker. En este momento todavía no hemos agregado D1: no esperes encontrar la tabla `links`. Volveremos a esta misma dirección cuando guardemos el primer enlace.
+
+Conserva abierta la terminal A y esta pestaña. Si cambiaste el puerto, usa el que imprime Wrangler en ambas direcciones. `http://localhost:8787/` sigue siendo la raíz de nuestra aplicación y devuelve JSON; el panel está bajo `/cdn-cgi/local/explorer`.
+
+Consulta la [documentación de Local Explorer](https://developers.cloudflare.com/workers/local-development/local-explorer/). La versión de Wrangler utilizada en este recorrido, 4.152.0, incluye esta herramienta.
+
 ### Publicar el primer Worker
 
 En **B**, dentro del proyecto:
@@ -177,6 +215,8 @@ Debes obtener `200` y `302`. Conserva B abierta: volveremos a usar `DEMO_BASE_UR
 **Primer ejemplo terminado:** el mismo handler responde localmente y desde una dirección HTTPS pública.
 
 ## Ejemplo 2 Rutas con Hono
+
+El resultado para quien abre `/workers` será el mismo. Ahora organizaremos las rutas con Hono y leeremos el alias como parámetro de `/:slug`; todavía no hay almacenamiento ni una API para crear enlaces. Continuamos dentro del mismo proyecto.
 
 Partimos del proyecto del ejemplo 1. A sigue ejecutando el servidor y B permanece dentro de `acortador-workers-demo`.
 
@@ -240,7 +280,7 @@ Si el servidor no recarga, pulsa **Ctrl+C en A**, vuelve a ejecutar `npm run dev
 
 ## Ejemplo 3 Enlaces con D1
 
-Partimos del ejemplo 2, con Hono instalado. Ahora queremos crear enlaces sin cambiar el código cada vez: guardaremos el slug y su destino en D1. Las redirecciones serán públicas y la creación requerirá un token.
+Partimos del ejemplo 2, con Hono instalado. Ahora queremos crear enlaces sin cambiar el código cada vez: guardaremos el slug y su destino en D1. Enviaremos una URL larga a `POST /api/links`, recibiremos un enlace con nuestro dominio y un alias, y podremos abrirlo con `GET /:slug`. Las redirecciones serán públicas y la creación requerirá un token.
 
 ### Crear la base y conectar el binding
 
@@ -429,13 +469,32 @@ Debes obtener `201` con este cuerpo:
 
 La redirección fija de los ejemplos anteriores ya no existe en el código: ahora `/workers` funciona porque acabas de crear el registro. Antes de crearlo, devolvería `404`.
 
+En **B**, comprueba la redirección:
+
 ```bash
 curl -i http://localhost:8787/workers
+```
+
+Debes obtener `302` y el destino en `Location`. Abre `http://localhost:8787/workers` en el navegador para seguirlo.
+
+### Ver el enlace guardado en Local Explorer
+
+Mantén `npm run dev` ejecutándose en **A** y vuelve a [Local Explorer](http://localhost:8787/cdn-cgi/local/explorer):
+
+1. Abre la sección de **D1** y selecciona la base correspondiente al binding **`DB`**, cuyo nombre configuramos como `acortador-db`.
+2. Abre la tabla **`links`** en el explorador de tablas de SQL Studio.
+3. Comprueba que exista una fila con `slug = workers`, `url = https://developers.cloudflare.com/workers/` y su fecha `created_at`.
+
+Esa fila es el resultado del `POST /api/links` anterior. Al abrir `/workers`, el Worker consulta ese registro y devuelve el destino. El enlace corto apunta al Worker; la URL de destino sigue siendo la página original. Estamos viendo los datos locales, separados de los remotos.
+
+Si prefieres comprobarlo desde la terminal **B**, esta consulta ofrece el mismo dato:
+
+```bash
 npx wrangler d1 execute acortador-db --local \
   --command='SELECT slug, url, created_at FROM links'
 ```
 
-La primera petición devuelve `302`; la consulta SQL muestra el registro. Abre el enlace en el navegador. Para comprobar persistencia, detén y reinicia `npm run dev` en A, y vuelve a consultar `/workers` en B: debe seguir redirigiendo.
+Para comprobar persistencia, detén y reinicia `npm run dev` en **A**, y vuelve a consultar `/workers` en **B**: debe seguir redirigiendo. Recarga Local Explorer y comprueba que la fila siga presente. Mientras el servidor esté detenido, las direcciones locales de la demo y de Local Explorer no estarán disponibles.
 
 ### Comprobar los casos de error
 
@@ -558,6 +617,8 @@ Debes obtener `200`, `302` y `404`; la consulta SQL debe mostrar el enlace remot
 | `409` al crear | El slug ya existe; usar otro sin sobrescribir su destino |
 | Funciona en local, pero devuelve `404` en público | Crear el enlace en la API remota; los registros locales no se copian |
 | Tras pasar al ejemplo 3, `/workers` devuelve `404` | Crear el registro con el POST; el destino ya no está escrito en el código |
+| Local Explorer no abre | Mantener `npm run dev` activo, comprobar el puerto y usar `/cdn-cgi/local/explorer` |
+| D1 o `links` no aparece en Local Explorer | Revisar el binding `DB`, aplicar el esquema local y reiniciar el servidor tras cambiar la configuración |
 | Puerto ocupado | Elegir otro puerto y ajustar las peticiones sin detener procesos ajenos |
 
 ## Validación
@@ -571,6 +632,8 @@ Con la versión actual que conserva `Env`, los tres ejemplos locales se reproduj
 ## Documentación oficial
 
 - [Inicializar un Worker](https://developers.cloudflare.com/workers/get-started/guide/).
+- [Desarrollo local](https://developers.cloudflare.com/workers/local-development/).
+- [Local Explorer y D1 SQL Studio](https://developers.cloudflare.com/workers/local-development/local-explorer/).
 - [Instalar y actualizar Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/).
 - [Configuración de Wrangler](https://developers.cloudflare.com/workers/wrangler/configuration/).
 - [TypeScript y tipos generados](https://developers.cloudflare.com/workers/languages/typescript/).
