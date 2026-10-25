@@ -1,0 +1,25 @@
+{
+  "name": "acortador-workers-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 execute acortador-db --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute acortador-db --remote --file=schema.sql",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "typecheck": "npm run cf-typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.13.13"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "5.9.3",
+    "wrangler": "^4.152.0"
+  }
+}

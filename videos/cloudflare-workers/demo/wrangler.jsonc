@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "acortador-workers-demo",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-24",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "acortador-db",
+      "database_id": "REEMPLAZAR_CON_EL_ID_DE_D1"
+    }
+  ]
+}
