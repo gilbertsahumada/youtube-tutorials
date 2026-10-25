@@ -68,7 +68,7 @@ npx wrangler --version
 
 No necesitas instalar Wrangler globalmente. `npx wrangler` utiliza la instalación del proyecto. Conserva `package-lock.json` para reproducir sus dependencias.
 
-### Revisar la configuración y preparar los tipos
+### Revisar la configuración
 
 C3 genera estos archivos; no tienes que crearlos desde cero:
 
@@ -85,15 +85,13 @@ En `wrangler.jsonc`, conserva las opciones y la fecha de compatibilidad generada
 
 La fecha de compatibilidad fija comportamientos del runtime. Puede ser anterior al día en que creaste el proyecto; no necesitas cambiarla para seguir el ejemplo.
 
-Configura los scripts de tipos en **A**, sin borrar los demás scripts de C3:
+Conserva `Env`, el nombre de la interfaz de tipos que viene en el scaffold. Conserva también `tsconfig.json` y `worker-configuration.d.ts`, generado durante la inicialización. No edites ese archivo de tipos a mano.
+
+Agrega únicamente un script para comprobar TypeScript en **A**, sin borrar los scripts de la plantilla:
 
 ```bash
-npm pkg set 'scripts.cf-typegen=wrangler types --env-interface CloudflareBindings'
-npm pkg set 'scripts.typecheck=npm run cf-typegen && tsc --noEmit'
-npm run cf-typegen
+npm pkg set 'scripts.typecheck=tsc --noEmit'
 ```
-
-El último comando genera `worker-configuration.d.ts`, con los tipos del runtime y una interfaz llamada `CloudflareBindings`. Conserva el `tsconfig.json` que genera C3: incluye ese archivo y activa `strict`. No edites los tipos generados a mano.
 
 ### Escribir el handler completo
 
@@ -118,10 +116,10 @@ export default {
 
     return Response.json({ error: 'No encontrado' }, { status: 404 })
   }
-} satisfies ExportedHandler<CloudflareBindings>
+} satisfies ExportedHandler<Env>
 ```
 
-Cloudflare llama a `fetch` cuando llega una petición HTTP. El handler lee el path y devuelve una respuesta. `Request` y `Promise<Response>` tipan la entrada y la salida; `satisfies ExportedHandler<CloudflareBindings>` comprueba la forma del handler.
+Cloudflare llama a `fetch` cuando llega una petición HTTP. El handler lee el path y devuelve una respuesta. `Request` y `Promise<Response>` tipan la entrada y la salida; `satisfies ExportedHandler<Env>` comprueba que el objeto cumpla el contrato de un Worker. `Env` describe los recursos disponibles en el argumento `env`; esta comprobación solo ocurre durante el desarrollo.
 
 `Response.redirect(..., 302)` le indica al cliente que haga otra petición al destino. El Worker no descarga la página de Cloudflare ni la sirve como intermediario.
 
@@ -134,7 +132,7 @@ npm run typecheck
 npm run dev
 ```
 
-El primer comando genera los tipos y ejecuta `tsc --noEmit`. El segundo mantiene un servidor local en ejecución.
+El primer comando ejecuta `tsc --noEmit` para comprobar TypeScript sin generar archivos JavaScript. El segundo mantiene un servidor local en ejecución.
 
 En **B**, desde la misma carpeta padre donde comenzó A, entra al proyecto **una sola vez**:
 
@@ -258,13 +256,16 @@ Si ya existe `acortador-db` en tu cuenta, elige otro nombre y úsalo también en
 
 Un binding conecta al Worker con un recurso. Nuestro código accederá a esta base mediante `c.env.DB`, sin escribir una conexión con usuario y contraseña.
 
-Regenera los tipos después de agregar el binding:
+Ahora que agregamos D1, necesitamos actualizar los tipos. `cf-typegen` es un script de `package.json` que ejecuta `wrangler types`: lee la configuración y genera `worker-configuration.d.ts`. No crea la base, no aplica SQL y no despliega el Worker. Conservamos el nombre predeterminado `Env`.
+
+En **B**, asegura que el script use el comando predeterminado y ejecútalo:
 
 ```bash
+npm pkg set 'scripts.cf-typegen=wrangler types'
 npm run cf-typegen
 ```
 
-En `worker-configuration.d.ts` aparecerá `DB: D1Database` en los tipos de `CloudflareBindings`. No escribas esa declaración a mano.
+El scaffold normalmente ya incluye ese script; `npm pkg set` lo deja explícito y también corrige una copia que antes usara otro nombre de interfaz. En `worker-configuration.d.ts` aparecerá `DB: D1Database` dentro de `Env`. No escribas esa declaración a mano. Repite `npm run cf-typegen` cuando cambies los bindings u otra configuración que afecte a los tipos. `npm run typecheck` comprueba el código usando los tipos generados.
 
 ### Crear el esquema local
 
@@ -312,7 +313,7 @@ Reemplaza **todo** `src/index.ts` por:
 import { Hono } from 'hono'
 import { bearerAuth } from 'hono/bearer-auth'
 
-type Bindings = CloudflareBindings & {
+type Bindings = Env & {
   ADMIN_TOKEN?: string
 }
 
@@ -548,8 +549,8 @@ Debes obtener `200`, `302` y `404`; la consulta SQL debe mostrar el enlace remot
 | Síntoma | Qué revisar |
 |---|---|
 | Wrangler rechaza Node | Usar una versión admitida de Node 22 o 24 en ambas terminales |
-| No existe el script `typecheck` | Ejecutar los dos comandos `npm pkg set` del ejemplo 1 |
-| TypeScript no reconoce `CloudflareBindings` o `DB` | Ejecutar `npm run cf-typegen` y conservar el archivo generado en `tsconfig.json` |
+| No existe el script `typecheck` | Ejecutar el comando `npm pkg set` del ejemplo 1 |
+| TypeScript no reconoce `Env` o `DB` | Ejecutar `npm run cf-typegen` y conservar el archivo generado en `tsconfig.json` |
 | `no such table: links` en local | Aplicar `schema.sql` con `--local` desde la raíz del proyecto |
 | `no such table: links` en público | Aplicar el esquema con `--remote` contra la base configurada |
 | `401` al crear | Enviar el token correspondiente a local o remoto en `Authorization: Bearer ...` |
@@ -561,9 +562,9 @@ Debes obtener `200`, `302` y `404`; la consulta SQL debe mostrar el enlace remot
 
 ## Validación
 
-Las tres versiones del código se auditaron desde un proyecto nuevo de Create Cloudflare con Node 22.19.0, TypeScript 5.9.3, Wrangler 4.152.0 y Hono 4.13.13. Pasaron 78 comprobaciones que incluyen tipos y empaquetado, HTTP local, D1 local y remoto, secrets, dos despliegues, duplicados y persistencia. Los recursos remotos de ensayo se eliminaron al terminar.
+La versión anterior, con la interfaz de tipos llamada `CloudflareBindings`, se auditó desde un proyecto nuevo de Create Cloudflare con Node 22.19.0, TypeScript 5.9.3, Wrangler 4.152.0 y Hono 4.13.13. Pasaron 78 comprobaciones que incluyen tipos y empaquetado, HTTP local, D1 local y remoto, secrets, dos despliegues, duplicados y persistencia. Los recursos remotos de ensayo se eliminaron al terminar.
 
-Además, los tres ejemplos locales se reprodujeron en otro proyecto nuevo usando los bloques de código de este README: pasaron 40 comprobaciones de tipos, HTTP, SQL local, persistencia y empaquetado. Esa segunda corrida no creó ni desplegó recursos remotos.
+Con la versión actual que conserva `Env`, los tres ejemplos locales se reprodujeron en otro proyecto nuevo usando los bloques de código de este README: pasaron 41 comprobaciones de tipos, HTTP, SQL local, persistencia y empaquetado. Esta corrida no creó ni desplegó recursos remotos.
 
 [verificacion.json](verificacion.json) conserva los resultados y los hashes de esa corrida. Es evidencia identificada de la versión comprobada, no una prueba de carga ni una garantía sobre latencia. En un proyecto nuevo C3 puede instalar versiones adicionales más recientes; conserva su lockfile.
 

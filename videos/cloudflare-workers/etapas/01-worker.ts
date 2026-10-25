@@ -16,4 +16,4 @@ export default {
 
     return Response.json({ error: 'No encontrado' }, { status: 404 })
   }
-} satisfies ExportedHandler<CloudflareBindings>
+} satisfies ExportedHandler<Env>

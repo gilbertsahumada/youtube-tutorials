@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { bearerAuth } from 'hono/bearer-auth'
 
-type Bindings = CloudflareBindings & {
+type Bindings = Env & {
   ADMIN_TOKEN?: string
 }
 
