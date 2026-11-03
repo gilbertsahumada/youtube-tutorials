@@ -1,0 +1,8 @@
+# Material privado de producción: guiones, notas y ensayos del canal.
+/.produccion/
+
+# Archivos auxiliares usados para preparar las slides de Pi Durable.
+/.pi-durable-build/
+/pi-durable-output/
+/tmp/pdfs/
+/output/pdf/pi-durable.pdf

@@ -1,0 +1,33 @@
+{
+  "name": "pi-durable-vacation-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "scripts": {
+    "demo": "node --env-file-if-exists=.env --import tsx src/main.ts start",
+    "demo:resume": "node --env-file-if-exists=.env --import tsx src/main.ts resume",
+    "demo:status": "node --import tsx src/main.ts status",
+    "demo:trip": "node --import tsx src/main.ts trip",
+    "demo:ask": "node --import tsx src/main.ts ask",
+    "demo:steer": "node --import tsx src/main.ts steer",
+    "demo:release": "node --import tsx src/main.ts release",
+    "demo:crash": "node --import tsx src/main.ts crash",
+    "demo:stop": "node --import tsx src/main.ts stop",
+    "demo:events": "node --import tsx src/main.ts events",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test --test-concurrency=1 test/*.test.ts",
+    "verify": "npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@earendil-works/chord": "1.5.0",
+    "@earendil-works/pi-ai": "1.5.0",
+    "@earendil-works/pi-durable": "1.5.0",
+    "@earendil-works/pi-schema": "1.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}
