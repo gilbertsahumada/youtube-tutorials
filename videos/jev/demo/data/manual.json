@@ -1,0 +1,17 @@
+[
+  {
+    "id": "1",
+    "message": "No puedo entrar",
+    "context": "Entorno de pruebas. Un único reporte recibido. Sin información adicional sobre el alcance."
+  },
+  {
+    "id": "2",
+    "message": "No puedo entrar",
+    "context": "Producción. Se desplegó un cambio de acceso. Varios clientes reportan que no pueden iniciar sesión."
+  },
+  {
+    "id": "3",
+    "message": "Al iniciar sesión aparece HTTP 500. Ningún usuario puede acceder.",
+    "context": "Producción. El equipo reprodujo el error en todos los intentos de acceso y los registros muestran errores desde el último despliegue. Toda la operación de reservas está detenida."
+  }
+]

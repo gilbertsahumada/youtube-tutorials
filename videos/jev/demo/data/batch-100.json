@@ -1,0 +1,502 @@
+[
+  {
+    "id": "batch-001",
+    "message": "No me funciona el acceso a la cuenta.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-002",
+    "message": "Al iniciar sesión aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en el acceso a la cuenta. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-003",
+    "message": "Desde el último cambio no puedo iniciar sesión.",
+    "context": "Producción. Se desplegó un cambio en el acceso a la cuenta hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-004",
+    "message": "Nadie en el equipo puede iniciar sesión. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en el acceso a la cuenta. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-005",
+    "message": "A veces se queda cargando al iniciar sesión, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre el acceso a la cuenta sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-006",
+    "message": "No me funciona el pago de reservas.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-007",
+    "message": "Al confirmar el pago de una reserva aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en el pago de reservas. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-008",
+    "message": "Desde el último cambio no puedo confirmar el pago de una reserva.",
+    "context": "Producción. Se desplegó un cambio en el pago de reservas hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-009",
+    "message": "Nadie en el equipo puede confirmar el pago de una reserva. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en el pago de reservas. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-010",
+    "message": "A veces se queda cargando al confirmar el pago de una reserva, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre el pago de reservas sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-011",
+    "message": "No me funciona la exportación de reportes.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-012",
+    "message": "Al exportar un reporte a CSV aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la exportación de reportes. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-013",
+    "message": "Desde el último cambio no puedo exportar un reporte a CSV.",
+    "context": "Producción. Se desplegó un cambio en la exportación de reportes hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-014",
+    "message": "Nadie en el equipo puede exportar un reporte a CSV. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la exportación de reportes. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-015",
+    "message": "A veces se queda cargando al exportar un reporte a CSV, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la exportación de reportes sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-016",
+    "message": "No me funciona el calendario.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-017",
+    "message": "Al abrir el calendario mensual aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en el calendario. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-018",
+    "message": "Desde el último cambio no puedo abrir el calendario mensual.",
+    "context": "Producción. Se desplegó un cambio en el calendario hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-019",
+    "message": "Nadie en el equipo puede abrir el calendario mensual. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en el calendario. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-020",
+    "message": "A veces se queda cargando al abrir el calendario mensual, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre el calendario sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-021",
+    "message": "No me funciona la búsqueda de reservas.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-022",
+    "message": "Al buscar por el código de reserva aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la búsqueda de reservas. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-023",
+    "message": "Desde el último cambio no puedo buscar por el código de reserva.",
+    "context": "Producción. Se desplegó un cambio en la búsqueda de reservas hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-024",
+    "message": "Nadie en el equipo puede buscar por el código de reserva. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la búsqueda de reservas. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-025",
+    "message": "A veces se queda cargando al buscar por el código de reserva, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la búsqueda de reservas sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-026",
+    "message": "No me funciona la carga de archivos.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-027",
+    "message": "Al adjuntar un PDF a una reserva aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la carga de archivos. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-028",
+    "message": "Desde el último cambio no puedo adjuntar un PDF a una reserva.",
+    "context": "Producción. Se desplegó un cambio en la carga de archivos hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-029",
+    "message": "Nadie en el equipo puede adjuntar un PDF a una reserva. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la carga de archivos. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-030",
+    "message": "A veces se queda cargando al adjuntar un PDF a una reserva, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la carga de archivos sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-031",
+    "message": "No me funciona la actualización del perfil.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-032",
+    "message": "Al guardar el nombre del perfil aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la actualización del perfil. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-033",
+    "message": "Desde el último cambio no puedo guardar el nombre del perfil.",
+    "context": "Producción. Se desplegó un cambio en la actualización del perfil hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-034",
+    "message": "Nadie en el equipo puede guardar el nombre del perfil. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la actualización del perfil. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-035",
+    "message": "A veces se queda cargando al guardar el nombre del perfil, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la actualización del perfil sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-036",
+    "message": "No me funciona el envío de invitaciones.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-037",
+    "message": "Al invitar a una persona al equipo aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en el envío de invitaciones. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-038",
+    "message": "Desde el último cambio no puedo invitar a una persona al equipo.",
+    "context": "Producción. Se desplegó un cambio en el envío de invitaciones hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-039",
+    "message": "Nadie en el equipo puede invitar a una persona al equipo. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en el envío de invitaciones. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-040",
+    "message": "A veces se queda cargando al invitar a una persona al equipo, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre el envío de invitaciones sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-041",
+    "message": "No me funciona la recuperación de contraseña.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-042",
+    "message": "Al solicitar un enlace de recuperación aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la recuperación de contraseña. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-043",
+    "message": "Desde el último cambio no puedo solicitar un enlace de recuperación.",
+    "context": "Producción. Se desplegó un cambio en la recuperación de contraseña hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-044",
+    "message": "Nadie en el equipo puede solicitar un enlace de recuperación. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la recuperación de contraseña. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-045",
+    "message": "A veces se queda cargando al solicitar un enlace de recuperación, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la recuperación de contraseña sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-046",
+    "message": "No me funciona la cancelación de reservas.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-047",
+    "message": "Al cancelar una reserva confirmada aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la cancelación de reservas. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-048",
+    "message": "Desde el último cambio no puedo cancelar una reserva confirmada.",
+    "context": "Producción. Se desplegó un cambio en la cancelación de reservas hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-049",
+    "message": "Nadie en el equipo puede cancelar una reserva confirmada. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la cancelación de reservas. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-050",
+    "message": "A veces se queda cargando al cancelar una reserva confirmada, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la cancelación de reservas sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-051",
+    "message": "No me funciona la edición de tarifas.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-052",
+    "message": "Al guardar una tarifa nueva aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la edición de tarifas. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-053",
+    "message": "Desde el último cambio no puedo guardar una tarifa nueva.",
+    "context": "Producción. Se desplegó un cambio en la edición de tarifas hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-054",
+    "message": "Nadie en el equipo puede guardar una tarifa nueva. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la edición de tarifas. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-055",
+    "message": "A veces se queda cargando al guardar una tarifa nueva, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la edición de tarifas sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-056",
+    "message": "No me funciona la descarga de facturas.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-057",
+    "message": "Al descargar una factura aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la descarga de facturas. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-058",
+    "message": "Desde el último cambio no puedo descargar una factura.",
+    "context": "Producción. Se desplegó un cambio en la descarga de facturas hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-059",
+    "message": "Nadie en el equipo puede descargar una factura. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la descarga de facturas. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-060",
+    "message": "A veces se queda cargando al descargar una factura, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la descarga de facturas sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-061",
+    "message": "No me funciona la sincronización de disponibilidad.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-062",
+    "message": "Al sincronizar la disponibilidad aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la sincronización de disponibilidad. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-063",
+    "message": "Desde el último cambio no puedo sincronizar la disponibilidad.",
+    "context": "Producción. Se desplegó un cambio en la sincronización de disponibilidad hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-064",
+    "message": "Nadie en el equipo puede sincronizar la disponibilidad. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la sincronización de disponibilidad. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-065",
+    "message": "A veces se queda cargando al sincronizar la disponibilidad, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la sincronización de disponibilidad sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-066",
+    "message": "No me funciona la asignación de salas.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-067",
+    "message": "Al asignar una sala a una reserva aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la asignación de salas. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-068",
+    "message": "Desde el último cambio no puedo asignar una sala a una reserva.",
+    "context": "Producción. Se desplegó un cambio en la asignación de salas hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-069",
+    "message": "Nadie en el equipo puede asignar una sala a una reserva. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la asignación de salas. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-070",
+    "message": "A veces se queda cargando al asignar una sala a una reserva, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la asignación de salas sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-071",
+    "message": "No me funciona la lista de clientes.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-072",
+    "message": "Al abrir la lista de clientes aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la lista de clientes. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-073",
+    "message": "Desde el último cambio no puedo abrir la lista de clientes.",
+    "context": "Producción. Se desplegó un cambio en la lista de clientes hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-074",
+    "message": "Nadie en el equipo puede abrir la lista de clientes. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la lista de clientes. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-075",
+    "message": "A veces se queda cargando al abrir la lista de clientes, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la lista de clientes sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-076",
+    "message": "No me funciona el registro de asistencia.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-077",
+    "message": "Al marcar una asistencia aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en el registro de asistencia. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-078",
+    "message": "Desde el último cambio no puedo marcar una asistencia.",
+    "context": "Producción. Se desplegó un cambio en el registro de asistencia hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-079",
+    "message": "Nadie en el equipo puede marcar una asistencia. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en el registro de asistencia. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-080",
+    "message": "A veces se queda cargando al marcar una asistencia, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre el registro de asistencia sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-081",
+    "message": "No me funciona la creación de cupones.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-082",
+    "message": "Al guardar un cupón de descuento aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la creación de cupones. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-083",
+    "message": "Desde el último cambio no puedo guardar un cupón de descuento.",
+    "context": "Producción. Se desplegó un cambio en la creación de cupones hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-084",
+    "message": "Nadie en el equipo puede guardar un cupón de descuento. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la creación de cupones. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-085",
+    "message": "A veces se queda cargando al guardar un cupón de descuento, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la creación de cupones sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-086",
+    "message": "No me funciona el filtro por fechas.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-087",
+    "message": "Al filtrar las reservas por fecha aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en el filtro por fechas. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-088",
+    "message": "Desde el último cambio no puedo filtrar las reservas por fecha.",
+    "context": "Producción. Se desplegó un cambio en el filtro por fechas hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-089",
+    "message": "Nadie en el equipo puede filtrar las reservas por fecha. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en el filtro por fechas. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-090",
+    "message": "A veces se queda cargando al filtrar las reservas por fecha, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre el filtro por fechas sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-091",
+    "message": "No me funciona la selección de horarios.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-092",
+    "message": "Al seleccionar un horario disponible aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la selección de horarios. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-093",
+    "message": "Desde el último cambio no puedo seleccionar un horario disponible.",
+    "context": "Producción. Se desplegó un cambio en la selección de horarios hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-094",
+    "message": "Nadie en el equipo puede seleccionar un horario disponible. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la selección de horarios. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-095",
+    "message": "A veces se queda cargando al seleccionar un horario disponible, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la selección de horarios sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  },
+  {
+    "id": "batch-096",
+    "message": "No me funciona la confirmación por correo.",
+    "context": "Entorno de pruebas. Solo se recibió este mensaje. No hay pasos, error observado ni datos sobre el alcance."
+  },
+  {
+    "id": "batch-097",
+    "message": "Al solicitar la confirmación por correo aparece HTTP 500.",
+    "context": "Producción. Un cliente reporta el error en la confirmación por correo. El resto de las funciones sigue operativo. Se conserva el identificador de la solicitud para investigar."
+  },
+  {
+    "id": "batch-098",
+    "message": "Desde el último cambio no puedo solicitar la confirmación por correo.",
+    "context": "Producción. Se desplegó un cambio en la confirmación por correo hace veinte minutos. Cinco clientes reportan el mismo síntoma. No se ha comprobado una interrupción general."
+  },
+  {
+    "id": "batch-099",
+    "message": "Nadie en el equipo puede solicitar la confirmación por correo. Todos los intentos fallan.",
+    "context": "Producción. El equipo reprodujo la falla en la confirmación por correo. Los registros confirman que esa función falla para todas las cuentas probadas y toda la operación que depende de ella está detenida."
+  },
+  {
+    "id": "batch-100",
+    "message": "A veces se queda cargando al solicitar la confirmación por correo, pero no sé cuándo ocurre.",
+    "context": "Entorno y alcance desconocidos. Reporte sobre la confirmación por correo sin registros, hora precisa ni pasos reproducibles. No hay más información."
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "name": "jev-terminal-lab",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "start": "node src/index.ts",
+    "demo": "node src/index.ts",
+    "batch": "node src/index.ts lote --cantidad 100 --concurrencia 8",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.ts",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "~5.9.3"
+  }
+}
