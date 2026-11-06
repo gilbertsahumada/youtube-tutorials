@@ -21,6 +21,8 @@ videos/
   pi/                             → introducción a Pi, skills, extensiones y repository onboarding
   pi-pr-evidence/                 → revisión read-only de Pull Requests con Pi y GitHub Actions
   cloudflare-workers/             → acortador TypeScript con Wrangler, Hono y D1
+  jev/                            → TypeScript, terminal interactiva y lote de 100 reportes
+  jev-primitivas/                  → ejemplos de Choice, Score, Noul y Box
 ```
 
 ## Videos
@@ -39,6 +41,8 @@ videos/
 | 10 | Pi: skills, extensiones y repository onboarding | [`videos/pi`](videos/pi) | La introducción básica a Pi y un onboarding local por rol | [Ver video](https://youtu.be/fvXWPim2RzM) |
 | 11 | Revisión de Pull Requests con Pi | [`videos/pi-pr-evidence`](videos/pi-pr-evidence) | Un reviewer read-only que publica comentarios desde GitHub Actions | Por agregar |
 | 12 | Cloudflare Workers en la práctica | [`videos/cloudflare-workers`](videos/cloudflare-workers) | Un acortador en TypeScript, desde el Worker hasta Hono, D1 y el despliegue con Wrangler | Por agregar |
+| 13 | Qué es Jev: decisiones dentro de tu aplicación | [`videos/jev`](videos/jev) | Demo TypeScript con casos manuales, 100 reportes, métricas y presentación visual | Por agregar |
+| 14 | Primitivas de Jev: Choice, Score, Noul y Box | [`videos/jev-primitivas`](videos/jev-primitivas) | Solicitudes de texto e imagen para explorar las primitivas | Por agregar |
 
 > La numeración sigue el orden del índice, no necesariamente el de publicación. Los enlaces pendientes se completarán después.
 
@@ -51,7 +55,7 @@ git clone https://github.com/gilbertsahumada/youtube-tutorials.git
 cd youtube-tutorials/videos/<carpeta-del-video>
 ```
 
-Las demos basadas en scripts requieren **Node.js 20 o superior** y **Bash** (macOS, Linux o WSL; los scripts no corren en Windows nativo). Cada video indica si necesita Claude Code, Codex o Pi. Company Brain requiere Node.js 22.13 o superior. La demo de Cloudflare Workers requiere Node.js 22 o 24 actualizado.
+Las demos basadas en scripts requieren **Node.js 20 o superior** y **Bash** (macOS, Linux o WSL; los scripts no corren en Windows nativo). Cada video indica si necesita Claude Code, Codex o Pi. Company Brain requiere Node.js 22.13 o superior. La demo de Cloudflare Workers requiere Node.js 22 o 24 actualizado. Jev requiere Node.js 22.19 o superior.
 
 Demos con recorrido ejecutable, y qué hace cada una:
 
@@ -62,6 +66,7 @@ Demos con recorrido ejecutable, y qué hace cada una:
 | [`graph-engineering`](videos/graph-engineering) | `node review-graph.mjs` | lentes en paralelo, verificación adversarial y ancla externa |
 | [`company-brain`](videos/company-brain) | `npm start` desde `demo/` y el recorrido en la interfaz | configura proyectos y participantes, sincroniza Gmail y aprueba propuestas para crear o actualizar issues; seguimiento automático opcional |
 | [`cloudflare-workers`](videos/cloudflare-workers) | configurar D1 y ejecutar `npm run dev` desde `demo/` | crear enlaces cortos con una API TypeScript y desplegarla con Wrangler |
+| [`jev`](videos/jev) | `npm ci` y `npm start` desde `demo/` | inspeccionar solicitudes, enviar casos y medir un lote de 100 reportes con concurrencia limitada |
 
 Los números que verás publicados salen de ejecuciones registradas y están marcados como tales. La generación es probabilística: **tu corrida dará algo distinto**, y esa es justamente la razón de que cada demo traiga su propio evaluador.
 

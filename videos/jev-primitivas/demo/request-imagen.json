@@ -1,0 +1,23 @@
+{
+  "model": "jev-1.14.0",
+  "state": {
+    "mensaje": "El usuario adjunta una captura ficticia para señalar el botón rojo de confirmación.",
+    "captura": "dbca3c3a-e9c4-4a9b-a63f-7724325f99de"
+  },
+  "assets": {
+    "dbca3c3a-e9c4-4a9b-a63f-7724325f99de": {
+      "type": "image",
+      "part": "captura"
+    }
+  },
+  "questions": {
+    "boton_visible": {
+      "type": "noul",
+      "instructions": "¿Hay un botón rojo visible en `captura`?"
+    },
+    "boton": {
+      "type": "box",
+      "instructions": "Localiza el botón rojo de la captura en `captura`."
+    }
+  }
+}
