@@ -23,6 +23,7 @@ videos/
   cloudflare-workers/             → acortador TypeScript con Wrangler, Hono y D1
   jev/                            → TypeScript, terminal interactiva y lote de 100 reportes
   jev-primitivas/                  → ejemplos de Choice, Score, Noul y Box
+  backend-practico/                → 10 prompts en inglés para revisar tu backend, en dos videos
 ```
 
 ## Videos
@@ -43,6 +44,8 @@ videos/
 | 12 | Cloudflare Workers en la práctica | [`videos/cloudflare-workers`](videos/cloudflare-workers) | Un acortador en TypeScript, desde el Worker hasta Hono, D1 y el despliegue con Wrangler | Por agregar |
 | 13 | Qué es Jev: decisiones dentro de tu aplicación | [`videos/jev`](videos/jev) | Demo TypeScript con casos manuales, 100 reportes, métricas y presentación visual | Por agregar |
 | 14 | Primitivas de Jev: Choice, Score, Noul y Box | [`videos/jev-primitivas`](videos/jev-primitivas) | Solicitudes de texto e imagen para explorar las primitivas | Por agregar |
+| 15 | 5 decisiones para construir una API confiable | [`videos/backend-practico`](videos/backend-practico) | Prompts en inglés para revisar idempotencia, errores, JWT, versionado y documentación | Por agregar |
+| 16 | Por qué tu backend se vuelve lento y devuelve datos incorrectos | [`videos/backend-practico`](videos/backend-practico) | Prompts en inglés para revisar paginación, N+1, caché, rate limiting y consistencia | Por agregar |
 
 > La numeración sigue el orden del índice, no necesariamente el de publicación. Los enlaces pendientes se completarán después.
 
@@ -72,7 +75,7 @@ Los números que verás publicados salen de ejecuciones registradas y están mar
 
 ## Una nota sobre el idioma
 
-Todo está en español para que lo entiendas rápido, pero los modelos suelen rendir mejor en inglés (están entrenados mayormente en inglés). Si quieres exprimir mejores resultados, traduce los prompts, los skills y tus specs a inglés. Funciona igual en español, así que es cosa de cada uno.
+Las guías están en español para que lo entiendas rápido, pero los modelos suelen rendir mejor en inglés (están entrenados mayormente en inglés). Si quieres exprimir mejores resultados, traduce los prompts, los skills y tus specs a inglés. Funciona igual en español, así que es cosa de cada uno.
 
 ## Formación en preparación
 
